@@ -1,0 +1,48 @@
+# llm-redteam-harness
+
+A **target-agnostic, portable** harness for **authorized** red-teaming of LLM / agentic
+applications. It drives a target through a validated, OWASP-LLM-aligned checklist of
+application-layer weaknesses, proves each finding against a ground-truth **oracle**, and
+accumulates what it learns as reusable methodology.
+
+> **Prime directive.** A red-team harness's product is **rigor, not findings**. It is engineered to
+> **default to disbelief** and to **disprove itself before it is allowed to believe**. Success is not
+> "found lots of issues" — it is being *more conservative than the operator's own intuition* about
+> what counts as real.
+
+## Scope fence (read first)
+
+Three zones, enforced structurally (not just documented):
+
+| Zone | What | Gate |
+| --- | --- | --- |
+| ✅ **Default — benign proxy** | system-prompt disclosure, refusal-flip on a *harmless* target, indirect-injection canary, excessive-agency / unsafe-render, cross-user canary propagation | a skill with no benign `safe_signal` **will not load** |
+| ⚠️ **Authorized impact-escalation** | a real PoC artifact to prove blast radius (e.g. contained worm/exfil chain) | `scope.md` authorizes **+** runtime human-confirm **+** contained **+** cleanup-logged |
+| ❌ **Never** | real-harm uplift as the product · a library of working harmful jailbreaks · HarmBench-style harm-elicitation as a metric · wholesale ingestion of harm corpora | — |
+
+**Authorization is mandatory.** No `scope.md` filled and signed → the loop refuses to run.
+
+## What it is / isn't
+
+- It **is** a knowledge base of composable cards (vulns × techniques × oracles) + one adaptive
+  loop that reads them, driven by a single orchestrator with on-demand hunters.
+- It **isn't** a universal jailbreak generator, a payload arsenal, or a self-rewriting memory.
+
+## Layout
+
+```
+skills/         PLANE 1 — methodology (read-only): vulns/ · techniques/ · oracles/
+engine/         PLANE 2 — orchestration: loop · roster · gates
+schemas/        the contracts: attempt · finding · pattern · technique-card
+fixtures/       sanitized oracle-calibration ground truth
+engagements/    PLANE 3 — _TEMPLATE copied OUT into each target's own project repo (append-only)
+docs/           architecture + decisions
+```
+
+**Plane rule:** Plane 1 is read-only knowledge; Plane 3 is write-only memory. The portable harness
+(Plane 1+2) travels; each engagement's Plane 3 wiki lives with its target.
+
+## Status
+
+`v0` scaffold — first vertical slice: **LLM07 system-prompt leakage** (structure only, no live run
+yet). See `docs/architecture.md` and `CLAUDE.md`.

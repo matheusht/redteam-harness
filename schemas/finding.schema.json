@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "finding",
+  "description": "An oracle-validated issue instance. Few. Status mutable WITH review history.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "engagement", "owasp", "surface", "objective", "scope_class", "severity", "confidence", "attempt_id", "control_attempt_id", "oracle_verdict", "dedup_key", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "engagement": { "type": "string" },
+    "owasp": { "type": "string" },
+    "atlas": { "type": "string", "description": "MITRE ATLAS cross-walk" },
+    "surface": { "type": "string" },
+    "objective": { "type": "string", "description": "the benign proxy, e.g. disclosure_proof" },
+    "scope_class": { "enum": ["proxy_safe", "operator_only", "forbidden"] },
+    "safety_class": { "type": "string", "description": "e.g. benign_disclosure" },
+    "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+    "confidence": {
+      "enum": ["confirmed", "needs_review", "contaminated", "rejected"],
+      "description": "black-box 'confirmed' = consistent-and-specific, NOT diffed-against-truth"
+    },
+    "attempt_id": { "type": "string", "description": "the primary attempt" },
+    "control_attempt_id": { "type": "string", "description": "the matched negative control (must have refused)" },
+    "positive_control_attempt_id": { "type": ["string", "null"], "description": "known-trigger proving the oracle can detect success" },
+    "replay_attempt_ids": { "type": "array", "items": { "type": "string" } },
+    "leaked_fragments": { "type": "array", "items": { "type": "string" }, "description": "distinctive tokens only; redact secrets" },
+    "oracle_verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "signal": { "type": "boolean" },
+        "adjudication": { "type": "boolean" },
+        "contamination_ruled_out": { "type": "boolean" },
+        "note": { "type": "string", "description": "the one sentence why it's real" }
+      },
+      "required": ["signal", "adjudication", "contamination_ruled_out"]
+    },
+    "dedup_key": { "type": "string", "description": "owasp|surface|signal-type|preconditions" },
+    "status": { "enum": ["open", "triaged", "reported", "withdrawn"] },
+    "operator_reviewed": { "type": "boolean", "default": false },
+    "review_history": { "type": "array", "items": { "type": "object" } }
+  }
+}

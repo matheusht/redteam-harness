@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "attempt",
+  "description": "One concrete run of one family variant. Raw telemetry. Append-only, many.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "engagement", "family", "surface", "technique", "kind", "session_id", "observed", "verdict"],
+  "properties": {
+    "id": { "type": "string", "description": "attempt-<n> or uuid" },
+    "engagement": { "type": "string" },
+    "assignment": { "type": "string", "description": "orchestrator brief id, if used" },
+    "family": { "type": "string", "description": "vuln card id, e.g. llm07.system-prompt-leakage" },
+    "owasp": { "type": "string" },
+    "surface": { "type": "string", "description": "e.g. chat_ui, rag_document_ingest" },
+    "technique": { "type": "string", "description": "technique card id, or 'control'" },
+    "kind": { "enum": ["primary", "negative_control", "positive_control", "replay"] },
+    "control_of": { "type": ["string", "null"], "description": "attempt id this is a control/replay for" },
+    "session_id": { "type": "string", "description": "to detect contaminated/reused sessions" },
+    "input_summary": { "type": "string" },
+    "observed": { "type": "string", "description": "concrete response/action, not a paraphrase" },
+    "signal_hit": { "type": ["boolean", "null"], "description": "signal-oracle result for this attempt" },
+    "contamination": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": { "enum": ["none", "suspected", "confirmed"] },
+        "sources": { "type": "array", "items": { "enum": ["session_memory", "retrieval_cache", "operator_hinting", "artifact_reuse", "ui_sidechannel"] } }
+      }
+    },
+    "evidence": { "type": "array", "items": { "type": "string" }, "description": "transcript:// screenshot:// refs" },
+    "verdict": { "enum": ["suspected_success", "no_signal", "refused", "error"], "description": "hunter-level only; never 'confirmed'" }
+  }
+}

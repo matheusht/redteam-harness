@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pattern",
+  "description": "A distilled reusable tactic that survived review. Very few. Manual promotion only. Abstract + scrubbed by design — never a payload arsenal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "abstraction", "applicability", "evidence_links", "scrubbed", "version", "review_status"],
+  "properties": {
+    "id": { "type": "string" },
+    "abstraction": {
+      "type": "string",
+      "description": "the SHAPE of what worked, not the phrasing. e.g. 'task-reframing as in-scene recitation softened refusals on benign hidden-instruction surfaces'"
+    },
+    "applicability": { "type": "array", "items": { "type": "string" }, "description": "surfaces/contexts where it applied" },
+    "preconditions": { "type": "array", "items": { "type": "string" } },
+    "evidence_links": { "type": "array", "items": { "type": "string" }, "description": "finding:// attempt:// ids — NOT copied transcripts" },
+    "loses_to": { "type": "array", "items": { "type": "string" }, "description": "defenses observed to stop it" },
+    "scope_tag": { "enum": ["defensive-validation-only", "benign-canary-only", "operator-review-required"] },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "scrubbed": { "const": true, "description": "no verbatim payload strings, no stepwise harmful recipes" },
+    "version": { "type": "integer" },
+    "supersedes": { "type": ["string", "null"] },
+    "review_status": { "enum": ["candidate", "promoted", "retired"] },
+    "promoted_by": { "type": "string" }
+  }
+}
