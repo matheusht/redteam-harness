@@ -43,8 +43,10 @@ reads markdown; deterministic — the orchestrator, not the model, picks the car
 
 ## 4. The runbook (per engagement)
 
-1. **Ground & scope** — read prior intel; fill `scope.md`; pick the active OWASP subset (the harness
-   ships all ten as cards; scope selects). *Scope varies per project — be prepared for all.*
+0. **Bootstrap** — copy `engagements/_TEMPLATE/` into the **target's own** project repo as
+   `engagements/<id>/` (Plane 3 lives with the target, never in this portable repo).
+1. **Ground & scope** — read prior intel; fill + sign `scope.md`; pick the active OWASP subset (the
+   harness ships all ten as cards; scope selects). *Scope varies per project — be prepared for all.*
 2. **Establish the oracle** — load `skills/oracles/`; calibrate against `fixtures/` or source.
 3. **Recon** — authenticate, snapshot surfaces/tools/flows, capture **baseline controls** (what the
    target refuses with no attack).
