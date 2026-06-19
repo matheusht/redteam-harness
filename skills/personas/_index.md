@@ -16,6 +16,12 @@ verbatim-recitation *architecture*. They **must not** carry working harmful-cont
 portable repo (see scope fence ✗ "no library of working harmful jailbreaks"). A foothold is pointed
 at a `safe_signal`-gated objective; the gate, not the persona, draws the harm line.
 
+> **Decision (2026-06-19): no bulk known-jailbreak corpus here.** Storing a broad library of
+> working jailbreaks "for pattern recognition" is a *defensive detection* dataset — a different
+> artifact serving blue-team, not this offensive methodology. It must NOT live in this repo (it is
+> exactly the "library of working harmful jailbreaks" the scope fence forbids). If ever needed it is
+> a separate, access-controlled defensive corpus. Deferred — not for now.
+
 ## How the loop uses a foothold
 1. Pick a foothold whose `engages_via` fits the surface.
 2. Load it; send its engagement trigger; **CONFIRM engaged** (in-character + no refusal) — log as an
