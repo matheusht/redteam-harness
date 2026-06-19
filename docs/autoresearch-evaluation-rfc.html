@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>RFC — Autoresearch Evaluation Before Self-Improvement</title>
+  <style>
+    :root {
+      --paper: #f6f1e7;
+      --paper-deep: #eee6d7;
+      --ink: #211f1a;
+      --muted: #6e685d;
+      --line: #cfc5b3;
+      --line-strong: #918774;
+      --red: #9d2f26;
+      --red-soft: #ead4cf;
+      --green: #2d624b;
+      --green-soft: #dce8df;
+      --amber: #8a5a14;
+      --amber-soft: #eee1c5;
+      --code: #2b2924;
+      --code-ink: #f4ede0;
+      --white: #fffdf8;
+      --measure: 78rem;
+      --mono: "SFMono-Regular", "Cascadia Code", "Liberation Mono", "DejaVu Sans Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(67, 57, 42, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 100% 28px;
+      font-family: var(--mono);
+      font-size: 15px;
+      line-height: 1.68;
+      text-rendering: optimizeLegibility;
+    }
+
+    a {
+      color: var(--red);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:hover { color: #6f1d18; }
+
+    code, pre, kbd { font-family: var(--mono); }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line-strong);
+      background: rgba(246, 241, 231, 0.96);
+      backdrop-filter: blur(8px);
+    }
+
+    .topbar-inner {
+      width: min(var(--measure), calc(100% - 40px));
+      min-height: 48px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .document-id {
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .topbar nav {
+      display: flex;
+      gap: 18px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .topbar nav::-webkit-scrollbar { display: none; }
+
+    .topbar nav a {
+      color: var(--muted);
+      text-decoration: none;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .topbar nav a:hover { color: var(--ink); }
+
+    main {
+      width: min(var(--measure), calc(100% - 40px));
+      margin: 0 auto;
+      padding: 70px 0 96px;
+    }
+
+    .masthead {
+      padding-bottom: 52px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .rfc-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid var(--line-strong);
+      background: var(--line-strong);
+      margin-bottom: 46px;
+    }
+
+    .rfc-meta div {
+      min-height: 72px;
+      padding: 13px 14px;
+      background: var(--paper);
+    }
+
+    .rfc-meta dt {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .rfc-meta dd {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-weight: 750;
+      line-height: 1.18;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-width: 15ch;
+      font-size: clamp(42px, 7vw, 86px);
+    }
+
+    h2 {
+      margin-top: 78px;
+      padding-top: 18px;
+      border-top: 2px solid var(--ink);
+      font-size: clamp(27px, 4vw, 43px);
+    }
+
+    h3 {
+      margin-top: 42px;
+      font-size: 21px;
+    }
+
+    h4 {
+      margin-top: 28px;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .dek {
+      max-width: 68ch;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 22px);
+      line-height: 1.55;
+    }
+
+    .verdict {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 1fr);
+      gap: 30px;
+      margin: 42px 0 0;
+      padding-top: 25px;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .verdict strong {
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    .verdict p {
+      max-width: 66ch;
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    p { max-width: 76ch; }
+
+    .lead {
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .section-number {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--red);
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+
+    .callout {
+      max-width: 76ch;
+      margin: 28px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--red);
+      background: var(--red-soft);
+    }
+
+    .callout strong { color: #6f1d18; }
+
+    .callout p:first-child { margin-top: 0; }
+    .callout p:last-child { margin-bottom: 0; }
+
+    .decision {
+      margin: 34px 0;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+    }
+
+    .decision-header {
+      display: grid;
+      grid-template-columns: 10rem minmax(0, 1fr);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .decision-header > * { padding: 16px 18px; }
+
+    .decision-header strong {
+      color: var(--white);
+      background: var(--red);
+    }
+
+    .decision-header span { font-weight: 700; }
+
+    .decision-body {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .decision-body div {
+      padding: 17px 18px;
+      border-right: 1px solid var(--line);
+    }
+
+    .decision-body div:last-child { border-right: 0; }
+
+    .decision-body b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    table {
+      width: 100%;
+      margin: 26px 0 34px;
+      border-collapse: collapse;
+      background: rgba(255, 253, 248, 0.6);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--white);
+      background: var(--code);
+      font-weight: 700;
+    }
+
+    tbody tr:hover { background: var(--white); }
+
+    .status-good { color: var(--green); font-weight: 700; }
+    .status-warn { color: var(--amber); font-weight: 700; }
+    .status-stop { color: var(--red); font-weight: 700; }
+
+    .architecture {
+      margin: 34px 0 42px;
+      padding: 26px;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+      overflow-x: auto;
+    }
+
+    .architecture svg {
+      display: block;
+      min-width: 850px;
+      width: 100%;
+      height: auto;
+    }
+
+    .caption {
+      max-width: none;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tier-list {
+      margin: 30px 0 40px;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .tier {
+      display: grid;
+      grid-template-columns: 7rem minmax(12rem, 0.8fr) minmax(18rem, 1.7fr);
+      gap: 24px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tier-index {
+      color: var(--red);
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .tier h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .tier p { margin: 0; }
+
+    .tier .custody {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pipeline {
+      margin: 30px 0 40px;
+      padding: 24px;
+      border: 1px solid var(--line-strong);
+      background: var(--code);
+      color: var(--code-ink);
+      overflow-x: auto;
+    }
+
+    .pipeline ol {
+      min-width: 1000px;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(108px, 1fr));
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: pipeline;
+    }
+
+    .pipeline li {
+      position: relative;
+      min-height: 105px;
+      padding: 34px 18px 14px 0;
+      border-top: 1px solid #777064;
+      counter-increment: pipeline;
+      font-size: 12px;
+    }
+
+    .pipeline li::before {
+      content: counter(pipeline);
+      position: absolute;
+      top: -13px;
+      left: 0;
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #a39a8b;
+      background: var(--code);
+      color: var(--code-ink);
+      font-size: 11px;
+    }
+
+    .pipeline li::after {
+      content: "→";
+      position: absolute;
+      top: 39px;
+      right: 10px;
+      color: #aaa293;
+    }
+
+    .pipeline li:last-child::after { content: ""; }
+
+    .contract {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+      gap: 28px;
+      margin: 32px 0 42px;
+    }
+
+    .contract > div {
+      border-top: 4px solid var(--ink);
+      padding-top: 16px;
+    }
+
+    .contract h3 { margin-top: 0; }
+
+    .checklist {
+      margin: 18px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      position: relative;
+      padding: 8px 0 8px 27px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .checklist li::before {
+      content: "□";
+      position: absolute;
+      left: 0;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .formula {
+      margin: 18px 0;
+      padding: 20px;
+      border: 1px solid var(--line-strong);
+      background: var(--paper-deep);
+      font-size: 13px;
+      overflow-x: auto;
+    }
+
+    .formula code {
+      white-space: pre;
+      color: var(--ink);
+    }
+
+    .rule {
+      margin: 20px 0;
+      padding: 16px 18px;
+      border: 1px solid var(--green);
+      background: var(--green-soft);
+    }
+
+    .rule strong { color: var(--green); }
+
+    .threat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      margin: 30px 0 40px;
+      border: 1px solid var(--line-strong);
+      background: var(--line-strong);
+    }
+
+    .threat {
+      min-height: 184px;
+      padding: 18px;
+      background: var(--white);
+    }
+
+    .threat h3 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    .threat p { margin-bottom: 0; }
+
+    .threat b {
+      color: var(--red);
+      font-size: 11px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 9rem minmax(0, 1fr) 15rem;
+      gap: 28px;
+      padding: 25px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .phase:first-of-type { border-top: 1px solid var(--line-strong); }
+
+    .phase-code {
+      color: var(--red);
+      font-weight: 800;
+    }
+
+    .phase h3 {
+      margin: 0 0 7px;
+      font-size: 18px;
+    }
+
+    .phase p { margin: 0; }
+
+    .phase-exit {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .acceptance {
+      columns: 2;
+      column-gap: 44px;
+      margin-top: 28px;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .acceptance li {
+      break-inside: avoid;
+      margin: 0 0 12px;
+      padding: 0 0 12px 28px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+
+    .acceptance li::before {
+      content: "PASS";
+      position: absolute;
+      left: 0;
+      top: 2px;
+      color: var(--green);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .source-list {
+      margin: 28px 0 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .source-list li {
+      display: grid;
+      grid-template-columns: 3rem minmax(15rem, 0.8fr) minmax(20rem, 1.2fr);
+      gap: 20px;
+      padding: 17px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .source-list .ref {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    footer {
+      margin-top: 86px;
+      padding-top: 24px;
+      border-top: 2px solid var(--ink);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .print-link {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .print-link:hover { background: var(--paper-deep); }
+
+    @media (max-width: 850px) {
+      .topbar-inner { width: min(100% - 24px, var(--measure)); }
+      .document-id { display: none; }
+      main { width: min(100% - 24px, var(--measure)); padding-top: 42px; }
+      table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .rfc-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .verdict { grid-template-columns: 1fr; gap: 8px; }
+      .decision-header { grid-template-columns: 1fr; }
+      .decision-body { grid-template-columns: 1fr; }
+      .decision-body div { border-right: 0; border-bottom: 1px solid var(--line); }
+      .decision-body div:last-child { border-bottom: 0; }
+      .tier { grid-template-columns: 4rem 1fr; gap: 16px; }
+      .tier > div:last-child { grid-column: 2; }
+      .contract { grid-template-columns: 1fr; }
+      .threat-grid { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 6rem 1fr; gap: 16px; }
+      .phase-exit { grid-column: 2; }
+      .source-list li { grid-template-columns: 2rem 1fr; }
+      .source-list li > span:last-child { grid-column: 2; }
+    }
+
+    @media (max-width: 580px) {
+      body { font-size: 14px; }
+      .rfc-meta { grid-template-columns: 1fr; }
+      h1 { font-size: 40px; }
+      h2 { margin-top: 58px; font-size: 28px; }
+      .tier { grid-template-columns: 1fr; }
+      .tier > div:last-child { grid-column: 1; }
+      .phase { grid-template-columns: 1fr; }
+      .phase-exit { grid-column: 1; }
+      .acceptance { columns: 1; }
+      .topbar nav { gap: 14px; }
+    }
+
+    @media print {
+      @page { size: A4; margin: 15mm; }
+      body { background: white; font-size: 10pt; }
+      .topbar, .print-link { display: none; }
+      main { width: auto; padding: 0; }
+      h1 { font-size: 40pt; }
+      h2 { break-before: page; margin-top: 0; }
+      h3, .decision, .architecture, .pipeline, .contract, table, .phase, .threat {
+        break-inside: avoid;
+      }
+      a { color: var(--ink); }
+      .architecture, .decision, .threat, table { background: white; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="document-id">RFC / AR-EVAL-001</div>
+      <nav aria-label="Document sections">
+        <a href="#verdict">Verdict</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#metric">Metric</a>
+        <a href="#threats">Threats</a>
+        <a href="#delivery">Delivery</a>
+        <a href="#acceptance">Acceptance</a>
+        <a href="#references">References</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="masthead">
+      <dl class="rfc-meta">
+        <div><dt>Status</dt><dd>Implementation RFC</dd></div>
+        <div><dt>Date</dt><dd>2026-06-19</dd></div>
+        <div><dt>Decision</dt><dd>Evaluator before ratchet</dd></div>
+        <div><dt>Promotion</dt><dd>Human-gated</dd></div>
+      </dl>
+
+      <h1>Autoresearch evaluation before self-improvement</h1>
+      <p class="dek">
+        A rigor-first evaluator architecture for the LLM red-team harness: what the existing design
+        gets right, what it cannot yet prove, and the mechanical gates required before a technique
+        is allowed to improve itself.
+      </p>
+
+      <div class="verdict" id="verdict">
+        <strong>EXECUTIVE VERDICT</strong>
+        <p>
+          The harness architecture is sound. The self-improvement plan is not yet safe to run.
+          Insert a Phase&nbsp;2.5 evaluator foundation between the first closed vertical slice and
+          any autoresearch ratchet. Autoresearch may propose technique variants offline; it may not
+          control its evaluator, inspect its holdout, touch live client targets, or promote itself.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-number">01 / REVIEW</span>Architecture review</h2>
+      <p class="lead">
+        The original brainstorm correctly converged on four separations: vulnerability, delivery
+        technique, oracle, and orchestration. The current repository improves that proposal by
+        adding a three-plane boundary, append-only evidence, a two-layer oracle, and hard
+        authorization gates. Those are the right foundations for evaluation-driven research.
+      </p>
+
+      <table aria-label="Original brainstorm compared with current harness">
+        <thead>
+          <tr>
+            <th>Concern</th>
+            <th>Original brainstorm</th>
+            <th>Current harness</th>
+            <th>Evaluation consequence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Composition</td>
+            <td>Vulnerability × technique, judged by oracles.</td>
+            <td class="status-good">Preserved and made deterministic through exact card loading.</td>
+            <td>Keep. Candidate mutation can be scoped to one technique card.</td>
+          </tr>
+          <tr>
+            <td>Memory</td>
+            <td>Winning payloads and success rates update the portable library.</td>
+            <td class="status-good">Abstract, scrubbed, manual promotion; engagement evidence stays separate.</td>
+            <td>Current model is safer. Never let the researcher write Plane&nbsp;1 directly.</td>
+          </tr>
+          <tr>
+            <td>Success signal</td>
+            <td>Oracle score and eventual confirmed-finding rate.</td>
+            <td class="status-warn">Two-layer oracle with controls, replay, and contamination rule-out.</td>
+            <td>Promising, but prose invariants must become executable gates.</td>
+          </tr>
+          <tr>
+            <td>Optimization</td>
+            <td>UCB ordering, evolving success rate, promote winners.</td>
+            <td class="status-good">Ladder + winners; UCB deliberately deferred.</td>
+            <td>Correct. A bandit is premature before stable cross-campaign statistics exist.</td>
+          </tr>
+          <tr>
+            <td>Safety</td>
+            <td>Authorized testing with some target-specific payload memory.</td>
+            <td class="status-good">Three-zone scope fence, safe-signal load gate, live impact confirmation.</td>
+            <td>Autoresearch must be structurally confined to Zone&nbsp;1 offline evaluation.</td>
+          </tr>
+          <tr>
+            <td>Anti-cheating</td>
+            <td>Implicit trust in a fixed objective and scorer.</td>
+            <td class="status-stop">Roadmapped, not implemented.</td>
+            <td>This is the blocking dependency for self-improvement.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="decision">
+        <div class="decision-header">
+          <strong>DECISION 01</strong>
+          <span>The first campaign mutates techniques only.</span>
+        </div>
+        <div class="decision-body">
+          <div><b>MUTABLE</b>One declared candidate technique variant and its experiment notes.</div>
+          <div><b>IMMUTABLE</b>Personas, vuln cards, engine, oracle, datasets, evaluator, and budgets.</div>
+          <div><b>FORBIDDEN</b>Live client targets, cross-user surfaces, Zone-2 artifacts, and automatic promotion.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>Why the current roadmap metric needs revision.</strong>
+          “Confirmed-finding rate” rewards both real capability and evaluator exploitation. A
+          researcher could improve it by weakening controls, counting duplicates, reusing
+          contaminated sessions, changing budgets, or overfitting visible cases. The evaluator must
+          establish validity first and compare utility second.
+        </p>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2><span class="section-number">02 / EVALUATION SYSTEM</span>Four tiers, two trust domains</h2>
+      <p class="lead">
+        Static engagement transcripts can test whether the evaluator rejects known false
+        discoveries. They cannot establish whether an unseen technique works. Technique efficacy
+        requires a target that can be rerun: a hermetic synthetic application or a pinned,
+        controlled model with planted benign canaries.
+      </p>
+
+      <div class="architecture">
+        <svg viewBox="0 0 1120 530" role="img" aria-labelledby="arch-title arch-desc">
+          <title id="arch-title">Autoresearch evaluator trust boundaries</title>
+          <desc id="arch-desc">
+            The researcher workspace can see calibration and development cases. Validation is
+            read-only. The sealed holdout and its signing key live in a separate evaluator domain.
+          </desc>
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6e685d"/>
+            </marker>
+            <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#cfc5b3" stroke-width="2"/>
+            </pattern>
+          </defs>
+
+          <rect x="16" y="16" width="748" height="494" fill="#f6f1e7" stroke="#918774" stroke-width="2"/>
+          <text x="38" y="48" font-family="monospace" font-size="15" font-weight="700" fill="#211f1a">RESEARCHER WORKSPACE</text>
+          <text x="38" y="70" font-family="monospace" font-size="11" fill="#6e685d">visible cases · candidate branch · no signing key</text>
+
+          <rect x="790" y="16" width="314" height="494" fill="url(#hatch)" stroke="#9d2f26" stroke-width="2"/>
+          <text x="812" y="48" font-family="monospace" font-size="15" font-weight="700" fill="#9d2f26">PRIVATE EVALUATOR</text>
+          <text x="812" y="70" font-family="monospace" font-size="11" fill="#6e685d">sealed cases · query ledger · signing key</text>
+
+          <rect x="42" y="112" width="216" height="114" fill="#fffdf8" stroke="#918774"/>
+          <text x="58" y="141" font-family="monospace" font-size="12" font-weight="700" fill="#211f1a">1. CALIBRATION</text>
+          <text x="58" y="166" font-family="monospace" font-size="11" fill="#6e685d">public positives</text>
+          <text x="58" y="184" font-family="monospace" font-size="11" fill="#6e685d">hard negatives</text>
+          <text x="58" y="202" font-family="monospace" font-size="11" fill="#6e685d">oracle self-test</text>
+
+          <rect x="286" y="112" width="216" height="114" fill="#fffdf8" stroke="#918774"/>
+          <text x="302" y="141" font-family="monospace" font-size="12" font-weight="700" fill="#211f1a">2. DEVELOPMENT</text>
+          <text x="302" y="166" font-family="monospace" font-size="11" fill="#6e685d">visible frozen slice</text>
+          <text x="302" y="184" font-family="monospace" font-size="11" fill="#6e685d">case diagnostics</text>
+          <text x="302" y="202" font-family="monospace" font-size="11" fill="#9d2f26">cannot promote</text>
+
+          <rect x="530" y="112" width="208" height="114" fill="#eee6d7" stroke="#918774"/>
+          <text x="546" y="141" font-family="monospace" font-size="12" font-weight="700" fill="#211f1a">3. VALIDATION</text>
+          <text x="546" y="166" font-family="monospace" font-size="11" fill="#6e685d">read-only frozen slice</text>
+          <text x="546" y="184" font-family="monospace" font-size="11" fill="#6e685d">paired comparison</text>
+          <text x="546" y="202" font-family="monospace" font-size="11" fill="#6e685d">identical budgets</text>
+
+          <rect x="816" y="112" width="262" height="114" fill="#ead4cf" stroke="#9d2f26"/>
+          <text x="832" y="141" font-family="monospace" font-size="12" font-weight="700" fill="#6f1d18">4. SEALED HOLDOUT</text>
+          <text x="832" y="166" font-family="monospace" font-size="11" fill="#6e685d">one query / campaign</text>
+          <text x="832" y="184" font-family="monospace" font-size="11" fill="#6e685d">aggregate result only</text>
+          <text x="832" y="202" font-family="monospace" font-size="11" fill="#6e685d">rotated after promotion</text>
+
+          <line x1="258" y1="169" x2="278" y2="169" stroke="#6e685d" marker-end="url(#arrow)"/>
+          <line x1="502" y1="169" x2="522" y2="169" stroke="#6e685d" marker-end="url(#arrow)"/>
+          <line x1="738" y1="169" x2="808" y2="169" stroke="#9d2f26" stroke-dasharray="5 5" marker-end="url(#arrow)"/>
+
+          <rect x="42" y="281" width="696" height="82" fill="#2b2924"/>
+          <text x="58" y="310" font-family="monospace" font-size="12" font-weight="700" fill="#f4ede0">CANDIDATE EXPERIMENT</text>
+          <text x="58" y="335" font-family="monospace" font-size="11" fill="#cfc5b3">one technique · one focused mutation · fixed target/version/seed/budget</text>
+          <line x1="390" y1="226" x2="390" y2="274" stroke="#6e685d" marker-end="url(#arrow)"/>
+
+          <rect x="816" y="281" width="262" height="82" fill="#2b2924" stroke="#9d2f26"/>
+          <text x="832" y="310" font-family="monospace" font-size="12" font-weight="700" fill="#f4ede0">SIGNED DECISION</text>
+          <text x="832" y="335" font-family="monospace" font-size="11" fill="#cfc5b3">allow · block · probe + failure class</text>
+          <line x1="947" y1="226" x2="947" y2="274" stroke="#9d2f26" marker-end="url(#arrow)"/>
+
+          <rect x="42" y="412" width="448" height="66" fill="#dce8df" stroke="#2d624b"/>
+          <text x="58" y="440" font-family="monospace" font-size="12" font-weight="700" fill="#2d624b">EVIDENCE BUNDLE</text>
+          <text x="58" y="460" font-family="monospace" font-size="11" fill="#53675b">candidate diff · manifests · paired runs · signed holdout</text>
+
+          <rect x="530" y="412" width="548" height="66" fill="#fffdf8" stroke="#918774"/>
+          <text x="546" y="440" font-family="monospace" font-size="12" font-weight="700" fill="#211f1a">HUMAN PROMOTION GATE</text>
+          <text x="546" y="460" font-family="monospace" font-size="11" fill="#6e685d">scrub · review · approve Plane-1 change; evaluator never writes methodology</text>
+
+          <line x1="390" y1="363" x2="266" y2="404" stroke="#6e685d" marker-end="url(#arrow)"/>
+          <line x1="947" y1="363" x2="947" y2="404" stroke="#9d2f26" marker-end="url(#arrow)"/>
+          <line x1="490" y1="445" x2="522" y2="445" stroke="#2d624b" marker-end="url(#arrow)"/>
+        </svg>
+        <p class="caption">
+          Trust boundary: the researcher can improve a candidate, but cannot redefine success or
+          recover holdout examples from evaluator output.
+        </p>
+      </div>
+
+      <div class="tier-list">
+        <article class="tier">
+          <div class="tier-index">01</div>
+          <div>
+            <h3>Calibration corpus</h3>
+            <div class="custody">PUBLIC / VERSIONED</div>
+          </div>
+          <div>
+            <p>Synthetic positives, negatives, confabulations, echoes, and contamination cases.</p>
+            <p class="custody">Purpose: prove the oracle and validity gates work before any candidate is scored.</p>
+          </div>
+        </article>
+        <article class="tier">
+          <div class="tier-index">02</div>
+          <div>
+            <h3>Development slice</h3>
+            <div class="custody">VISIBLE / FROZEN</div>
+          </div>
+          <div>
+            <p>Case-level feedback for baseline, seeded, evolve-best, and recombine experiments.</p>
+            <p class="custody">Purpose: iteration. Explicitly treated as overfittable and never sufficient for promotion.</p>
+          </div>
+        </article>
+        <article class="tier">
+          <div class="tier-index">03</div>
+          <div>
+            <h3>Validation slice</h3>
+            <div class="custody">READ-ONLY / FROZEN</div>
+          </div>
+          <div>
+            <p>Paired incumbent-versus-candidate runs with identical model, version, seeds, and budgets.</p>
+            <p class="custody">Purpose: qualify a frozen candidate for the one-shot holdout query.</p>
+          </div>
+        </article>
+        <article class="tier">
+          <div class="tier-index">04</div>
+          <div>
+            <h3>Sealed holdout</h3>
+            <div class="custody">PRIVATE / ROTATING</div>
+          </div>
+          <div>
+            <p>Cases and signing key remain outside the researcher workspace. Output is aggregate.</p>
+            <p class="custody">Purpose: detect overfit and authorize an evidence bundle, not automatic promotion.</p>
+          </div>
+        </article>
+      </div>
+
+      <h3>Evidence pipeline</h3>
+      <div class="pipeline" aria-label="Evaluation evidence pipeline">
+        <ol>
+          <li>Candidate technique</li>
+          <li>Conformance gate</li>
+          <li>False-discovery gate</li>
+          <li>Paired development eval</li>
+          <li>Three-run replay</li>
+          <li>Validation comparison</li>
+          <li>Sealed holdout</li>
+          <li>Manual promotion</li>
+        </ol>
+      </div>
+
+      <div class="decision">
+        <div class="decision-header">
+          <strong>DECISION 02</strong>
+          <span>The evaluator returns allow, block, or probe.</span>
+        </div>
+        <div class="decision-body">
+          <div><b>ALLOW</b>Evidence is valid and the candidate satisfies the keep contract.</div>
+          <div><b>BLOCK</b>Integrity, safety, validity, or protected-case regression failed.</div>
+          <div><b>PROBE</b>The result is plausible but needs the cheapest specified replay or diagnostic.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="metric">
+      <h2><span class="section-number">03 / METRIC CONTRACT</span>Validity first, utility second</h2>
+      <p class="lead">
+        No weighted score decides acceptance. Safety and evidence are constraints, not terms an
+        optimizer may trade away. The evaluator applies a lexicographic contract: every hard gate
+        passes, protected behavior is preserved, then clean coverage or efficiency may improve.
+      </p>
+
+      <div class="contract">
+        <div>
+          <h3>Hard gates</h3>
+          <ul class="checklist">
+            <li>Exactly one declared technique is modified.</li>
+            <li>The technique references an existing benign <code>safe_signal</code>.</li>
+            <li>Evaluator, oracle, datasets, model, and budget hashes match the manifest.</li>
+            <li>No Zone-2 artifact, target secret, or forbidden objective appears.</li>
+            <li>False-positive rate is zero on hard negatives.</li>
+            <li>Echoed, confabulated, contaminated, or control-free cases never confirm.</li>
+            <li>Every claimed success has evidence, negative control, and fresh-session replay.</li>
+            <li>Turns, tokens, time, and model calls remain within fixed budgets.</li>
+            <li>Every incumbent-confirmed protected case remains confirmed.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Primary metric</h3>
+          <div class="formula"><code>clean_confirmed_coverage =
+count(distinct benchmark cases
+  satisfying the full adjudication oracle
+  within the fixed campaign budget)</code></div>
+          <p>
+            Count cases, not attempts or findings. Deduplication is part of the metric boundary.
+            One underlying case cannot become multiple gains through retries, surfaces, or wording.
+          </p>
+        </div>
+      </div>
+
+      <div class="rule">
+        <strong>KEEP RULE.</strong>
+        Preserve every incumbent-confirmed protected case and either add at least one distinct clean
+        confirmed case, or preserve identical coverage while reducing target calls or tokens by at
+        least 10%.
+      </div>
+
+      <h3>Replay and uncertainty policy</h3>
+      <p>
+        Each claimed benchmark success consists of one primary run and two fresh-session replays.
+        Seeds, session identifiers, and target state are recorded. If the three-run result is not
+        stable, the evaluator returns <code>probe</code> with the cheapest next experiment rather
+        than accepting a one-shot improvement.
+      </p>
+      <p>
+        An LLM judge may classify an ambiguous response, compare incumbent and candidate output
+        blindly, or recommend a probe. It may never override a failed exact-match, provenance,
+        contamination, control, replay, budget, integrity, or safety gate.
+      </p>
+    </section>
+
+    <section id="threats">
+      <h2><span class="section-number">04 / ANTI-CHEAT</span>False-discovery threat model</h2>
+      <p class="lead">
+        The evaluator must be attacked before techniques are optimized against it. A foundation
+        corpus should contain attractive, high-scoring invalid candidates alongside real
+        improvements that the gate must preserve.
+      </p>
+
+      <div class="threat-grid">
+        <article class="threat">
+          <b>PROVENANCE FAILURE</b>
+          <h3>User-supplied canary echo</h3>
+          <p>A target repeats a token introduced by the candidate and appears to leak it.</p>
+          <p><strong>Required result:</strong> block; meaning/provenance gate fails.</p>
+        </article>
+        <article class="threat">
+          <b>SEMANTIC FALSE POSITIVE</b>
+          <h3>Fluent invented policy</h3>
+          <p>A convincing internal charter contains no distinctive source or planted token.</p>
+          <p><strong>Required result:</strong> block or needs-review; never confirmed.</p>
+        </article>
+        <article class="threat">
+          <b>STATE CONTAMINATION</b>
+          <h3>Reused-session success</h3>
+          <p>A later attempt recovers a token visible in session memory, retrieval cache, or artifacts.</p>
+          <p><strong>Required result:</strong> block; fresh-session replay required.</p>
+        </article>
+        <article class="threat">
+          <b>CONTROL COLLAPSE</b>
+          <h3>Missing or successful negative control</h3>
+          <p>The candidate “succeeds,” but the plain ask also succeeds or was never run.</p>
+          <p><strong>Required result:</strong> block; no bypass was demonstrated.</p>
+        </article>
+        <article class="threat">
+          <b>ACCOUNTING ATTACK</b>
+          <h3>Duplicate coverage inflation</h3>
+          <p>Retries or surface aliases are counted as distinct confirmed findings.</p>
+          <p><strong>Required result:</strong> deduplicate by benchmark case and boundary.</p>
+        </article>
+        <article class="threat">
+          <b>EVALUATOR TAMPERING</b>
+          <h3>Budget, scorer, or dataset change</h3>
+          <p>The candidate improves the visible metric by changing the rules or receiving more calls.</p>
+          <p><strong>Required result:</strong> block on manifest hash mismatch.</p>
+        </article>
+        <article class="threat">
+          <b>TASK BYPASS</b>
+          <h3>Shortcut without intended work</h3>
+          <p>The candidate produces a favorable signal while skipping the target interaction or invariant.</p>
+          <p><strong>Required result:</strong> block on trace and task-completion invariants.</p>
+        </article>
+        <article class="threat">
+          <b>OVERFIT / ORACLE EXTRACTION</b>
+          <h3>Holdout inspection or repeated query</h3>
+          <p>The researcher seeks case detail or probes the sealed evaluator until it learns the set.</p>
+          <p><strong>Required result:</strong> deny access, enforce one query, rotate after promotion.</p>
+        </article>
+      </div>
+
+      <h3>Foundation acceptance thresholds</h3>
+      <table aria-label="Evaluator foundation acceptance criteria">
+        <thead>
+          <tr><th>Measure</th><th>Required value</th><th>Failure behavior</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>invalid_accept_rate</code></td><td>0</td><td>Block Phase 3 launch.</td></tr>
+          <tr><td><code>valid_candidate_retention</code></td><td>100% on curated foundation corpus</td><td>Repair over-strict gate before launch.</td></tr>
+          <tr><td>Repeatability</td><td>Identical decision for identical input and manifest</td><td>Return block; evaluator is not calibrated.</td></tr>
+          <tr><td>Integrity mismatch</td><td>Always detected</td><td>Fail closed; no degraded best-effort result.</td></tr>
+          <tr><td>Holdout query budget</td><td>One signed query per frozen candidate/campaign</td><td>Deny subsequent query and invalidate campaign.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2><span class="section-number">05 / CONTRACTS</span>Implementation interfaces</h2>
+      <p class="lead">
+        The exact wire format may evolve, but the ownership and evidence fields below are
+        non-negotiable. They are what make a result replayable and prevent the researcher from
+        quietly redefining the experiment.
+      </p>
+
+      <table aria-label="Required evaluator artifacts">
+        <thead>
+          <tr><th>Artifact</th><th>Owner</th><th>Required contents</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>campaign-manifest</code></td>
+            <td>Operator / evaluator</td>
+            <td>Campaign id; mutable technique id; incumbent hash; evaluator/oracle/dataset/model hashes; budgets; protected cases; holdout query id.</td>
+          </tr>
+          <tr>
+            <td><code>candidate-manifest</code></td>
+            <td>Research loop</td>
+            <td>Parent candidate; mutation strategy; candidate hash; focused-change statement; expected mechanism; branch/commit.</td>
+          </tr>
+          <tr>
+            <td><code>evaluation-result</code></td>
+            <td>Evaluator</td>
+            <td>Decision; failure classes; clean coverage; protected-case regressions; calls/tokens/time; replay stability; manifest hashes.</td>
+          </tr>
+          <tr>
+            <td><code>holdout-attestation</code></td>
+            <td>Private evaluator</td>
+            <td>Campaign id; candidate hash; aggregate allow/block/probe; failure categories; query count; evaluator signature.</td>
+          </tr>
+          <tr>
+            <td><code>promotion-bundle</code></td>
+            <td>Orchestrator</td>
+            <td>Scrubbed proposed diff; full visible evidence; signed holdout attestation; redaction report; operator review fields.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Pre-ratchet conformance repairs</h3>
+      <ul class="checklist">
+        <li>Add the documented <code>foothold-establish</code> attempt kind, or model foothold establishment with an explicit compatible record.</li>
+        <li>Require replay, contamination rule-out, positive-control calibration, and a non-empty one-sentence justification for confirmed findings.</li>
+        <li>Validate card front matter, referenced ids, <code>safe_signal</code>, bounds, schemas, and redaction rules mechanically.</li>
+        <li>Correct documentation that says all ten vulnerability cards ship; the current repository contains one live vuln card.</li>
+        <li>Replace raw confirmed-finding rate in the roadmap with gated clean confirmed coverage.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">06 / REFERENCE SYNTHESIS</span>What to adopt—and what not to</h2>
+      <table aria-label="Reference system synthesis">
+        <thead>
+          <tr><th>System</th><th>Adopt</th><th>Do not inherit</th><th>Harness role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://github.com/x-zheng16/JustAsk">JustAsk</a></td>
+            <td>Fixed skills, evolving rules, separate statistics, hierarchical technique vocabulary.</td>
+            <td>Premature UCB over sparse or target-confounded results.</td>
+            <td>Future selection policy after stable cross-campaign evidence.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/davidondrej/jailbreak-autoresearch">Jailbreak Autoresearch</a></td>
+            <td>Baseline, seeded, evolve-best, recombine; fixed body and rubric; persistent experiment ledger.</td>
+            <td>A scalar semantic scorer as sole authority.</td>
+            <td>Candidate generation strategies.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/romovpa/claudini">Claudini</a></td>
+            <td>Isolated runs, one method chain per branch, explicit compute budgets, logs, leaderboard comparison.</td>
+            <td>White-box gradient attack method for hosted black-box targets.</td>
+            <td>Run model, not attack method.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.cerebras.ai/blog/how-to-stop-your-autoresearch-loop-from-cheating">Cerebras anti-drift lessons</a></td>
+            <td>One experiment per call, clean workspaces, strict validation, frequent re-anchoring, A/B from same baseline.</td>
+            <td>Loose objectives and mixed-context overnight exploration.</td>
+            <td>Runtime invariants and isolation.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/shelter951/SciTriage">SciTriage</a></td>
+            <td><code>allow/block/probe</code>, claim discipline, validity before score, cheapest-next-probe selection.</td>
+            <td>Domain-specific seed policies copied without adaptation to target/session nondeterminism.</td>
+            <td>Post-run evidence gate.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="delivery">
+      <h2><span class="section-number">07 / DELIVERY</span>Phased implementation</h2>
+      <p class="lead">
+        Build the evaluator in thin slices. Each phase must close with an executable exit criterion;
+        no phase is considered complete because the prose design exists.
+      </p>
+
+      <article class="phase">
+        <div class="phase-code">2.5A</div>
+        <div>
+          <h3>Conformance foundation</h3>
+          <p>Validator, repaired schemas, false-discovery corpus, deterministic evaluator self-tests.</p>
+        </div>
+        <div class="phase-exit"><strong>EXIT</strong><br>Zero invalid accepts; all known valid controls retained.</div>
+      </article>
+      <article class="phase">
+        <div class="phase-code">2.5B</div>
+        <div>
+          <h3>Hermetic benchmark</h3>
+          <p>Synthetic applications with planted canaries, pinned behavior, paired controls, fresh sessions, fixed budgets.</p>
+        </div>
+        <div class="phase-exit"><strong>EXIT</strong><br>Incumbent baseline is repeatable and replayable.</div>
+      </article>
+      <article class="phase">
+        <div class="phase-code">2.5C</div>
+        <div>
+          <h3>Sealed evaluation</h3>
+          <p>Private evaluator, signed aggregate results, one-query ledger, access denial, holdout rotation procedure.</p>
+        </div>
+        <div class="phase-exit"><strong>EXIT</strong><br>Tamper and repeated-query tests fail closed.</div>
+      </article>
+      <article class="phase">
+        <div class="phase-code">3A</div>
+        <div>
+          <h3>Shadow campaign</h3>
+          <p>Autoresearch proposes technique variants and produces bundles, but cannot promote them.</p>
+        </div>
+        <div class="phase-exit"><strong>EXIT</strong><br>Human and evaluator adjudication agree on a complete campaign.</div>
+      </article>
+      <article class="phase">
+        <div class="phase-code">3B</div>
+        <div>
+          <h3>Human-gated ratchet</h3>
+          <p>Enable manual promotion after conformance, replay, validation, sealed holdout, scrubbing, and operator review.</p>
+        </div>
+        <div class="phase-exit"><strong>EXIT</strong><br>Accepted candidate enters Plane 1 through reviewed evidence.</div>
+      </article>
+
+      <div class="callout">
+        <p>
+          <strong>Live engagements remain outside the optimization loop.</strong>
+          Signed engagements supply sanitized future benchmark cases and human validation. They are
+          not autonomous research environments. Any Zone-2 request terminates the offline campaign
+          as blocked and returns to the existing live human-confirm gate.
+        </p>
+      </div>
+    </section>
+
+    <section id="acceptance">
+      <h2><span class="section-number">08 / ACCEPTANCE</span>Tests before self-improvement</h2>
+      <ul class="acceptance">
+        <li>Every curated fake-success pattern is blocked.</li>
+        <li>A valid baseline and valid additive improvement are retained.</li>
+        <li>Case, evaluator, budget, oracle, and result tampering each block independently.</li>
+        <li>Holdout inspection and repeated queries fail closed.</li>
+        <li>Paired runs use identical target version, seeds, controls, and budgets.</li>
+        <li>Aggregate gains cannot hide a protected-case regression.</li>
+        <li>Equal coverage requires at least 10% call or token efficiency improvement.</li>
+        <li>An LLM judge cannot promote a mechanically invalid candidate.</li>
+        <li>Successful evaluation creates evidence, never an automatic Plane-1 edit.</li>
+        <li>One complete shadow campaign achieves human/evaluator agreement.</li>
+        <li>All emitted evidence passes redaction and contains no credentials or target secrets.</li>
+        <li>The evaluator reproduces the same decision from the same frozen artifacts.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="section-number">09 / DEFERRED</span>Explicit non-goals</h2>
+      <table aria-label="Deferred capabilities">
+        <thead><tr><th>Deferred item</th><th>Reason</th><th>Revisit when</th></tr></thead>
+        <tbody>
+          <tr><td>UCB selection</td><td>No trustworthy cross-campaign statistics yet.</td><td>Enough comparable campaigns exist to estimate technique priors.</td></tr>
+          <tr><td>Multi-agent live target concurrency</td><td>Shared browser and expanded blast radius add risk before proven throughput need.</td><td>A measured serialization bottleneck exists and scope explicitly authorizes concurrency.</td></tr>
+          <tr><td>Broad methodology mutation</td><td>Changing personas, vulns, engine, and techniques destroys causal attribution.</td><td>Technique-only campaigns are stable and evaluator coverage expands by subsystem.</td></tr>
+          <tr><td>Automatic Plane-1 promotion</td><td>Conflicts with manual scrub, cleanup, and review invariants.</td><td>Not planned; human promotion is a durable governance boundary.</td></tr>
+          <tr><td>Autonomous live engagement optimization</td><td>Conflicts with impact and escalation gates; risks target-specific overfit.</td><td>Not part of this architecture.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="references">
+      <h2><span class="section-number">10 / SOURCES</span>Primary references</h2>
+      <ol class="source-list">
+        <li>
+          <span class="ref">[01]</span>
+          <a href="https://github.com/yibie/awesome-autoresearch/blob/main/categories/evaluation-red-teaming.md">Evaluation / Red Teaming survey</a>
+          <span>Map of autoresearch evaluation systems and red-team applications used to identify the relevant comparison set.</span>
+        </li>
+        <li>
+          <span class="ref">[02]</span>
+          <a href="https://github.com/romovpa/claudini">Claudini</a>
+          <span>Isolated method chains, budgeted benchmark runs, persistent agent logs, and leaderboard-based comparison.</span>
+        </li>
+        <li>
+          <span class="ref">[03]</span>
+          <a href="https://github.com/x-zheng16/JustAsk">JustAsk</a>
+          <span>Fixed skill vocabulary with evolving rules and statistics; UCB-guided black-box system-prompt extraction.</span>
+        </li>
+        <li>
+          <span class="ref">[04]</span>
+          <a href="https://github.com/davidondrej/jailbreak-autoresearch">Jailbreak Autoresearch</a>
+          <span>Baseline, seeded, evolve-best, and recombine generation around a fixed body and scoring rubric.</span>
+        </li>
+        <li>
+          <span class="ref">[05]</span>
+          <a href="https://www.cerebras.ai/blog/how-to-stop-your-autoresearch-loop-from-cheating">How to stop your autoresearch loop from cheating</a>
+          <span>Evidence that environment design, isolation, and strict gates matter more than broad agent autonomy.</span>
+        </li>
+        <li>
+          <span class="ref">[06]</span>
+          <a href="https://github.com/shelter951/SciTriage">SciTriage</a>
+          <span>Validity gating, false-discovery defense, claim discipline, and allow/block/probe decisions.</span>
+        </li>
+        <li>
+          <span class="ref">[07]</span>
+          <a href="file:///Users/matheusvsky/Documents/trab/adapta-one-agent/docs/security-wiki/playbooks/harness-architecture-brainstorm.html">Original harness architecture brainstorm</a>
+          <span>The source architecture reviewed by this RFC: composable cards, adaptive loop, variant engine, and autoresearch roadmap.</span>
+        </li>
+      </ol>
+    </section>
+
+    <section>
+      <h2><span class="section-number">11 / FINAL DECISION</span>Authorization boundary</h2>
+      <div class="decision">
+        <div class="decision-header">
+          <strong>APPROVED DIRECTION</strong>
+          <span>Build Phase 2.5 before launching any self-improvement campaign.</span>
+        </div>
+        <div class="decision-body">
+          <div><b>RESEARCH</b>Offline, benign, technique-only, fixed-budget, isolated.</div>
+          <div><b>EVALUATE</b>Mechanical authority, private sealed holdout, signed evidence.</div>
+          <div><b>PROMOTE</b>Scrubbed proposal, operator review, manual Plane-1 change.</div>
+        </div>
+      </div>
+      <p>
+        The architecture should optimize for trustworthy negative results as much as positive ones.
+        A dry campaign that proves coverage without producing a winner is a successful evaluation.
+        The product remains rigor, not findings.
+      </p>
+    </section>
+
+    <footer>
+      <div>AR-EVAL-001 · self-contained HTML · no external runtime dependencies</div>
+      <button class="print-link" type="button" onclick="window.print()">Print / save as PDF</button>
+    </footer>
+  </main>
+</body>
+</html>
