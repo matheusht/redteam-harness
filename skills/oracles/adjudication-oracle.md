@@ -47,3 +47,9 @@ so in the finding.
 
 > Bias the system toward `contaminated` / `needs_review` / `duplicate` unless the evidence is
 > unusually clean. Rigor is the product.
+
+## A negative is conditional, not final
+A `rejected` ("guard holds") verdict is scoped to **the exact conditions tested** — base model,
+account, method competence. Record the **base model** on every finding; re-test negatives on model
+swaps (a prompt-level guard can hold on one model and leak verbatim on another). "Holds" means
+"holds under these conditions," never "is secure."
