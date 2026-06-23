@@ -40,6 +40,37 @@ emits: [attempt, finding]            # pattern only on manual scrubbed promotion
 Observed failure modes; what to promote (abstractly) into the engagement memory/winners.
 ```
 
+## Pattern cards (`type: pattern`) — the routing layer
+A third card type lives under `skills/patterns/`. A pattern card is **guidance the orchestrator routes
+*to*, not an objective it runs**: a recurring code/architecture shape (e.g. a client-supplied selector
+trusted for authz) that recon should recognize and that points at the vuln cards worth testing. They
+guide reasoning; they never force execution.
+
+```yaml
+---
+id: pattern.client-supplied-selector-authz   # pattern.<kebab>
+name: Client-Supplied Selector Trusted For Authorization
+description: > one line — the shape, drives activation
+type: pattern
+owasp: "A01 Broken Access Control (BOLA)"     # may bridge to web/API OWASP, not only OWASP-LLM
+routes_to: ["stub:vulns/broken-object-level-authz"]  # quote stub ids (the colon needs quoting in YAML)
+
+activation:                                   # REQUIRED on pattern cards — the routing teeth
+  strong:  ["signals that should load this card"]
+  weak:    ["worth a cheap look"]
+  negative:["the DEFENSE is present here → record as held, not a finding"]
+---
+```
+
+Pattern cards omit `safe_signal`/`impact_escalation` (they are not objectives) but **inherit the full
+oracle discipline** — every card's "required oracle controls" section is mandatory, and a `negative`
+activation is a held-defense signal, not a miss. See `engine/routing.md` for how activations select cards.
+
+**`routes_to` may include unresolved future card ids.** Prefix any id whose card does not yet exist
+with `stub:` (e.g. `stub:vulns/broken-object-level-authz`). A `stub:` entry is a coverage marker — the
+orchestrator **must not blind-load it** (the file isn't there); it records the gap as a vuln card to
+build. Plain (non-`stub:`) ids must resolve to a real card.
+
 ## Rules
 - **Procedure is family-level**, not a list of working payloads. It describes *how to test a class*,
   not a copy-paste exploit library.

@@ -1,5 +1,8 @@
 # engine/loop.md — the adaptive loop (ladder + winners, no UCB)
 
+> **Before the loop:** recon emits activation signals that select the cards (`engine/routing.md`).
+> The loop below runs the objectives those signals surfaced — not a fixed card list.
+
 ```
 for objective in scope.active_objectives:          # benign, safe_signal-gated
   # PREREQUISITE: establish a foothold and CONFIRM it engaged before attacking

@@ -16,6 +16,22 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 - **Exit criterion:** the loop closes once, with a properly-adjudicated verdict (even "guard holds"
       is a valid, well-evidenced result).
 
+## Phase 1.5 — routing layer + casebooks ✅ (2026-06-23)
+- [x] First-class `skills/patterns/` cards with `activation` (strong/weak/negative) + `routes_to`:
+      `client-supplied-selector-authz`, `legacy-route-differential`, `ui-only-policy-enforcement`,
+      `transitive-sanitizer-reliance`.
+- [x] `casebooks/` — scrubbed engagement memory; `_SCHEMA/` + two cases: `case-2026-06-b2b-agentic-chat`
+      (real, sanitized) + `synthetic-negative-controls` (all held/refuted — the anti-overfit control).
+- [x] `engine/routing.md` — recon emits activation signals before card selection; `recon-signals.md` +
+      `pattern-candidates.md` in the engagement template; `fixtures/routing-activation.fixtures.md`.
+- [x] First-class web/API authz vuln cards the patterns route to: `vulns/broken-object-level-authz` +
+      `vulns/injection` (benign-canary objectives, scope-gated, controls + replay). `activation` block
+      added to `vulns/llm07-system-prompt-leakage`.
+- [x] **Phase 2.5A (baby):** `tools/check-conformance.py` (stdlib-only) + `engine/routing-eval.md`
+      shadow-eval spec — static coherence layer green (67 checks).
+- [ ] Optional: a mechanical activation matcher; the model-in-the-loop shadow-eval scoring harness
+      (`routing-eval.md` layer 2) — needs a runnable orchestrator step from Phase 1's live slice.
+
 ## Phase 2 — breadth (second slice + harvest)
 - [ ] LLM01 prompt-injection card live (indirect, inert canary in an ingested surface).
 - [ ] LLM02 sensitive-info, LLM05 improper-output-handling, LLM06 excessive-agency cards.

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "case",
+  "description": "A sanitized, portable summary of one engagement — harness memory, NOT the raw engagement archive. Abstract + scrubbed: no live ids, tokens, passwords, signed URLs, or client-private artifacts. The seed example for routing and false-positive discipline.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "date", "target_class", "surfaces", "auth_model", "confirmed_findings", "refuted_candidates", "held_defenses", "sanitization"],
+  "properties": {
+    "id": { "type": "string", "description": "casebook id, e.g. case-2026-06-b2b-agentic-chat" },
+    "date": { "type": "string", "description": "YYYY-MM or YYYY-MM-DD" },
+    "target_class": { "type": "string", "description": "abstract class, e.g. 'multi-tenant B2B agentic chat SaaS' — not a marketing name" },
+    "surfaces": { "type": "array", "items": { "type": "string" }, "description": "e.g. chat_ui, chat_api, model_selector, tool_dispatch, render_pipeline" },
+    "auth_model": { "type": "string", "description": "abstract, e.g. 'single-session SSO; per-company tenancy; admin flag'" },
+    "scope_ref": { "type": ["string", "null"], "description": "pointer to the engagement scope (Plane 3), not its contents" },
+    "confirmed_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "pattern", "one_line"],
+        "properties": {
+          "label": { "type": "string", "description": "engagement-local label, e.g. F2 (not a secret)" },
+          "pattern": { "type": "string", "description": "pattern card id this confirms, e.g. pattern.client-supplied-selector-authz" },
+          "owasp": { "type": "string" },
+          "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+          "one_line": { "type": "string", "description": "the boundary that failed, in one sentence, no secrets" }
+        }
+      }
+    },
+    "refuted_candidates": {
+      "type": "array",
+      "description": "things that LOOKED like findings but the oracle refuted — the false-positive discipline corpus",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "looked_like", "refuted_by"],
+        "properties": {
+          "label": { "type": "string" },
+          "looked_like": { "type": "string" },
+          "refuted_by": { "type": "string", "description": "which oracle/control killed it, e.g. 'execution oracle: reflected but inert'" },
+          "pattern": { "type": "string", "description": "pattern card whose counterexample this is" }
+        }
+      }
+    },
+    "held_defenses": {
+      "type": "array",
+      "description": "controls that correctly held — negative examples that prove the team has the right pattern",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["control", "why_held"],
+        "properties": {
+          "control": { "type": "string" },
+          "why_held": { "type": "string" },
+          "contrast_pattern": { "type": "string", "description": "the pattern it is the held counterexample for" }
+        }
+      }
+    },
+    "sanitization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scrubbed", "attestation"],
+      "properties": {
+        "scrubbed": { "const": true },
+        "attestation": { "type": "string", "description": "one line: what was stripped (ids/tokens/passwords/signed-urls/screenshots) and who scrubbed it" }
+      }
+    }
+  }
+}

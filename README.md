@@ -24,19 +24,21 @@ Three zones, enforced structurally (not just documented):
 
 ## What it is / isn't
 
-- It **is** a knowledge base of composable cards (vulns × techniques × oracles) + one adaptive
-  loop that reads them, driven by a single orchestrator with on-demand hunters.
+- It **is** a knowledge base of composable cards (vulns × techniques × oracles, plus **patterns** that
+  route recon to the right cards) + one adaptive loop that reads them, driven by a single orchestrator
+  with on-demand hunters, and **casebooks** of scrubbed prior engagements it learns from.
 - It **isn't** a universal jailbreak generator, a payload arsenal, or a self-rewriting memory.
 
 ## Layout
 
 ```
-skills/         PLANE 1 — methodology (read-only): vulns/ · techniques/ · oracles/
-engine/         PLANE 2 — orchestration: loop · roster · gates
+skills/         PLANE 1 — methodology (read-only): vulns/ · techniques/ · oracles/ · patterns/
+engine/         PLANE 2 — orchestration: loop · routing · roster · gates
 schemas/        the contracts: attempt · finding · pattern · technique-card
-fixtures/       sanitized oracle-calibration ground truth
+fixtures/       sanitized oracle-calibration + routing-activation ground truth
+casebooks/      PLANE 1 — scrubbed prior-engagement memory (routing + false-positive discipline)
 engagements/    PLANE 3 — _TEMPLATE copied OUT into each target's own project repo (append-only)
-docs/           architecture + decisions
+docs/           architecture + decisions + field-notes (cross-engagement methodology log)
 ```
 
 **Plane rule:** Plane 1 is read-only knowledge; Plane 3 is write-only memory. The portable harness

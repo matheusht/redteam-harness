@@ -1,0 +1,34 @@
+id: synthetic-negative-controls
+date: 2026-06
+target_class: SYNTHETIC (invented) — a correctly-built app used to calibrate "held / refuted", not a real engagement
+surfaces:
+  - chat_api
+  - model_selector
+  - render_pipeline
+auth_model: synthetic — per-user ownership resolved from the session; per-company model policy
+scope_ref: null
+
+# Deliberately EMPTY. This case exists to teach the routing layer what a NON-finding looks like,
+# so it does not drift into "every activation is a bug."
+confirmed_findings: []
+
+refuted_candidates:
+  - label: S1
+    looked_like: "a script-shaped payload in model output reflected into the markdown/diagram renderer"
+    refuted_by: "execution oracle: framework sandboxed/escaped it; the inert local canary never fired"
+    pattern: pattern.transitive-sanitizer-reliance
+
+held_defenses:
+  - control: company model allowlist applied unconditionally to every request (all user classes)
+    why_held: "the disallowed model was coerced server-side regardless of seat — the correct shape; a strong activation that is NOT a finding"
+    contrast_pattern: pattern.ui-only-policy-enforcement
+  - control: chat-read resolves owner from the authenticated session, ignoring any client-supplied owner id
+    why_held: "the selector in the body was never trusted; sending another principal's id returned the caller's own scope (or 404), not cross-principal data"
+    contrast_pattern: pattern.client-supplied-selector-authz
+  - control: both route versions funnel through one authorization layer
+    why_held: "no sibling differential — v1 and v2 enforce identically"
+    contrast_pattern: pattern.legacy-route-differential
+
+sanitization:
+  scrubbed: true
+  attestation: "fully synthetic — no client, no engagement, no secrets. Authored as a calibration negative."

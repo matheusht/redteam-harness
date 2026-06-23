@@ -34,7 +34,7 @@ Single agent first. The shared browser serializes live work anyway; parallelism 
 
 ## 3. How skills are loaded (decision: portable + deterministic)
 
-Cards live as plain `SKILL.md` under `skills/{vulns,techniques,oracles}/`. The orchestrator loads
+Cards live as plain `SKILL.md` under `skills/{vulns,techniques,oracles,patterns}/`. The orchestrator loads
 the **exact** card for the current objective by id (Read the file) — deterministic, not fuzzy
 description-matching, which suits a rigor-first harness. Context stays lean because only the one
 card being fired is opened. The files are valid SKILL.md, so a thin `.Codex/skills/` native mirror
@@ -45,11 +45,17 @@ reads markdown; deterministic — the orchestrator, not the model, picks the car
 
 0. **Bootstrap** — copy `engagements/_TEMPLATE/` into the **target's own** project repo as
    `engagements/<id>/` (Plane 3 lives with the target, never in this portable repo).
-1. **Ground & scope** — read prior intel; fill + sign `scope.md`; pick the active OWASP subset (the
-   harness ships all ten as cards; scope selects). *Scope varies per project — be prepared for all.*
+1. **Ground & scope** — read prior intel; fill + sign `scope.md`; pick the active OWASP subset (LLM07
+   ships as a full vuln card; the rest of OWASP-LLM are planned/stub — scope selects from what exists).
+   *Scope varies per project — be prepared for all.*
 2. **Establish the oracle** — load `skills/oracles/`; calibrate against `fixtures/` or source.
-3. **Recon** — authenticate, snapshot surfaces/tools/flows, capture **baseline controls** (what the
-   target refuses with no attack).
+3. **Recon → routing** — authenticate, snapshot surfaces/tools/flows, capture **baseline controls**
+   (what the target refuses with no attack). Then **emit activation signals**: for each observation,
+   name which `skills/patterns/` (and vuln) cards it lights up (`strong/weak/negative`) per
+   `engine/routing.md`. Those signals select the cards for the loop. The orchestrator may use, ignore,
+   or override an activated card, but records one line on why for a **strong** signal on a high-impact
+   path. `negative` signals (a control that looks correctly enforced) are recorded as likely-held +
+   positive-control candidates, not findings.
 4. **Loop** (`engine/loop.md`) — ladder + winners, bounded chunks, oracle every result,
    loop-until-coverage-or-dry. A refusal is an input to the next rung; the terminal verdict is
    "coverage/dry", never "the model finally complied".

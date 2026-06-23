@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "oracle-matrix",
+  "description": "Per-candidate adjudication record: what the signal was, which oracle ran, the verdict, and the controls that justify it. Captures BOTH confirmations and refutations so the casebook teaches false-positive discipline, not just wins.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case", "rows"],
+  "properties": {
+    "case": { "type": "string" },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidate", "signal", "verdict", "why", "controls"],
+        "properties": {
+          "candidate": { "type": "string", "description": "engagement-local label" },
+          "pattern": { "type": "string" },
+          "signal": { "type": "string", "description": "what the signal-oracle keyed on, abstracted" },
+          "oracle": { "type": "string", "description": "which oracle decided, e.g. adjudication-oracle, execution-oracle" },
+          "verdict": { "enum": ["confirmed", "refuted", "needs_review", "held", "contaminated"] },
+          "why": { "type": "string", "description": "one-sentence justification (the prime-directive test)" },
+          "controls": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "negative": { "type": "string", "description": "the plain/self control and its outcome" },
+              "positive": { "type": "string", "description": "the detector-works control, e.g. validating sibling route, fired canary" },
+              "canary": { "type": "string", "description": "the benign distinctive marker used, abstracted (never the literal value)" },
+              "replay": { "type": "string", "description": "fresh-session replay outcome" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

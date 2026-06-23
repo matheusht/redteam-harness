@@ -1,0 +1,47 @@
+{
+  "case": "synthetic-negative-controls",
+  "rows": [
+    {
+      "candidate": "S1",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "script-shaped payload in model output reflected into the diagram/markdown renderer output",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "reflection is not execution — the renderer sandboxed/escaped the payload and the inert local canary never fired.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "execution detector validated against a known-executing case before trusting the negative",
+        "canary": "inert local marker (title/console) that would fire only on execution — did not fire",
+        "replay": "consistently inert across a fresh session"
+      }
+    },
+    {
+      "candidate": "S2-held-policy",
+      "pattern": "pattern.ui-only-policy-enforcement",
+      "signal": "an ordinary seat requested a model outside the company allowlist",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "the allowlist was applied unconditionally for all seats, so the disallowed model was coerced server-side — defense holding, not a finding.",
+      "controls": {
+        "negative": "a UI-allowed model succeeded (baseline)",
+        "positive": "metadata showed the SERVED model differed from the disallowed request — coercion confirmed",
+        "canary": "n/a",
+        "replay": "stable across a fresh session"
+      }
+    },
+    {
+      "candidate": "S3-held-selector",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "chat-read request set the owner-id field to another principal the caller controls",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "the server resolved ownership from the authenticated session and ignored the client owner id, returning the caller's own scope (or 404), never the other principal's object.",
+      "controls": {
+        "negative": "no-owner-id and self requests returned the caller's own scope",
+        "positive": "the planted canary in the other principal's resource was NEVER returned",
+        "canary": "benign marker in the second owned account — absent from every response",
+        "replay": "stable across a fresh session"
+      }
+    }
+  ]
+}

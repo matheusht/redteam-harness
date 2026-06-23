@@ -1,0 +1,52 @@
+case: case-2026-06-b2b-agentic-chat
+
+# The routing brain's seed data: what recon SAW → which pattern card it should activate.
+# Field names are kept as routing teeth; no values, ids, or secrets.
+signals:
+  - observation: "chat-read request carried an owner-id field in the query/body distinct from the session principal"
+    where: "chat_api request"
+    activates: [pattern.client-supplied-selector-authz]
+    strength: strong
+    note: "the selector that decides WHOSE chat is read — re-resolve authz from the principal, not this field"
+
+  - observation: "two versions of the same chat endpoint (v1 / v2) both mounted and answering"
+    where: "chat_api routing"
+    activates: [pattern.legacy-route-differential]
+    strength: strong
+    note: "frontend used the newer version; the older one stayed reachable — check the guard delta"
+
+  - observation: "newer route version called an owner-access validation helper that the older did not"
+    where: "chat_api handlers"
+    activates: [pattern.legacy-route-differential, pattern.client-supplied-selector-authz]
+    strength: strong
+    note: "the validating sibling is the positive control — it proves the guard belongs on both"
+
+  - observation: "UI model picker, but the chosen model id travels in the request body (modelAi)"
+    where: "model_selector / chat_api request"
+    activates: [pattern.ui-only-policy-enforcement]
+    strength: strong
+    note: "send a model outside the company allowlist; hunt the user class where the allowlist isn't loaded"
+
+  - observation: "client sends a mandatory-tools list in the request body"
+    where: "tool_dispatch / chat_api request"
+    activates: [pattern.ui-only-policy-enforcement]
+    strength: strong
+    note: "does client mandate outrank server deactivation? include a tool the admin disabled"
+
+  - observation: "model output rendered through markdown / diagram (mermaid) pipeline"
+    where: "render_pipeline"
+    activates: [pattern.transitive-sanitizer-reliance]
+    strength: weak
+    note: "weak on purpose — most such reflections are inert; require an EXECUTION oracle before any XSS claim"
+
+  - observation: "a server-side model filter applied to every request regardless of user class"
+    where: "model_selector"
+    activates: [pattern.ui-only-policy-enforcement]
+    strength: negative
+    note: "the CORRECT shape — defense holds here; record as the held counterexample, not a finding"
+
+  - observation: "export/owner resolution taken from the authenticated principal, not a request field"
+    where: "chat_api export"
+    activates: [pattern.client-supplied-selector-authz]
+    strength: negative
+    note: "held — the right counterpart to F2; use as the negative example"
