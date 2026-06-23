@@ -40,7 +40,9 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 
 ## Phase 3 — autoresearch (only once a frozen eval slice exists)
 - [ ] **Claudini keep-if-better ratchet**: propose technique variant → run on frozen slice → keep
-      only if it beats the incumbent's confirmed-finding rate.
+      only if it beats the incumbent on **gated `clean_confirmed_coverage`** (distinct benchmark cases
+      passing the full adjudication oracle within a fixed budget — NOT raw confirmed-finding rate, which
+      rewards evaluator-gaming; see `autoresearch-evaluation-rfc.html` §03).
 - [ ] **Anti-cheat gate** (rated more important): immutable evaluator per campaign · isolated
       experiments · hidden/rotating holdouts · replay-before-accept · revert-on-regression · no
       shared memory that turns evaluator quirks into strategy folklore.
