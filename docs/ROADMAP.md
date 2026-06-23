@@ -27,8 +27,14 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 - [x] First-class web/API authz vuln cards the patterns route to: `vulns/broken-object-level-authz` +
       `vulns/injection` (benign-canary objectives, scope-gated, controls + replay). `activation` block
       added to `vulns/llm07-system-prompt-leakage`.
-- [x] **Phase 2.5A (baby):** `tools/check-conformance.py` (stdlib-only) + `engine/routing-eval.md`
-      shadow-eval spec — static coherence layer green (67 checks).
+- [x] `vulns/llm06-excessive-agency` — built to close the coverage gap the shadow eval surfaced
+      (ui-only-policy activations were routing through BOLA for lack of a capability-bypass objective).
+      `ui-only-policy-enforcement` + `client-supplied-selector-authz` now route to it un-stubbed.
+- [x] **Phase 2.5A (baby):** `tools/check-conformance.py` (stdlib-only) + `engine/routing-eval.md` +
+      a first **shadow eval run** (`evals/routing/runs/2026-06-23/`, both cases PASS) — static + first
+      model-in-the-loop layer green (67 checks).
+- [ ] **Next vuln card:** `vulns/llm05-improper-output-handling` (the last remaining `stub:` route,
+      from `transitive-sanitizer-reliance`).
 - [ ] Optional: a mechanical activation matcher; the model-in-the-loop shadow-eval scoring harness
       (`routing-eval.md` layer 2) — needs a runnable orchestrator step from Phase 1's live slice.
 

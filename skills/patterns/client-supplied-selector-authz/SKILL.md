@@ -9,7 +9,7 @@ type: pattern
 owasp: "A01 Broken Access Control (BOLA) / API1:2023"
 also: "LLM06 Excessive Agency when the selector reaches an agent tool"
 atlas: "—"   # web/API authz pattern; no direct ATLAS technique
-routes_to: ["vulns/broken-object-level-authz", "stub:vulns/llm06-excessive-agency"]   # stub: = not yet built, do not blind-load
+routes_to: ["vulns/broken-object-level-authz", "vulns/llm06-excessive-agency"]
 
 activation:
   strong:
