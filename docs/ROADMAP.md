@@ -33,8 +33,8 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 - [x] **Phase 2.5A (baby):** `tools/check-conformance.py` (stdlib-only) + `engine/routing-eval.md` +
       a first **shadow eval run** (`evals/routing/runs/2026-06-23/`, both cases PASS) — static + first
       model-in-the-loop layer green (67 checks).
-- [ ] **Next vuln card:** `vulns/llm05-improper-output-handling` (the last remaining `stub:` route,
-      from `transitive-sanitizer-reliance`).
+- [x] `vulns/llm05-improper-output-handling` — built; `transitive-sanitizer-reliance` un-stubbed.
+      **No `stub:` routes remain** — every pattern card now routes only to cards that exist.
 - [ ] Optional: a mechanical activation matcher; the model-in-the-loop shadow-eval scoring harness
       (`routing-eval.md` layer 2) — needs a runnable orchestrator step from Phase 1's live slice.
 
