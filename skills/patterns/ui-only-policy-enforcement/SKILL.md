@@ -9,7 +9,7 @@ type: pattern
 owasp: "A01 Broken Access Control / A04 Insecure Design"
 also: "LLM06 Excessive Agency (a disabled tool re-enabled by the client); LLM-supply policy bypass"
 atlas: "—"
-routes_to: ["stub:vulns/llm06-excessive-agency", "vulns/broken-object-level-authz"]   # stub: = not yet built, do not blind-load
+routes_to: ["vulns/llm06-excessive-agency", "vulns/broken-object-level-authz"]
 
 activation:
   strong:
