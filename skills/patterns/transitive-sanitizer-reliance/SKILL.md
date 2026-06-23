@@ -10,7 +10,7 @@ type: pattern
 owasp: "A03 Injection / LLM05 Improper Output Handling"
 also: "the execution-oracle discipline that separates reflection from execution"
 atlas: "—"
-routes_to: ["stub:vulns/llm05-improper-output-handling", "vulns/injection"]   # stub: = not yet built, do not blind-load
+routes_to: ["vulns/llm05-improper-output-handling", "vulns/injection"]
 
 activation:
   strong:
