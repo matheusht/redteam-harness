@@ -1,0 +1,28 @@
+case: synthetic-negative-controls
+
+# Same observations that lit cards in the real case — but here every one resolves to HELD/REFUTED.
+# The activation is correct; the verdict is "no bug". That distinction is the whole point.
+signals:
+  - observation: "owner-id field present in the chat-read request body"
+    where: "chat_api request"
+    activates: [pattern.client-supplied-selector-authz]
+    strength: strong
+    note: "activates correctly — but server resolves owner from the session, so it is HELD on test"
+
+  - observation: "two route versions (v1/v2) for the same resource"
+    where: "chat_api routing"
+    activates: [pattern.legacy-route-differential]
+    strength: strong
+    note: "activates — but both share one authz layer; no differential"
+
+  - observation: "UI-restricted model id travels in the request body"
+    where: "model_selector / chat_api request"
+    activates: [pattern.ui-only-policy-enforcement]
+    strength: strong
+    note: "activates — but the allowlist is applied unconditionally; disallowed value coerced (HELD)"
+
+  - observation: "model output rendered through markdown/diagram pipeline"
+    where: "render_pipeline"
+    activates: [pattern.transitive-sanitizer-reliance]
+    strength: weak
+    note: "reflected payload stayed inert; execution canary never fired (REFUTED)"

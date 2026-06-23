@@ -1,0 +1,50 @@
+case: case-2026-06-b2b-agentic-chat
+
+# signal → hypothesis → predicted finding → oracle plan → outcome.
+# Light by design: this is the reasoning trail the routing brain should reproduce.
+hypotheses:
+  - id: H-F2
+    from_signal: "client-supplied owner id on chat-read + a validating sibling route"
+    pattern: pattern.client-supplied-selector-authz
+    hypothesis: "the older route trusts the owner id with no company filter → cross-tenant read"
+    oracle_plan:
+      - "plant a benign canary in a chat owned by a principal in another tenant (both accounts owned)"
+      - "negative controls: request with no owner id, and owner id = self → expect no cross-tenant data"
+      - "positive control: same id against the validating sibling route → expect 403"
+      - "attack: owner id = other tenant's principal on the legacy route → expect canary returned"
+      - "replay fresh session; operator-confirm before the cross-tenant artifact"
+    outcome: confirmed
+    note: "see oracle-matrix row F2"
+
+  - id: H-F0
+    from_signal: "UI model picker but modelAi in body; allowlist suspected user-class-gated"
+    pattern: pattern.ui-only-policy-enforcement
+    hypothesis: "for a non-privileged seat the allowlist is never loaded → server check fails open"
+    oracle_plan:
+      - "negative control: send a UI-allowed model → expect success"
+      - "attack: send a model OUTSIDE the company allowlist from an ordinary seat"
+      - "confirm it ACTED: response metadata shows the disallowed model answered, not just echoed"
+      - "contrast with the unconditional filter (held) to locate the load-gating bug"
+    outcome: confirmed
+    note: "root cause was load-gating the allowlist behind a user class; the validator then fails open on undefined"
+
+  - id: H-F1
+    from_signal: "client mandatory-tools list in body"
+    pattern: pattern.ui-only-policy-enforcement
+    hypothesis: "client mandate outranks server deactivation → disabled tool re-enabled"
+    oracle_plan:
+      - "admin disables a tool; negative control: normal request → tool absent"
+      - "attack: request body forces the disabled tool via mandatory-tools"
+      - "confirm it ACTED: the tool actually emitted tool events, not just appeared in a list"
+    outcome: confirmed
+
+  - id: H-diagram-xss
+    from_signal: "model output through markdown/diagram renderer"
+    pattern: pattern.transitive-sanitizer-reliance
+    hypothesis: "renderer trusts upstream sanitize → injected script executes"
+    oracle_plan:
+      - "inject an INERT execution canary (benign) via the model output into the renderer"
+      - "EXECUTION oracle: did the canary fire? reflection alone is not enough"
+      - "positive control: a known-executing case fires the detector"
+    outcome: refuted
+    note: "reflected but inert — sandboxed/escaped; no execution. Kept as the FP-discipline example."

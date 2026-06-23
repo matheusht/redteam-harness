@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Implementation Notes — Pattern + Casebook Routing Slice</title>
+  <style>
+    :root {
+      --paper:#f6f1e7; --ink:#211f1a; --muted:#6e685d; --line:#cfc5b3; --line-strong:#918774;
+      --red:#9d2f26; --green:#2d624b; --amber:#8a5a14; --white:#fffdf8; --code:#2b2924; --code-ink:#f4ede0;
+      --mono:"SFMono-Regular","Cascadia Code","Liberation Mono","DejaVu Sans Mono",monospace;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.62; }
+    main { width:min(70rem, calc(100% - 40px)); margin:0 auto; padding:52px 0 90px; }
+    h1 { font-size:clamp(30px,5vw,52px); letter-spacing:-0.04em; margin:0 0 6px; }
+    h2 { margin:54px 0 0; padding-top:14px; border-top:2px solid var(--ink); font-size:23px; letter-spacing:-0.03em; }
+    h3 { margin:26px 0 6px; font-size:15px; }
+    .dek { color:var(--muted); max-width:70ch; font-size:16px; }
+    .meta { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line-strong); border:1px solid var(--line-strong); margin:26px 0 8px; }
+    .meta div { background:var(--paper); padding:10px 12px; }
+    .meta dt { color:var(--muted); font-size:10px; margin:0 0 3px; }
+    .meta dd { margin:0; font-size:12px; font-weight:700; }
+    p, li { max-width:78ch; }
+    code { background:var(--white); border:1px solid var(--line); padding:0 4px; }
+    pre { background:var(--code); color:var(--code-ink); padding:14px 16px; overflow-x:auto; font-size:12px; }
+    table { width:100%; border-collapse:collapse; margin:18px 0 26px; font-size:12.5px; background:var(--white); }
+    th, td { border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top; }
+    th { background:var(--code); color:var(--code-ink); }
+    .tag { font-size:10px; font-weight:700; padding:1px 6px; border-radius:2px; }
+    .t-dec { background:#dce8df; color:var(--green); }
+    .t-dev { background:#eee1c5; color:var(--amber); }
+    .t-trd { background:#e3dcc8; color:var(--ink); }
+    .t-q   { background:#ead4cf; color:var(--red); }
+    .open { border-left:4px solid var(--red); background:#f3e3df; padding:12px 16px; margin:14px 0; }
+    .open b { color:#6f1d18; }
+    .done { color:var(--green); font-weight:700; }
+    footer { margin-top:60px; padding-top:18px; border-top:2px solid var(--ink); color:var(--muted); font-size:11px; }
+    ul { padding-left:20px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Implementation Notes</h1>
+    <p class="dek">Pattern-card + casebook routing slice for the LLM red-team harness. Running log of
+      how the implementation interprets, extends, or departs from the agreed plan. Newest decisions
+      kept inline with the change they affect.</p>
+
+    <dl class="meta">
+      <div><dt>Slice</dt><dd>Patterns + Casebook + Routing</dd></div>
+      <div><dt>Date</dt><dd>2026-06-23</dd></div>
+      <div><dt>Plan changes</dt><dd>1–6 implemented · 7 deferred</dd></div>
+      <div><dt>Type</dt><dd>docs / schema / cards (no validator)</dd></div>
+    </dl>
+
+    <h2>What was built</h2>
+    <table>
+      <thead><tr><th>Change</th><th>Files</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1 · Pattern cards</td><td><code>skills/patterns/{client-supplied-selector-authz, legacy-route-differential, ui-only-policy-enforcement, transitive-sanitizer-reliance}/SKILL.md</code></td><td class="done">done</td></tr>
+        <tr><td>2 · Casebook schema</td><td><code>casebooks/_SCHEMA/{case,recon-signals,oracle-matrix}.schema.json</code> + <code>README.md</code></td><td class="done">done</td></tr>
+        <tr><td>3 · Seed casebook</td><td><code>casebooks/case-2026-06-b2b-agentic-chat/{case.yml, recon-signals.yml, hypotheses.yml, oracle-matrix.json, lessons.md, promotion-notes.md}</code></td><td class="done">done</td></tr>
+        <tr><td>4 · Engagement template</td><td><code>engagements/_TEMPLATE/pattern-candidates.md</code></td><td class="done">done</td></tr>
+        <tr><td>5 · Routing layer</td><td><code>engine/routing.md</code> (new) + recon-step edits in <code>AGENTS.md</code>, <code>CLAUDE.md</code>, pointer in <code>engine/loop.md</code></td><td class="done">done</td></tr>
+        <tr><td>6 · Evaluator fixtures</td><td><code>fixtures/routing-activation.fixtures.md</code></td><td class="done">done</td></tr>
+        <tr><td>+ Contract update</td><td><code>schemas/technique.schema.md</code> (documents <code>type: pattern</code>)</td><td class="done">done</td></tr>
+        <tr><td>7 · Autoresearch eval</td><td>RFC Phase 2.5 — <b>deferred</b>, per plan</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Design decisions <span class="tag t-dec">where the spec was ambiguous</span></h2>
+
+    <h3>Pattern cards are a first-class <code>type: pattern</code>, not vuln cards</h3>
+    <p>The plan said "use the existing SKILL.md card format." I made pattern cards a distinct card
+      <em>type</em> with an <code>activation</code> front-matter block (<code>strong/weak/negative</code>)
+      and a <code>routes_to</code> field, and documented the type in <code>schemas/technique.schema.md</code>.
+      Rationale: a pattern is guidance the orchestrator routes <em>to</em>, not an objective it runs, so
+      it deliberately omits <code>safe_signal</code>/<code>impact_escalation</code> — but the doc states
+      it still inherits the full oracle discipline so the omission can't be read as a loophole.</p>
+
+    <h3>Casebooks live at repo root <code>casebooks/</code></h3>
+    <p>Matches the plan's stated default. Kept the three structured files under JSON Schema and left
+      <code>hypotheses.yml / lessons.md / promotion-notes.md</code> as light prose/YAML, documented in
+      <code>casebooks/_SCHEMA/README.md</code>. v1 goal is repeatable sanitized learning, not exhaustive
+      schema coverage.</p>
+
+    <h3>Routing got its own doc, not only inline edits</h3>
+    <p>Plan change 5 said "modify AGENTS.md / loop.md lightly." I did the light edits <em>and</em> added
+      <code>engine/routing.md</code>. Reason: the routing step ("recon emits activation signals before
+      card selection") is the conceptual heart of "the LLM chooses" — burying it as a clause in two
+      runbooks would under-weight it. The runbook edits now point at the doc. Edits to AGENTS.md and
+      CLAUDE.md are identical (they're twins) to avoid desync.</p>
+
+    <h3>Field names kept as routing teeth</h3>
+    <p>The casebook retains API field names (<code>ownerId</code>-style selector, <code>modelAi</code>,
+      <code>mandatoryTools</code>) and the v1/v2 route shape, because those are the activation signal —
+      stripping them would gut the routing value. Everything that is actually a secret (ids, tokens,
+      canary string, passwords, signed URLs, screenshots) is stripped. The sanitization attestation in
+      <code>case.yml</code> records exactly what was removed.</p>
+
+    <h2>Deviations <span class="tag t-dev">intentional departures</span></h2>
+    <ul>
+      <li><b>Added a card-contract section</b> to <code>schemas/technique.schema.md</code> documenting
+        <code>type: pattern</code> + <code>activation</code>. Not in the plan, but the new type is
+        incoherent undocumented. Kept to one block.</li>
+      <li><b>Edited <code>CLAUDE.md</code> too</b>, not just <code>AGENTS.md</code>. The plan named
+        AGENTS.md; CLAUDE.md is its twin and would have drifted. Both now carry the same recon→routing step.</li>
+      <li><b>Pointer line added to <code>engine/loop.md</code></b> (a two-line blockquote) so the loop
+        explicitly runs the objectives routing surfaced, rather than a fixed card list. Minor, additive.</li>
+      <li><b>ROADMAP not yet edited.</b> Left untouched in this pass to keep the diff scoped to the plan;
+        flagged as an open question below.</li>
+    </ul>
+
+    <h2>Tradeoffs <span class="tag t-trd">alternatives considered</span></h2>
+    <table>
+      <thead><tr><th>Choice</th><th>Picked</th><th>Rejected alternative</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Pattern OWASP mapping</td><td>Bridge to web/API OWASP (A01/A03) + note the LLM tie</td><td>Force everything into OWASP-LLM</td><td>F2/F0/F1 are authz/injection at heart; pretending they're pure LLM bugs would mis-teach routing.</td></tr>
+        <tr><td>routes_to targets</td><td>Point at vuln cards that are still <em>stubs</em></td><td>Only reference existing cards</td><td>The gap is information — it marks the next vuln-card slice to build instead of hiding the coverage hole.</td></tr>
+        <tr><td>Casebook fidelity</td><td>Abstract shapes + oracle reasoning</td><td>Near-verbatim engagement import</td><td>The RFC's Plane-1/Plane-3 rule: the portable harness never ingests secrets. Casebook = scrubbed memory.</td></tr>
+        <tr><td>FP discipline</td><td>Refuted diagram-XSS kept as a first-class row</td><td>Record only confirmed findings</td><td>The harness must remember what a <em>non</em>-finding looks like; the inert-reflection case is the load-bearing negative.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Review feedback — resolved <span class="tag t-dec">rev 2 · 2026-06-23</span></h2>
+    <ul>
+      <li><b>Inverted oracle wording (correctness)</b> in <code>ui-only-policy-enforcement</code> fixed:
+        coercion/rejection is the defense HOLDING; the bypass is the disallowed value <em>accepted and the
+        capability executing</em>. Reworded the "required oracle controls" bullet.</li>
+      <li><b>Stale runbooks fixed</b>: <code>AGENTS.md</code>/<code>CLAUDE.md</code> §3 now list
+        <code>skills/{vulns,techniques,oracles,patterns}/</code>; the "ships all ten OWASP cards" claim
+        corrected to "LLM07 full card; rest planned/stub."</li>
+      <li><b>README layout updated</b>: <code>patterns/</code>, <code>casebooks/</code>, and
+        <code>engine/routing.md</code> now shown.</li>
+      <li><b>Casebook anonymized</b> (Q3): renamed <code>adapta-b2b-2026-06</code> →
+        <code>case-2026-06-b2b-agentic-chat</code> across all files. Took the stricter habit.</li>
+      <li><b>Stub routes made non-loadable</b>: <code>routes_to</code> ids that have no card are now
+        prefixed <code>stub:</code>; <code>technique.schema.md</code> states a <code>stub:</code> entry
+        must not be blind-loaded.</li>
+      <li><b>XSS probe egress</b>: default execution canary is now LOCAL (title/console/DOM); an external
+        callback is off-by-default and needs explicit scope / Zone-2 confirmation.</li>
+      <li><b>ROADMAP (Q2)</b>: added "Phase 1.5 — routing layer + casebooks."</li>
+    </ul>
+
+    <h2>Vuln cards + conformance slice <span class="tag t-dec">rev 3 · 2026-06-23</span></h2>
+    <p>Built the 6-step next slice. Conformance checker green: <b>67 checks, 0 failing</b>; all card
+      front matter parses (Ruby YAML).</p>
+    <ul>
+      <li><b>Two vuln cards</b> the patterns route to: <code>vulns/broken-object-level-authz</code> (BOLA,
+        built first per your rec) and <code>vulns/injection</code>. Benign-canary objectives, mandatory
+        <code>safe_signal</code>, scope/impact gates, negative+differential+positive controls, replay,
+        boundary-escalation ladder. No payload arsenal — procedures are family-level.</li>
+      <li><b>Un-stubbed the resolved routes</b>: <code>vulns/broken-object-level-authz</code> and
+        <code>vulns/injection</code> dropped their <code>stub:</code> prefix now that the cards exist;
+        <code>llm06</code>/<code>llm05</code> stay <code>stub:</code>. Bidirectional links (patterns ↔ vuln
+        cards via <code>patterns:</code>).</li>
+      <li><b>Activation on a vuln card</b>: <code>llm07-system-prompt-leakage</code> now has an
+        <code>activation</code> block, so routing chooses both the shape (pattern) and the objective (vuln).</li>
+      <li><b>Recon template</b>: <code>engagements/_TEMPLATE/recon-signals.md</code> (chose a dedicated file
+        over appending to <code>progress.md</code>, per your preference — clean casebook extraction later).</li>
+      <li><b>Second casebook</b>: <code>synthetic-negative-controls</code> — fully invented, all held/refuted
+        (held policy · ignored selector · inert reflection). The anti-overfit control so routing doesn't
+        learn "everything is a bug." <code>confirmed_findings: []</code> on purpose.</li>
+      <li><b>Conformance checker</b>: <code>tools/check-conformance.py</code>, <b>stdlib-only</b> (no YAML
+        dep — line-based front-matter checks) so it runs in any CI. Checks: front matter, activation tiers,
+        <code>safe_signal</code>, route resolution + stub-quoting, casebook pattern-ref resolution, secret
+        scan. Decision: deliberately <em>structural</em>, not semantic.</li>
+      <li><b>Shadow-eval foundation</b>: <code>engine/routing-eval.md</code> — the four scored questions
+        (activation recall · held discipline · FP refusal · stub safety), with the synthetic case as the
+        anti-overfit control. Layer 1 (static coherence) is the checker and is green; layer 2
+        (model-in-the-loop scoring) is specced, not built.</li>
+    </ul>
+
+    <h2>Open questions <span class="tag t-q">remaining</span></h2>
+    <div class="open"><b>Q1 — RESOLVED.</b> BOLA + injection vuln cards built. Remaining stubs
+      (<code>llm06-excessive-agency</code>, <code>llm05-improper-output-handling</code>) are the next
+      OWASP-LLM vuln-card candidates when you want them.</div>
+    <div class="open"><b>Q4 — Activation matching.</b> Still prose-judged (orchestrator reads the
+      <code>activation</code> block). The conformance checker validates that activation blocks <em>exist
+      and are well-formed</em>, but does not mechanically <em>match</em> observations to cards. That
+      matcher + the model-in-the-loop shadow-eval (routing-eval.md layer 2) are the next eval build.</div>
+    <div class="open"><b>Honest scope note.</b> <code>routing-eval.md</code> layer 2 is a spec, not a run —
+      there is no runnable orchestrator step in this repo yet, so no live shadow eval has executed. The
+      checker (layer 1) is real and green. I did not claim otherwise anywhere.</div>
+
+    <h2>Verification done</h2>
+    <ul>
+      <li>All new files written; structure mirrors existing card/schema/template conventions (front-matter
+        shape, <code>$schema</code> draft 2020-12, prose card sections).</li>
+      <li>Seed casebook re-read for secrets: no live ids, tokens, canary value, passwords, signed URLs,
+        or screenshots — only field names, route shape, abstract outcomes.</li>
+      <li>Each pattern card has: purpose, strong/weak/negative activation, suggested probes, required
+        oracle controls, counterexamples, do-not-overclaim.</li>
+      <li>Hard gates untouched: scope, safe_signal, Zone-2 confirm, redaction, oracle-before-confirmed
+        remain as in <code>AGENTS.md §1</code>; routing changes <em>what is considered</em>, not the gates.</li>
+    </ul>
+    <p style="color:var(--muted)">Still worth a human eye: JSON Schema files don't yet have a validator
+      run against them (no validator exists in the repo — Phase 2.5). The seed casebook is the only data
+      to validate, and it was hand-checked against the schemas.</p>
+
+    <footer>implementation-notes.html · running log · self-contained, no runtime deps</footer>
+  </main>
+</body>
+</html>

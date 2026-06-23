@@ -1,0 +1,59 @@
+id: case-2026-06-b2b-agentic-chat
+date: 2026-06
+target_class: multi-tenant B2B agentic chat SaaS (per-company tenancy, model selector, server-side tools)
+surfaces:
+  - chat_ui
+  - chat_api          # versioned REST for chat read/update
+  - model_selector    # company-scoped model allowlist
+  - tool_dispatch     # server-side agent tools, admin-toggleable
+  - render_pipeline   # markdown / diagram rendering of model output
+auth_model: single-session SSO; per-company tenancy; per-user ownership; company admin flag
+scope_ref: "Plane 3 engagement scope (target repo) — not reproduced here"
+
+confirmed_findings:
+  - label: F2
+    pattern: pattern.client-supplied-selector-authz
+    owasp: "A01 Broken Access Control (BOLA) / API1:2023"
+    severity: critical
+    one_line: >
+      a chat-read endpoint trusted a client-supplied owner id to scope the read, with no company
+      filter, so a caller in one tenant read another tenant's decrypted chat; the newer route version
+      validated the same id, the older one did not.
+  - label: F0
+    pattern: pattern.ui-only-policy-enforcement
+    owasp: "A01 Broken Access Control / A04 Insecure Design"
+    severity: high
+    one_line: >
+      the company model allowlist was only LOADED for one user class, so for an ordinary seat the
+      allowlist was absent and the server-side check failed open, accepting a model the UI never offered.
+  - label: F1
+    pattern: pattern.ui-only-policy-enforcement
+    owasp: "LLM06 Excessive Agency / A01"
+    severity: high
+    one_line: >
+      a client-supplied "mandatory tools" list outranked the server's deactivated-tools policy, so a
+      tool an admin had disabled could be re-enabled from the request body and actually dispatched.
+
+refuted_candidates:
+  - label: C-diagram-xss
+    looked_like: "model output containing a script-ish payload reflected into a diagram/markdown renderer"
+    refuted_by: "execution oracle: payload reflected but rendered inert (sandboxed/escaped); no execution signal fired"
+    pattern: pattern.transitive-sanitizer-reliance
+
+held_defenses:
+  - control: server-side model FILTER applied unconditionally to every request
+    why_held: "loaded for all users, not gated behind a user class — coerced the disallowed value; this is the CORRECT shape, and its presence next to F0 is the tell that F0's allowlist load was the bug"
+    contrast_pattern: pattern.ui-only-policy-enforcement
+  - control: image-model selection validated server-side
+    why_held: "re-resolved against policy server-side rather than trusting the client value"
+    contrast_pattern: pattern.ui-only-policy-enforcement
+  - control: chat export path owner-scoped
+    why_held: "export resolved ownership from the authenticated principal, not a client-supplied id — the correct counterpart to F2"
+    contrast_pattern: pattern.client-supplied-selector-authz
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-06: stripped all live ids (chat/user/company), bearer tokens, the benign
+    canary string, passwords, signed URLs, and screenshots. Only API field names, route-version shape,
+    and abstract outcomes retained. Field names (ownerId/modelAi/mandatoryTools) kept as routing teeth.

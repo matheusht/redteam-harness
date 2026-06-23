@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "recon-signals",
+  "description": "The routing brain's training data: observations seen during recon mapped to the pattern cards they should activate. This is what makes 'the LLM chooses' a recorded skill instead of vibes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case", "signals"],
+  "properties": {
+    "case": { "type": "string", "description": "owning casebook id" },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["observation", "where", "activates", "strength"],
+        "properties": {
+          "observation": { "type": "string", "description": "the concrete thing recon saw, abstracted — no secrets" },
+          "where": { "type": "string", "description": "surface it was seen on, e.g. chat_api request body" },
+          "activates": { "type": "array", "items": { "type": "string" }, "description": "pattern card ids this lights up" },
+          "strength": { "enum": ["strong", "weak", "negative"] },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

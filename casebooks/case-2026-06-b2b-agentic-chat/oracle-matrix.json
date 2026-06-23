@@ -1,0 +1,61 @@
+{
+  "case": "case-2026-06-b2b-agentic-chat",
+  "rows": [
+    {
+      "candidate": "F2",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "legacy chat-read route returned a chat whose content carried the victim tenant's planted canary when the owner-id field pointed at a principal in another tenant",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "a caller in tenant A read tenant B's decrypted chat by setting a client-supplied owner id the route never authorized.",
+      "controls": {
+        "negative": "no-owner-id request and owner-id=self both returned 404 / no cross-tenant data",
+        "positive": "same owner id against the validating sibling route returned 403 — proves the guard exists and the legacy route lacks it",
+        "canary": "benign distinctive marker planted in the victim chat (literal value scrubbed)",
+        "replay": "reproduced in a fresh session; cross-tenant artifact operator-confirmed"
+      }
+    },
+    {
+      "candidate": "F0",
+      "pattern": "pattern.ui-only-policy-enforcement",
+      "signal": "an ordinary seat got an answer from a model outside the company allowlist, with response metadata showing that model actually answered",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the company allowlist was only loaded for a privileged user class, so for an ordinary seat the server-side check ran against an absent allowlist and failed open.",
+      "controls": {
+        "negative": "a UI-allowed model succeeded (baseline)",
+        "positive": "the unconditional model filter (held defense) coerced its target value — confirms server-side coercion is possible here, isolating the allowlist load-gating as the bug",
+        "canary": "n/a (capability-execution finding, not a token leak)",
+        "replay": "reproduced fresh session; asserted served model != requested-allowed model"
+      }
+    },
+    {
+      "candidate": "F1",
+      "pattern": "pattern.ui-only-policy-enforcement",
+      "signal": "a tool an admin had deactivated emitted tool events after being forced via the client mandatory-tools list",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the client-supplied mandatory-tools list outranked the server's deactivated-tools policy, dispatching a disabled capability.",
+      "controls": {
+        "negative": "normal request (no mandatory-tools) → the deactivated tool was absent",
+        "positive": "a sibling family (web search) was correctly removed at toolset assembly — the held counterpart showing the right place to enforce",
+        "canary": "n/a (tool actually fired its events, not merely listed)",
+        "replay": "reproduced fresh session"
+      }
+    },
+    {
+      "candidate": "C-diagram-xss",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "a script-shaped payload in model output was reflected into the diagram/markdown renderer's output",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "reflection is not execution — the renderer sandboxed/escaped the payload and no execution canary fired, so there is no XSS.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "execution detector validated against a known-executing case before trusting the negative",
+        "canary": "inert benign execution marker (would have fired if it ran) — did not fire",
+        "replay": "re-checked fresh session; consistently inert"
+      }
+    }
+  ]
+}
