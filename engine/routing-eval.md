@@ -45,6 +45,10 @@ verdicts; secret-free per `tools/check-conformance.py`. Live engagements feed *n
 into this eval — they are never themselves the eval environment (RFC §07).
 
 ## Status
-Layer 1 implemented and green (`tools/check-conformance.py`). Layer 2 (model-in-the-loop scoring
-harness) is the next build — it needs a runnable orchestrator step, which Phase 1's first live slice
-produces. Until then this doc is the spec the scoring harness implements.
+Layer 1 implemented and green (`tools/check-conformance.py`). Layer 2 (model-in-the-loop) had its
+**first run on 2026-06-23** — blind orchestrator subagents over both casebooks, operator-scored; both
+PASSED all four dimensions and the run surfaced a real coverage gap (see
+`evals/routing/runs/2026-06-23/` — instructions + verbatim outputs + score). Still open: a
+*mechanical* scorer (set-compare activations, assert
+zero confirmations / zero stub loads) and variance/replay across runs. The harness lives in
+`evals/routing/`.

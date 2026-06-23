@@ -38,11 +38,33 @@ schemas/        the contracts: attempt · finding · pattern · technique-card
 fixtures/       sanitized oracle-calibration + routing-activation ground truth
 casebooks/      PLANE 1 — scrubbed prior-engagement memory (routing + false-positive discipline)
 engagements/    PLANE 3 — _TEMPLATE copied OUT into each target's own project repo (append-only)
+tools/          conformance checker — the first mechanical gate
 docs/           architecture + decisions + field-notes (cross-engagement methodology log)
 ```
 
 **Plane rule:** Plane 1 is read-only knowledge; Plane 3 is write-only memory. The portable harness
 (Plane 1+2) travels; each engagement's Plane 3 wiki lives with its target.
+
+## Conformance (run before promoting any card / casebook change)
+
+```
+python3 tools/check-conformance.py     # stdlib only; exit 0 = clean
+```
+
+Structural gate (Phase 2.5A): front matter, pattern `activation` tiers, vuln `safe_signal`,
+`routes_to` resolution + `stub:` quoting, casebook pattern-refs, and a casebook secret scan. **A green
+run is required before a pattern/vuln/casebook change is promoted** (also enforced in CI —
+`.github/workflows/conformance.yml`). It is structural, not a full schema validator; that's Phase 2.5.
+
+## Naming & anonymization
+
+- **Casebooks are strictly anonymized** — no client/marketing name beyond an abstract `target_class`,
+  no live ids/tokens/URLs. Enforced by the schema rule + the conformance secret scan.
+- **Plane-1 methodology files** (field-notes, fixtures, vuln-card lessons) MAY keep an operator-internal
+  engagement label as *provenance* (it makes a lesson credible), but **never a secret** — the redaction
+  rule still applies. This repo is private / operator-internal.
+- **Before any external sharing**, run a pre-publish pass that replaces engagement labels with abstract
+  handles. Until then, labels stay internal.
 
 ## Status
 

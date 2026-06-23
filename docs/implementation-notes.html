@@ -51,7 +51,7 @@
       <div><dt>Slice</dt><dd>Patterns + Casebook + Routing</dd></div>
       <div><dt>Date</dt><dd>2026-06-23</dd></div>
       <div><dt>Plan changes</dt><dd>1–6 implemented · 7 deferred</dd></div>
-      <div><dt>Type</dt><dd>docs / schema / cards (no validator)</dd></div>
+      <div><dt>Type</dt><dd>docs / schema / cards + conformance checker</dd></div>
     </dl>
 
     <h2>What was built</h2>
@@ -180,9 +180,11 @@
       <code>activation</code> block). The conformance checker validates that activation blocks <em>exist
       and are well-formed</em>, but does not mechanically <em>match</em> observations to cards. That
       matcher + the model-in-the-loop shadow-eval (routing-eval.md layer 2) are the next eval build.</div>
-    <div class="open"><b>Honest scope note.</b> <code>routing-eval.md</code> layer 2 is a spec, not a run —
-      there is no runnable orchestrator step in this repo yet, so no live shadow eval has executed. The
-      checker (layer 1) is real and green. I did not claim otherwise anywhere.</div>
+    <div class="open"><b>Honest scope note (updated rev 3.1).</b> Layer 2 had <em>one</em> blind
+      model-in-the-loop dry run over frozen observations (<code>evals/routing/runs/2026-06-23/</code>);
+      it was operator-scored and passed. It is <em>not</em> yet mechanically scored, replayed, or
+      statistically validated, and <em>no live target was involved</em>. Layer 1 (the conformance
+      checker) is real and green.</div>
 
     <h2>Verification done</h2>
     <ul>
@@ -195,9 +197,11 @@
       <li>Hard gates untouched: scope, safe_signal, Zone-2 confirm, redaction, oracle-before-confirmed
         remain as in <code>AGENTS.md §1</code>; routing changes <em>what is considered</em>, not the gates.</li>
     </ul>
-    <p style="color:var(--muted)">Still worth a human eye: JSON Schema files don't yet have a validator
-      run against them (no validator exists in the repo — Phase 2.5). The seed casebook is the only data
-      to validate, and it was hand-checked against the schemas.</p>
+    <p style="color:var(--muted)">Update (rev 3): <code>tools/check-conformance.py</code> now provides a
+      stdlib-only structural gate (67 checks green) — front matter, activation tiers, <code>safe_signal</code>,
+      route resolution + stub-quoting, casebook pattern-refs, and a casebook secret scan. It is structural,
+      not a full JSON-Schema validator; deeper schema validation stays Phase 2.5. Run it with
+      <code>python3 tools/check-conformance.py</code>.</p>
 
     <footer>implementation-notes.html · running log · self-contained, no runtime deps</footer>
   </main>
