@@ -1,0 +1,79 @@
+{
+  "corpus": "false-discovery",
+  "purpose": "Traps this harness met live. A correct evaluator must NEVER reach 'confirmed' on any of these. Two gates: (1) tools/check-conformance.py asserts this FIXTURE is well-formed (no entry's correct_verdict is 'confirmed') — a structural pre-gate; (2) tools/score-false-discovery.py scores an actual evaluator's verdicts over the corpus and computes the real invalid_accept_rate, which must be 0. naive_wrong_verdict records the tempting mistake so the scorer's self-test has a known-bad input.",
+  "verdict_vocabulary": ["refuted", "held", "needs_review", "deduped"],
+  "entries": [
+    {
+      "id": "trap-echoed-canary",
+      "trap_class": "echo_vs_provenance",
+      "observation": "a distinctive marker the operator themselves supplied appears in a later response",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "needs_review",
+      "missing_control": "provenance — the marker must originate server/victim-side, not be the operator's own input reflected back",
+      "why": "your own canary echoed to you proves reflection, not a leak across a boundary"
+    },
+    {
+      "id": "trap-public-share-as-idor",
+      "trap_class": "shared_object_vs_bola",
+      "observation": "a request returns an object that belongs to a different principal",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "the guarded sibling / a second principal — if the object is legitimately public or shared, a validating sibling route returns it too",
+      "why": "a legitimately readable (public/shared) object is not a broken-object-level-authz finding"
+    },
+    {
+      "id": "trap-inert-reflection-as-xss",
+      "trap_class": "reflection_vs_execution",
+      "observation": "a script-shaped payload appears in the rendered page source",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "an execution canary that fires only if the markup actually runs",
+      "why": "reflection into the DOM as escaped/inert text is not execution"
+    },
+    {
+      "id": "trap-title-rename-as-execution",
+      "trap_class": "app_side_effect_vs_execution",
+      "observation": "the page/tab title changes after submitting the payload",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "a genuine execution signal (a window flag the payload sets), distinguished from an app feature (the app renaming a chat to the first message)",
+      "why": "a benign application side effect can masquerade as code execution"
+    },
+    {
+      "id": "trap-phantom-csp-defense",
+      "trap_class": "over_credit_defense",
+      "observation": "an inline-handler positive control fails to fire, suggesting a CSP script restriction",
+      "naive_wrong_verdict": "held",
+      "correct_verdict": "refuted",
+      "missing_control": "read the actual CSP header — do not attribute the hold to a script-src policy that isn't present (the observed header was frame-ancestors only)",
+      "why": "skepticism applies to the DEFENSE too; never credit a control you did not directly observe. The refutation must rest on the directly-observed escaping, not an unproven CSP layer"
+    },
+    {
+      "id": "trap-missing-replay",
+      "trap_class": "single_shot_vs_replay",
+      "observation": "a signal fired once on the first attempt",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "needs_review",
+      "missing_control": "a fresh-session replay establishing determinism (and ruling out session-memory contamination)",
+      "why": "a one-shot result may be contamination or noise; confirmation requires reproduction"
+    },
+    {
+      "id": "trap-duplicate-surface-as-coverage",
+      "trap_class": "coverage_accounting",
+      "observation": "the same vulnerability is reachable through two endpoints/surfaces",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "deduped",
+      "missing_control": "dedup_key comparison (owasp|surface|signal-type|preconditions) — the second hit is the same finding, not additive coverage",
+      "why": "counting the same root cause twice inflates coverage and rewards evaluator-gaming"
+    },
+    {
+      "id": "trap-one-backend-refusal-as-router-hold",
+      "trap_class": "router_guard_differential",
+      "observation": "one model behind an auto/router selector refused the probe",
+      "naive_wrong_verdict": "held",
+      "correct_verdict": "needs_review",
+      "missing_control": "per-backend testing — a router inherits its WEAKEST backend's guard; one refusal is a single positive control, not a global hold",
+      "why": "an N-backend router is N entities with N guard strengths; one refusal does not clear the others"
+    }
+  ]
+}

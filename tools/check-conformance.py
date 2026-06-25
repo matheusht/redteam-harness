@@ -9,7 +9,13 @@ contracts the orchestrator relies on, NOT semantics:
   - vuln cards declare safe_signal
   - routes_to: non-stub ids resolve (pattern.<id> or vulns/<dir>); stub: ids are quoted + skipped
   - casebooks reference only pattern ids that exist
-  - no live-secret shapes leaked into any casebook file
+  - no live-secret shapes leaked into any casebook / fixture / eval file
+  - finding fixtures honor the evidence-contract migration gate (Phase 2.5A)
+  - the false-discovery corpus has a zero invalid-accept rate
+  - the adversarial-candidate corpus is well-formed (>=1 retain, all immutable-touching = block)
+
+Structural only: a green run means the evidence CONTRACT is present and well-formed (necessary), NOT
+that any finding is true (the model oracle still adjudicates that). Do not read green as "confirmed".
 
 Usage:  python3 tools/check-conformance.py        (exit 0 = clean, 1 = failures)
 """
@@ -164,18 +170,170 @@ SECRET_PATTERNS = [
 
 
 def check_secrets():
-    print("\n[secrets] casebook scan")
-    base = os.path.join(ROOT, "casebooks")
+    print("\n[secrets] casebook + fixture + eval scan")
     hits = []
-    for dirpath, _, files in os.walk(base):
-        for fn in files:
-            fp = os.path.join(dirpath, fn)
-            text = open(fp, errors="ignore").read()
-            for pat, desc in SECRET_PATTERNS:
-                for m in re.finditer(pat, text):
-                    hits.append(f"{os.path.relpath(fp, ROOT)}: {desc} :: {m.group(0)[:24]}")
-    record(not hits, "casebooks contain no live-secret shapes",
+    for sub in ("casebooks", "fixtures", "evals"):
+        base = os.path.join(ROOT, sub)
+        if not os.path.isdir(base):
+            continue
+        for dirpath, _, files in os.walk(base):
+            for fn in files:
+                fp = os.path.join(dirpath, fn)
+                text = open(fp, errors="ignore").read()
+                for pat, desc in SECRET_PATTERNS:
+                    for m in re.finditer(pat, text):
+                        hits.append(f"{os.path.relpath(fp, ROOT)}: {desc} :: {m.group(0)[:24]}")
+    record(not hits, "casebooks/fixtures/evals contain no live-secret shapes",
            "; ".join(hits) if hits else "")
+
+
+# ---- Phase 2.5A: evidence-contract gate + evaluator corpora ----
+
+POLICY_CUTOFF = "2026-06-25"
+FINDING_BASE_REQUIRED = [
+    "id", "engagement", "owasp", "surface", "objective", "scope_class", "severity",
+    "confidence", "attempt_id", "control_attempt_id", "oracle_verdict", "dedup_key", "status",
+]
+CONTRACT_REQUIRED = ["negative_control", "replay", "contamination", "justification", "run_cost"]
+
+
+def load_json(path):
+    with open(path) as fh:
+        return json.load(fh)
+
+
+def finding_is_new(f):
+    d = f.get("recorded_date")
+    return bool(d) and d >= POLICY_CUTOFF
+
+
+def _int_ge(v, lo):
+    return isinstance(v, int) and not isinstance(v, bool) and v >= lo
+
+
+def contract_problems(f):
+    """Deep validation of evidence_contract: nested required fields + types, not just top-level keys."""
+    ec = f.get("evidence_contract")
+    if not isinstance(ec, dict):
+        return ["evidence_contract missing or not an object"]
+    p = []
+
+    nc = ec.get("negative_control")
+    if not isinstance(nc, dict):
+        p.append("negative_control missing/not-object")
+    else:
+        if not isinstance(nc.get("ran"), bool):
+            p.append("negative_control.ran must be bool")
+        if nc.get("result") not in ("refused", "no_signal", "different_outcome", "n/a"):
+            p.append("negative_control.result invalid")
+
+    rp = ec.get("replay")
+    if not isinstance(rp, dict):
+        p.append("replay missing/not-object")
+    else:
+        if not _int_ge(rp.get("sessions"), 1):
+            p.append("replay.sessions must be int >= 1")
+        if not isinstance(rp.get("fresh_session"), bool):
+            p.append("replay.fresh_session must be bool")
+        if not isinstance(rp.get("deterministic"), bool):
+            p.append("replay.deterministic must be bool")
+
+    ct = ec.get("contamination")
+    if not isinstance(ct, dict):
+        p.append("contamination missing/not-object")
+    elif not isinstance(ct.get("ruled_out"), bool):
+        p.append("contamination.ruled_out must be bool")
+
+    j = ec.get("justification")
+    if not (isinstance(j, str) and j.strip()):
+        p.append("justification must be a non-empty string")
+
+    rc = ec.get("run_cost")
+    if not isinstance(rc, dict):
+        p.append("run_cost missing/not-object")
+    else:
+        for k in ("model_calls", "target_calls"):
+            if not _int_ge(rc.get(k), 0):
+                p.append(f"run_cost.{k} must be int >= 0")
+
+    pc = ec.get("positive_control")
+    if pc is not None and not isinstance(pc, dict):
+        p.append("positive_control must be an object when present")
+    return p
+
+
+def contract_complete(f):
+    return not contract_problems(f)
+
+
+def check_finding_fixtures():
+    print("\n[findings] evidence-contract gate (necessary, not sufficient)")
+    base = os.path.join(ROOT, "fixtures", "findings")
+    if not os.path.isdir(base):
+        return
+    for fn in sorted(os.listdir(base)):
+        fp = os.path.join(base, fn)
+        if not fn.endswith(".json") or not os.path.isfile(fp):
+            continue
+        f = load_json(fp)
+        missing = [k for k in FINDING_BASE_REQUIRED if k not in f]
+        record(not missing, f"findings/{fn}: base required fields", f"missing {missing}" if missing else "")
+        record("recorded_date" in f, f"findings/{fn}: recorded_date present (drives the migration gate)",
+               "every finding must carry recorded_date so the cutoff is explicit, never defaulted" if "recorded_date" not in f else "")
+        problems = contract_problems(f)
+        if finding_is_new(f):
+            record(not problems, f"findings/{fn}: new finding carries complete, well-formed evidence contract",
+                   f"recorded >= {POLICY_CUTOFF} but: {problems}" if problems else "")
+        else:
+            if problems:
+                print(f"  warn findings/{fn}: legacy finding (pre-{POLICY_CUTOFF}) contract gaps {problems} — advisory, not gated")
+            record(True, f"findings/{fn}: legacy finding advisory-only")
+
+    mr = os.path.join(base, "_must_reject")
+    if os.path.isdir(mr):
+        for fn in sorted(os.listdir(mr)):
+            fp = os.path.join(mr, fn)
+            if not fn.endswith(".json"):
+                continue
+            f = load_json(fp)
+            caught = finding_is_new(f) and bool(contract_problems(f))
+            record(caught, f"findings/_must_reject/{fn}: caught by the contract gate (invalid-accept guard)",
+                   "a new finding without a complete, well-formed contract slipped through" if not caught else "")
+
+
+def check_false_discovery_corpus():
+    print("\n[false-discovery] invalid-accept guard")
+    fp = os.path.join(ROOT, "fixtures", "false-discovery", "corpus.json")
+    if not os.path.isfile(fp):
+        return
+    entries = load_json(fp).get("entries", [])
+    record(len(entries) > 0, "false-discovery: corpus non-empty")
+    confirmable = [e.get("id", "?") for e in entries if e.get("correct_verdict") == "confirmed"]
+    record(not confirmable, "false-discovery: invalid_accept_rate == 0 (no trap's correct verdict is 'confirmed')",
+           f"wrongly confirmable: {confirmable}" if confirmable else "")
+    req = ["id", "trap_class", "observation", "correct_verdict", "missing_control", "why"]
+    for e in entries:
+        miss = [k for k in req if k not in e]
+        record(not miss, f"false-discovery/{e.get('id', '?')}: well-formed", f"missing {miss}" if miss else "")
+
+
+def check_adversarial_candidates():
+    print("\n[adversarial-candidates] Phase-3 gate fixture (staged, not launched)")
+    fp = os.path.join(ROOT, "fixtures", "adversarial-candidates", "corpus.json")
+    if not os.path.isfile(fp):
+        return
+    entries = load_json(fp).get("entries", [])
+    retain = [e.get("id", "?") for e in entries if e.get("expected_disposition") == "retain"]
+    block = [e.get("id", "?") for e in entries if e.get("expected_disposition") == "block"]
+    record(len(retain) >= 1, "adversarial: at least one valid additive candidate to retain",
+           "no retain candidate" if not retain else "")
+    record(len(block) >= 1, "adversarial: at least one gaming candidate to block",
+           "no block candidate" if not block else "")
+    for e in entries:
+        d = e.get("expected_disposition")
+        record(d in ("retain", "block"), f"adversarial/{e.get('id', '?')}: disposition in vocab", f"got {d}")
+    leaks = [e.get("id", "?") for e in entries if e.get("touches_immutable") and e.get("expected_disposition") != "block"]
+    record(not leaks, "adversarial: every immutable-touching candidate is blocked", f"leaky: {leaks}" if leaks else "")
 
 
 def main():
@@ -186,6 +344,9 @@ def main():
     check_oracles()
     check_casebooks(pattern_ids)
     check_secrets()
+    check_finding_fixtures()
+    check_false_discovery_corpus()
+    check_adversarial_candidates()
 
     print(f"\n{CHECKS} checks, {len(FAILS)} failing")
     if FAILS:

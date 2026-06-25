@@ -16,6 +16,7 @@ activation:
     - "versioned route pairs for the same resource (/v1 vs /v2, /api vs /internal, legacy vs new)"
     - "a guard / validation call present in one handler and absent in its sibling for the same action"
     - "the frontend calls the new route, but the old one is still mounted and responds"
+    - "a legacy/older endpoint honors a client-supplied owner/tenant selector while the canonical sibling DENIES the same actor for the same object (the guard was added to the canonical version and never back-ported)"
   weak:
     - "method variants on the same path that branch into different handlers (GET vs POST, query vs body)"
     - "a route named with a deprecation hint (legacy, old, compat, v0) that still answers"
@@ -40,6 +41,11 @@ is dead. The bug is the *delta between siblings*, demonstrated with one fixed ac
 ## Required oracle controls
 - **The canonical sibling is your positive control**: it must DENY the same action — that proves the
   guard exists and the legacy route is the one missing it.
+- **A different resource that enforces the same selector class corroborates** (e.g. a path-param
+  endpoint that 403s a cross-tenant id, or a list endpoint that ignores the owner override): it shows
+  the platform CAN enforce, so the gap is route-specific drift, not a systemic absence. This also kills
+  the public-share / "anyone-can-read" false positive — if the object were legitimately readable, the
+  guarded sibling would return it too.
 - **Same actor, same intent**: the only variable is the route. If you changed the account or the
   payload too, you haven't isolated the differential.
 - **Canary + replay** as for the underlying pattern (selector / policy). Cross-tenant → operator-confirm.

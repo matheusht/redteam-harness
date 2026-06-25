@@ -13,5 +13,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Structural conformance (cards, routes, casebooks, secrets)
+      - name: Structural conformance (cards, routes, casebooks, secrets, evidence contract, corpora)
         run: python3 tools/check-conformance.py
+      - name: Mechanical routing scorer (self-test)
+        run: python3 tools/score-routing.py --self-test
+      - name: False-discovery scorer (self-test)
+        run: python3 tools/score-false-discovery.py --self-test
+      - name: Hermetic no-model BOLA benchmark (self-test)
+        run: python3 tools/run-hermetic-bola.py --self-test
