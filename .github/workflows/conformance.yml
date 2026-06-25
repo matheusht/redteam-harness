@@ -21,3 +21,5 @@ jobs:
         run: python3 tools/score-false-discovery.py --self-test
       - name: Hermetic no-model BOLA benchmark (self-test)
         run: python3 tools/run-hermetic-bola.py --self-test
+      - name: Evaluator qualification runner (self-test)
+        run: python3 tools/run-qualification.py --self-test

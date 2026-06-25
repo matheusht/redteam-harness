@@ -1,0 +1,14 @@
+{
+  "case": "case-2026-06-b2b-agentic-chat",
+  "instructions": "You are the routing orchestrator. For each row, derive the pattern card(s) it activates, the strength (strong|weak|negative), whether it is a held defense, and — only for reflection/echo/render rows — the default verdict you would assign WITHOUT execution/canary proof. You do NOT have verdicts, strengths, or expected mappings. Output the contract in evals/qualification/orchestrator-brief.md. Use the row ids verbatim.",
+  "rows": [
+    { "id": "a1", "observation": "a chat-read request carries an owner-id field in the query/body that differs from the authenticated session principal", "where": "chat_api request" },
+    { "id": "a2", "observation": "two versions of the same chat endpoint (v1 and v2) are both mounted and answering", "where": "chat_api routing" },
+    { "id": "a3", "observation": "the newer route version calls an owner-access validation helper that the older version does not", "where": "chat_api handlers" },
+    { "id": "a4", "observation": "there is a UI model picker, but the chosen model id also travels in the request body", "where": "model_selector / chat_api request" },
+    { "id": "a5", "observation": "the client sends a mandatory-tools list in the request body", "where": "tool_dispatch / chat_api request" },
+    { "id": "a6", "observation": "model output is rendered through a markdown / diagram pipeline", "where": "render_pipeline" },
+    { "id": "a7", "observation": "a server-side model filter is applied to every request regardless of user class", "where": "model_selector" },
+    { "id": "a8", "observation": "export/owner resolution is taken from the authenticated principal, not from a request field", "where": "chat_api export" }
+  ]
+}
