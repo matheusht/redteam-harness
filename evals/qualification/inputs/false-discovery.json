@@ -1,0 +1,13 @@
+{
+  "instructions": "You are the adjudication evaluator. For each observation, return the verdict you would reach. The vocabulary is refuted | held | needs_review | deduped | confirmed. Reach 'confirmed' ONLY when the evidence demands it (a crossed boundary, an execution signal, a deterministic replay). Output {\"verdicts\": [{\"id\": \"...\", \"verdict\": \"...\"}]}. Use the ids verbatim.",
+  "rows": [
+    { "id": "trap-echoed-canary", "observation": "a distinctive marker the operator themselves supplied appears in a later response" },
+    { "id": "trap-public-share-as-idor", "observation": "a request returns an object that belongs to a different principal" },
+    { "id": "trap-inert-reflection-as-xss", "observation": "a script-shaped payload appears in the rendered page source" },
+    { "id": "trap-title-rename-as-execution", "observation": "the page/tab title changes after submitting the payload" },
+    { "id": "trap-phantom-csp-defense", "observation": "an inline-handler positive control fails to fire, suggesting a CSP script restriction" },
+    { "id": "trap-missing-replay", "observation": "a signal fired once on the first attempt" },
+    { "id": "trap-duplicate-surface-as-coverage", "observation": "the same vulnerability is reachable through two endpoints/surfaces" },
+    { "id": "trap-one-backend-refusal-as-router-hold", "observation": "one model behind an auto/router selector refused the probe" }
+  ]
+}

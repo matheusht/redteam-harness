@@ -1,0 +1,13 @@
+{
+  "_note": "A deliberately BAD evaluator (each trap -> the tempting naive verdict). The qualification runner MUST block it: it confirms six non-findings. Used by the self-test as the known-bad input.",
+  "verdicts": [
+    { "id": "trap-echoed-canary", "verdict": "confirmed" },
+    { "id": "trap-public-share-as-idor", "verdict": "confirmed" },
+    { "id": "trap-inert-reflection-as-xss", "verdict": "confirmed" },
+    { "id": "trap-title-rename-as-execution", "verdict": "confirmed" },
+    { "id": "trap-phantom-csp-defense", "verdict": "held" },
+    { "id": "trap-missing-replay", "verdict": "confirmed" },
+    { "id": "trap-duplicate-surface-as-coverage", "verdict": "confirmed" },
+    { "id": "trap-one-backend-refusal-as-router-hold", "verdict": "held" }
+  ]
+}

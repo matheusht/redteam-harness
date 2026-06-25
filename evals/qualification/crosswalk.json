@@ -1,0 +1,25 @@
+{
+  "_note": "PLUMBING, never shown to the orchestrator subagent. Maps blind row ids -> frozen gold observation_keys so a natural subagent output can be scored against evals/routing/gold/ without leaking the gold vocabulary into the blind input. The mapping is structural (an id<->id anchor), not an answer: it does not reveal cards, strength, held status, or verdicts.",
+  "case-2026-06-b2b-agentic-chat": {
+    "rows": {
+      "a1": "owner-id-selector",
+      "a2": "v1-v2-mounted",
+      "a3": "newer-validates-older-doesnt",
+      "a4": "modelAi-in-body",
+      "a5": "mandatory-tools-list",
+      "a6": "model-output-rendered",
+      "a7": "unconditional-model-filter",
+      "a8": "owner-from-principal"
+    },
+    "must_refute": { "C-diagram-xss": "a6", "C-render-xss": "a6" }
+  },
+  "synthetic-negative-controls": {
+    "rows": {
+      "b1": "owner-id-selector",
+      "b2": "v1-v2-mounted",
+      "b3": "modelAi-in-body",
+      "b4": "model-output-rendered"
+    },
+    "must_refute": { "S1": "b4" }
+  }
+}

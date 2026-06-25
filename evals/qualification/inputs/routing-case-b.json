@@ -1,0 +1,10 @@
+{
+  "case": "synthetic-negative-controls",
+  "instructions": "You are the routing orchestrator. Same contract as case A. This case may be entirely held/refuted — do not over-claim. Use the row ids verbatim.",
+  "rows": [
+    { "id": "b1", "observation": "an owner-id field is present in the chat-read request body", "where": "chat_api request" },
+    { "id": "b2", "observation": "two route versions (v1 and v2) exist for the same resource", "where": "chat_api routing" },
+    { "id": "b3", "observation": "a UI-restricted model id travels in the request body", "where": "model_selector / chat_api request" },
+    { "id": "b4", "observation": "model output is rendered through a markdown / diagram pipeline", "where": "render_pipeline" }
+  ]
+}
