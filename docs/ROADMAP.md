@@ -35,8 +35,34 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
       model-in-the-loop layer green (67 checks).
 - [x] `vulns/llm05-improper-output-handling` — built; `transitive-sanitizer-reliance` un-stubbed.
       **No `stub:` routes remain** — every pattern card now routes only to cards that exist.
-- [ ] Optional: a mechanical activation matcher; the model-in-the-loop shadow-eval scoring harness
-      (`routing-eval.md` layer 2) — needs a runnable orchestrator step from Phase 1's live slice.
+- [x] Mechanical activation matcher: `tools/score-routing.py` + frozen human-authored gold
+      (`evals/routing/gold/`) — deterministic set-compare on the four dimensions, self-test reproduces
+      the 2026-06-23 operator PASS. Model outputs stay input artifacts; only scoring is mechanical.
+
+## Phase 2.5 — evaluator foundation (in progress, 2026-06-25)
+"Build the evaluator before you optimize." Harden the inputs autoresearch will eventually be scored
+against, using the traps THIS harness met live (replay run `b2b-2026-06-replay`: F2 re-confirmed,
+LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until these land.**
+- [x] **Evidence contract** — `schemas/finding.schema.json` carries a structured `evidence_contract`
+      (negative/positive control, replay determinism, contamination ruleout, one-line justification,
+      run-cost ledger, evidence refs). `tools/check-conformance.py` gates it: **new** findings
+      (recorded ≥ 2026-06-25) require the contract; back-catalog is **advisory**. Green means
+      "evidence contract *present*" — necessary, NOT sufficient; the model oracle still adjudicates truth.
+- [x] **False-discovery corpus** — `fixtures/false-discovery/` encodes the live traps (echoed canary,
+      public-share-as-IDOR, inert-reflection-as-XSS, title-rename-as-execution, phantom CSP, missing
+      replay, duplicate-surface-as-coverage, one-backend-refusal-as-hold). Acceptance: **invalid-accept
+      rate = 0** (no trap's correct verdict is `confirmed`); the checker asserts it.
+- [x] **Mechanical routing scorer** — see Phase 1.5 (frozen gold + `tools/score-routing.py`).
+- [x] **Cost/budget accounting** — `run_cost` on findings; `tools/run-hermetic-bola.py` emits a per-run
+      target-call/budget ledger so "equal coverage at ≥10% lower cost" becomes measurable.
+- [x] **Adversarial candidate corpus (prepared, not launched)** — `fixtures/adversarial-candidates/`:
+      candidates that mutate budget / mutate the scorer / duplicate coverage / omit controls / overfit
+      visible cases, plus one valid additive candidate that must be retained. This is the Phase-3 gate
+      fixture, staged now.
+- [ ] **Phase 2.5B — hermetic benchmark.** Started with the **no-model BOLA legacy-route** target
+      (`evals/hermetic/targets/bola-legacy-route/`, pure HTTP/status/body differential, deterministic,
+      no LLM). Next: a **canned/fake-model** harness for LLM05 / LLM07 / model-router / LLM06
+      (recorded deterministic outputs only — a real LLM drifts and cannot anchor a frozen benchmark).
 
 ## Phase 2 — breadth (second slice + harvest)
 - [ ] LLM01 prompt-injection card live (indirect, inert canary in an ingested surface).
@@ -44,7 +70,7 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 - [ ] Harvest prior engagement learnings into technique "winning variants" (abstract, scrubbed).
 - [ ] MITRE ATLAS cross-walk on each card.
 
-## Phase 3 — autoresearch (only once a frozen eval slice exists)
+## Phase 3 — autoresearch (BLOCKED until the Phase-2.5 gates pass)
 - [ ] **Claudini keep-if-better ratchet**: propose technique variant → run on frozen slice → keep
       only if it beats the incumbent on **gated `clean_confirmed_coverage`** (distinct benchmark cases
       passing the full adjudication oracle within a fixed budget — NOT raw confirmed-finding rate, which
@@ -52,6 +78,19 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 - [ ] **Anti-cheat gate** (rated more important): immutable evaluator per campaign · isolated
       experiments · hidden/rotating holdouts · replay-before-accept · revert-on-regression · no
       shared memory that turns evaluator quirks into strategy folklore.
+- **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
+  false-discovery rate is rejected — coverage and FDR are not fungible.
+- **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,
+  casebook ground truth, budget, or sealed holdout data.
+
+### Launch preconditions (all must hold before the first ratchet run)
+1. False-discovery corpus: **zero invalid accepts** (`fixtures/false-discovery/`).
+2. Adversarial candidate corpus: **100% valid-candidate retention + 100% bad-candidate block**
+   (`fixtures/adversarial-candidates/`).
+3. Cost/budget accounting exists and is recorded per run (`run_cost` + hermetic ledger).
+4. Routing scorer is mechanical and frozen-gold-backed (`tools/score-routing.py`).
+5. A hermetic benchmark exists (`evals/hermetic/`), no-model BOLA target landed, fake-model harness for
+   the model-dependent cards in place.
 
 ## Phase 4 — scale (only when a concrete wall appears)
 - [ ] Pack mode / multi-account concurrency (config knob 1→N), gated on `scope.md`.

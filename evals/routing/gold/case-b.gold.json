@@ -1,0 +1,17 @@
+{
+  "case": "synthetic-negative-controls",
+  "frozen": "2026-06-25",
+  "provenance": "human-authored from synthetic recon-signals.yml + oracle-matrix.json; the anti-overfit control — EVERY row is held/refuted; do NOT let an agent regenerate",
+  "expected_activations": [
+    { "observation_key": "owner-id-selector", "cards": ["pattern.client-supplied-selector-authz"], "strength": "strong" },
+    { "observation_key": "v1-v2-mounted", "cards": ["pattern.legacy-route-differential"], "strength": "strong" },
+    { "observation_key": "modelAi-in-body", "cards": ["pattern.ui-only-policy-enforcement"], "strength": "strong" },
+    { "observation_key": "model-output-rendered", "cards": ["pattern.transitive-sanitizer-reliance"], "strength": "weak" }
+  ],
+  "held_signals": [],
+  "must_refute": [
+    { "candidate": "S1" }
+  ],
+  "stub_routes_forbidden": true,
+  "must_not_confirm_blind": true
+}

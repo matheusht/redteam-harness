@@ -38,6 +38,68 @@
     "dedup_key": { "type": "string", "description": "owasp|surface|signal-type|preconditions" },
     "status": { "enum": ["open", "triaged", "reported", "withdrawn"] },
     "operator_reviewed": { "type": "boolean", "default": false },
-    "review_history": { "type": "array", "items": { "type": "object" } }
+    "review_history": { "type": "array", "items": { "type": "object" } },
+
+    "recorded_date": { "type": "string", "description": "YYYY-MM-DD; drives the migration gate — findings recorded on/after the policy cutoff (2026-06-25) MUST carry evidence_contract, earlier ones are advisory" },
+    "schema_version": { "type": "integer", "description": "2 = evidence-contract era" },
+    "evidence_contract": {
+      "type": "object",
+      "description": "Structured proof-of-rigor. Presence + well-formedness is a NECESSARY (not sufficient) gate checked mechanically by tools/check-conformance.py; the model oracle still adjudicates whether the evidence is TRUE.",
+      "additionalProperties": false,
+      "required": ["negative_control", "replay", "contamination", "justification", "run_cost"],
+      "properties": {
+        "negative_control": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ran", "result"],
+          "properties": {
+            "ran": { "type": "boolean" },
+            "result": { "enum": ["refused", "no_signal", "different_outcome", "n/a"], "description": "the control MUST NOT reproduce the finding's signal" },
+            "attempt_id": { "type": ["string", "null"] }
+          }
+        },
+        "positive_control": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ran": { "type": "boolean" },
+            "result": { "enum": ["detector_fired", "sibling_denied", "n/a"], "description": "proves the oracle CAN detect success / the guard belongs there" },
+            "attempt_id": { "type": ["string", "null"] }
+          }
+        },
+        "replay": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sessions", "fresh_session", "deterministic"],
+          "properties": {
+            "sessions": { "type": "integer", "minimum": 1 },
+            "fresh_session": { "type": "boolean", "description": "replayed in a session with no shared memory/cache" },
+            "deterministic": { "type": "boolean" }
+          }
+        },
+        "contamination": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ruled_out"],
+          "properties": {
+            "ruled_out": { "type": "boolean" },
+            "sources_checked": { "type": "array", "items": { "enum": ["session_memory", "retrieval_cache", "operator_hinting", "artifact_reuse", "ui_sidechannel"] } }
+          }
+        },
+        "justification": { "type": "string", "description": "the one-sentence prime-directive test — why this is real (or, for a refutation, why it is NOT)" },
+        "run_cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model_calls", "target_calls"],
+          "properties": {
+            "model_calls": { "type": "integer", "minimum": 0 },
+            "target_calls": { "type": "integer", "minimum": 0 },
+            "tokens": { "type": ["integer", "null"], "minimum": 0 },
+            "elapsed_seconds": { "type": ["number", "null"], "minimum": 0 }
+          }
+        },
+        "evidence_refs": { "type": "array", "items": { "type": "string" }, "description": "attempt:// transcript:// screenshot:// pointers; never inline secrets" }
+      }
+    }
   }
 }

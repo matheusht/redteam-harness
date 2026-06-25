@@ -1,0 +1,21 @@
+{
+  "id": "FX-legacy-bola",
+  "engagement": "EXAMPLE-parent",
+  "owasp": "A01 Broken Access Control / API1:2023",
+  "surface": "chat_api_legacy_route",
+  "objective": "cross_tenant_read_proof",
+  "scope_class": "operator_only",
+  "severity": "critical",
+  "confidence": "confirmed",
+  "attempt_id": "attempt-12",
+  "control_attempt_id": "attempt-09",
+  "oracle_verdict": {
+    "signal": true,
+    "adjudication": true,
+    "contamination_ruled_out": true,
+    "note": "cross-tenant object returned on the legacy route while the canonical sibling denied the same actor"
+  },
+  "dedup_key": "A01|chat_read|cross-tenant-owner-selector|legacy-route",
+  "status": "reported",
+  "recorded_date": "2026-06-20"
+}

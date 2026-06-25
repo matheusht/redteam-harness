@@ -1,0 +1,21 @@
+{
+  "id": "FX-must-reject-incomplete-contract",
+  "engagement": "EXAMPLE-replay",
+  "owasp": "A01 Broken Access Control / API1:2023",
+  "surface": "chat_api_legacy_route",
+  "objective": "cross_tenant_read_proof",
+  "scope_class": "operator_only",
+  "severity": "critical",
+  "confidence": "confirmed",
+  "attempt_id": "attempt-220",
+  "control_attempt_id": "attempt-219",
+  "oracle_verdict": { "signal": true, "adjudication": true, "contamination_ruled_out": true },
+  "dedup_key": "A01|chat_read|cross-tenant-owner-selector|incomplete-contract",
+  "status": "open",
+  "recorded_date": "2026-06-25",
+  "schema_version": 2,
+  "evidence_contract": {
+    "negative_control": { "ran": true, "result": "refused" },
+    "justification": "missing replay, contamination, and run_cost — an incomplete contract must NOT pass the gate"
+  }
+}

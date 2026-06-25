@@ -1,0 +1,23 @@
+{
+  "case": "case-2026-06-b2b-agentic-chat",
+  "frozen": "2026-06-25",
+  "provenance": "human-authored from recon-signals.yml + oracle-matrix.json + case.yml#held_defenses; do NOT let an agent regenerate this file",
+  "expected_activations": [
+    { "observation_key": "owner-id-selector", "cards": ["pattern.client-supplied-selector-authz"], "strength": "strong" },
+    { "observation_key": "v1-v2-mounted", "cards": ["pattern.legacy-route-differential"], "strength": "strong" },
+    { "observation_key": "newer-validates-older-doesnt", "cards": ["pattern.legacy-route-differential", "pattern.client-supplied-selector-authz"], "strength": "strong" },
+    { "observation_key": "modelAi-in-body", "cards": ["pattern.ui-only-policy-enforcement"], "strength": "strong" },
+    { "observation_key": "mandatory-tools-list", "cards": ["pattern.ui-only-policy-enforcement"], "strength": "strong" },
+    { "observation_key": "model-output-rendered", "cards": ["pattern.transitive-sanitizer-reliance"], "strength": "weak" }
+  ],
+  "held_signals": [
+    { "observation_key": "unconditional-model-filter", "cards": ["pattern.ui-only-policy-enforcement"] },
+    { "observation_key": "owner-from-principal", "cards": ["pattern.client-supplied-selector-authz"] }
+  ],
+  "must_refute": [
+    { "candidate": "C-diagram-xss" },
+    { "candidate": "C-render-xss" }
+  ],
+  "stub_routes_forbidden": true,
+  "must_not_confirm_blind": false
+}

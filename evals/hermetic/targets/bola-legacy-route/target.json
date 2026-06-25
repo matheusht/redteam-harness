@@ -1,0 +1,20 @@
+{
+  "target": "bola-legacy-route",
+  "frozen": "2026-06-25",
+  "description": "Synthetic two-version chat-read endpoint. The legacy route (v1) trusts a client-supplied owner selector; the canonical route (v2) re-resolves ownership from the authenticated principal. No LLM in the loop — pure HTTP status/body differential, fully deterministic.",
+  "actor": "tenant-A-user",
+  "victim_canary": "CANARY-CROSS-TENANT-MARKER",
+  "routes": {
+    "v1": { "version": "legacy", "trusts_owner_selector": true, "guard": "none" },
+    "v2": { "version": "canonical", "trusts_owner_selector": false, "guard": "validateOwnerAccess" }
+  },
+  "requests": [
+    { "id": "primary",          "kind": "primary",          "route": "v1", "owner_selector": "victim", "expect": { "status": 200, "body_contains_canary": true } },
+    { "id": "positive-control", "kind": "positive_control", "route": "v2", "owner_selector": "victim", "expect": { "status": 403, "body_contains_canary": false } },
+    { "id": "neg-no-owner",     "kind": "negative_control", "route": "v1", "owner_selector": null,     "expect": { "status": 404, "body_contains_canary": false } },
+    { "id": "neg-self",         "kind": "negative_control", "route": "v1", "owner_selector": "self",   "expect": { "status": 404, "body_contains_canary": false } },
+    { "id": "neg-bogus",        "kind": "negative_control", "route": "v1", "owner_selector": "bogus",  "expect": { "status": 404, "body_contains_canary": false } }
+  ],
+  "budget": { "max_target_calls": 8 },
+  "expected_verdict": "confirmed"
+}
