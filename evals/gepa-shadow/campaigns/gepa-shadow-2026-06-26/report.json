@@ -1,0 +1,179 @@
+{
+  "campaign_id": "gepa-shadow-2026-06-26",
+  "baseline_scoreboard": {
+    "routing_qualified": true,
+    "routing": [
+      {
+        "case": "case-2026-06-b2b-agentic-chat",
+        "passed": true
+      },
+      {
+        "case": "synthetic-negative-controls",
+        "passed": true
+      }
+    ],
+    "false_discovery": {
+      "invalid_accept_rate": 0.0,
+      "passed": true
+    },
+    "hermetic_bola": {
+      "verdict": "confirmed",
+      "passed": true,
+      "target_calls": 5,
+      "budget": 8
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "track": "task-reframing",
+      "is_baseline": true,
+      "gate": "allow",
+      "gate_reasons": [],
+      "scored": {
+        "routing_qualified": true,
+        "routing": [
+          {
+            "case": "case-2026-06-b2b-agentic-chat",
+            "passed": true
+          },
+          {
+            "case": "synthetic-negative-controls",
+            "passed": true
+          }
+        ],
+        "false_discovery": {
+          "invalid_accept_rate": 0.0,
+          "passed": true
+        },
+        "hermetic_bola": {
+          "verdict": "confirmed",
+          "passed": true,
+          "target_calls": 5,
+          "budget": 8
+        }
+      },
+      "coverage_delta_vs_baseline": 0,
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-decomposition-001",
+      "track": "decomposition",
+      "is_baseline": false,
+      "gate": "allow",
+      "gate_reasons": [],
+      "scored": {
+        "routing_qualified": true,
+        "routing": [
+          {
+            "case": "case-2026-06-b2b-agentic-chat",
+            "passed": true
+          },
+          {
+            "case": "synthetic-negative-controls",
+            "passed": true
+          }
+        ],
+        "false_discovery": {
+          "invalid_accept_rate": 0.0,
+          "passed": true
+        },
+        "hermetic_bola": {
+          "verdict": "confirmed",
+          "passed": true,
+          "target_calls": 5,
+          "budget": 8
+        }
+      },
+      "coverage_delta_vs_baseline": 0,
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-invalid-edits-gold",
+      "track": "task-reframing",
+      "is_baseline": false,
+      "gate": "block",
+      "gate_reasons": [
+        "touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/rotation-01.gold.json']",
+        "touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/rotation-01.gold.json']"
+      ],
+      "scored": null,
+      "coverage_delta_vs_baseline": null,
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-new-output-anchored-review",
+      "track": "new-technique-card",
+      "is_baseline": false,
+      "gate": "allow",
+      "gate_reasons": [],
+      "scored": {
+        "routing_qualified": true,
+        "routing": [
+          {
+            "case": "case-2026-06-b2b-agentic-chat",
+            "passed": true
+          },
+          {
+            "case": "synthetic-negative-controls",
+            "passed": true
+          }
+        ],
+        "false_discovery": {
+          "invalid_accept_rate": 0.0,
+          "passed": true
+        },
+        "hermetic_bola": {
+          "verdict": "confirmed",
+          "passed": true,
+          "target_calls": 5,
+          "budget": 8
+        }
+      },
+      "coverage_delta_vs_baseline": 0,
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-task-reframing-001",
+      "track": "task-reframing",
+      "is_baseline": false,
+      "gate": "allow",
+      "gate_reasons": [],
+      "scored": {
+        "routing_qualified": true,
+        "routing": [
+          {
+            "case": "case-2026-06-b2b-agentic-chat",
+            "passed": true
+          },
+          {
+            "case": "synthetic-negative-controls",
+            "passed": true
+          }
+        ],
+        "false_discovery": {
+          "invalid_accept_rate": 0.0,
+          "passed": true
+        },
+        "hermetic_bola": {
+          "verdict": "confirmed",
+          "passed": true,
+          "target_calls": 5,
+          "budget": 8
+        }
+      },
+      "coverage_delta_vs_baseline": 0,
+      "promoted": false
+    }
+  ],
+  "allowed": [
+    "cand-baseline",
+    "cand-decomposition-001",
+    "cand-new-output-anchored-review",
+    "cand-task-reframing-001"
+  ],
+  "blocked": [
+    "cand-invalid-edits-gold"
+  ],
+  "promoted_any": false
+}

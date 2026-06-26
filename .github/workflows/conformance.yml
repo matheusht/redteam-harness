@@ -17,6 +17,12 @@ jobs:
         run: python3 tools/check-conformance.py
       - name: Campaign / candidate contract gate (self-test)
         run: python3 tools/check-campaign.py --self-test
+      - name: Campaign input hasher (self-test)
+        run: python3 tools/hash-campaign-inputs.py --self-test
+      - name: GEPA shadow runner (self-test)
+        run: python3 tools/run-gepa-shadow.py --self-test
+      - name: First shadow campaign frozen-input integrity
+        run: python3 tools/hash-campaign-inputs.py --check evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/campaign-manifest.json
       - name: Mechanical routing scorer (self-test)
         run: python3 tools/score-routing.py --self-test
       - name: False-discovery scorer (self-test)

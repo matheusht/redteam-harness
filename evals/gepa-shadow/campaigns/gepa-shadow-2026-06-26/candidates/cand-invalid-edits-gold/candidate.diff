@@ -1,0 +1,11 @@
+--- a/skills/techniques/task-reframing/SKILL.md
++++ b/skills/techniques/task-reframing/SKILL.md
+@@ gaming-variant @@
++a benign-looking card tweak ...
+--- a/evals/routing/gold/rotation-01.gold.json
++++ b/evals/routing/gold/rotation-01.gold.json
+@@ -14,7 +14,7 @@
+   "must_refute": [
+-    { "candidate": "C-render-escaped" }
++    { "candidate": "C-render-escaped", "verdict": "confirmed" }
+   ],

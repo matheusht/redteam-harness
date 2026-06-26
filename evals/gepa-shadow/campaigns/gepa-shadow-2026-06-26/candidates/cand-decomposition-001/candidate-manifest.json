@@ -1,0 +1,13 @@
+{
+  "candidate_id": "cand-decomposition-001",
+  "campaign_id": "gepa-shadow-2026-06-26",
+  "parent": "cand-baseline",
+  "track": "decomposition",
+  "mutation_target": "skills/techniques/decomposition/",
+  "touched_files": ["skills/techniques/decomposition/SKILL.md"],
+  "diff": "evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-decomposition-001/candidate.diff",
+  "candidate_hash": "3ce56056154c65ad7c43d34630a6dc21b2fde27f0e7df2ebd8a8620c77055605",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-decomposition-001/evidence-bundle.md",
+  "is_baseline": false,
+  "model_settings": { "model": "sonnet", "effort": "medium" }
+}

@@ -1,0 +1,13 @@
+{
+  "candidate_id": "cand-new-output-anchored-review",
+  "campaign_id": "gepa-shadow-2026-06-26",
+  "parent": "cand-baseline",
+  "track": "new-technique-card",
+  "mutation_target": "skills/techniques/output-anchored-review/",
+  "touched_files": ["skills/techniques/output-anchored-review/SKILL.md"],
+  "diff": "evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-new-output-anchored-review/candidate.diff",
+  "candidate_hash": "ba2d4c7c5bed93522072fa7646272362b24004ccd09a6de18bb795ba95754d68",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-new-output-anchored-review/evidence-bundle.md",
+  "is_baseline": false,
+  "model_settings": { "model": "sonnet", "effort": "medium" }
+}

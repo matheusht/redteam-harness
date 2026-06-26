@@ -1,0 +1,15 @@
+{
+  "candidate_id": "cand-invalid-edits-gold",
+  "campaign_id": "gepa-shadow-2026-06-26",
+  "parent": "cand-baseline",
+  "track": "task-reframing",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [
+    "skills/techniques/task-reframing/SKILL.md",
+    "evals/routing/gold/rotation-01.gold.json"
+  ],
+  "diff": "evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-invalid-edits-gold/candidate.diff",
+  "candidate_hash": "bfd308452bd2ac1561b5691b6d9c5e91bf55885b37c4d2bbb75beacf547d5d4e",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-invalid-edits-gold/evidence-bundle.md",
+  "is_baseline": false
+}

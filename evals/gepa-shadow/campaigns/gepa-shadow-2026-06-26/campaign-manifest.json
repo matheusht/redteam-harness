@@ -1,0 +1,68 @@
+{
+  "campaign_id": "gepa-shadow-2026-06-26",
+  "created": "2026-06-26",
+  "description": "First GEPA shadow campaign. Three independent tracks (task-reframing variant, decomposition variant, one new technique card) plus a no-op baseline control and one intentionally invalid candidate. Shadow only: candidates are gated and run through the frozen scorers; nothing is applied or promoted.",
+  "tracks": [
+    { "name": "task-reframing", "mutation_target": "skills/techniques/task-reframing/", "kind": "existing-card-variant" },
+    { "name": "decomposition", "mutation_target": "skills/techniques/decomposition/", "kind": "existing-card-variant" },
+    { "name": "new-technique-card", "mutation_target": "skills/techniques/output-anchored-review/", "kind": "new-technique-card" }
+  ],
+  "mutable_allowlist": [
+    "skills/techniques/task-reframing/",
+    "skills/techniques/decomposition/",
+    "skills/techniques/output-anchored-review/"
+  ],
+  "immutable": [
+    "engine/",
+    "skills/oracles/",
+    "skills/patterns/",
+    "skills/vulns/"
+  ],
+  "frozen_inputs": {
+    "evals:routing:gold:case-a.gold": {
+      "path": "evals/routing/gold/case-a.gold.json",
+      "sha256": "245c011a425a849456d07d4c0dfa9706443bcd34de3812c8645cf8d7b4323a4a"
+    },
+    "evals:routing:gold:case-b.gold": {
+      "path": "evals/routing/gold/case-b.gold.json",
+      "sha256": "d30ce98d015690f8abd9b54c271a24feedcbc44f5854526007239edb00020933"
+    },
+    "evals:routing:gold:rotation-01.gold": {
+      "path": "evals/routing/gold/rotation-01.gold.json",
+      "sha256": "81544abdcbf98735e397fd1b9fc307e456ac9acffe0b5874efa96c68c75619c7"
+    },
+    "evals:qualification:crosswalk": {
+      "path": "evals/qualification/crosswalk.json",
+      "sha256": "14f5e074549a39dd297e5d947774f9422cf1c6392cfedb70ea18f627d5d9f428"
+    },
+    "fixtures:false-discovery:corpus": {
+      "path": "fixtures/false-discovery/corpus.json",
+      "sha256": "a9fbc12b1796a5681e43190abb1e2b747e2bca102570dfdc2b480c43078a7f54"
+    },
+    "fixtures:adversarial-candidates:corpus": {
+      "path": "fixtures/adversarial-candidates/corpus.json",
+      "sha256": "e7726374ff8f13c69fde8a5f79d946d7aa9bcd7c550d620f13e80254715082f8"
+    },
+    "evals:hermetic:targets:bola-legacy-route:target": {
+      "path": "evals/hermetic/targets/bola-legacy-route/target.json",
+      "sha256": "7a380c720058f7ec23ed38074f4f2a50e8c6152edb99ade96a3d50320082b6f3"
+    },
+    "tools:score-routing": {
+      "path": "tools/score-routing.py",
+      "sha256": "43725a16e40d59bd9640b417a9d20553af9e46afb6b4141c5337be5286363a6c"
+    },
+    "tools:score-false-discovery": {
+      "path": "tools/score-false-discovery.py",
+      "sha256": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f"
+    }
+  },
+  "budgets": { "model_calls": 40, "target_calls": 80, "tokens": null },
+  "benchmark_set": [
+    "routing:case-a",
+    "routing:case-b",
+    "routing:rotation-case-01-web-api",
+    "false-discovery",
+    "adversarial-candidates",
+    "hermetic:bola-legacy-route"
+  ]
+}
