@@ -31,6 +31,14 @@ campaigns/<campaign-id>/
   mutation) are hard vetoes → `block`. An eligible candidate is `allow` only if it adds a distinct
   clean confirmed coverage case or preserves coverage at ≥10% lower cost; otherwise `probe`. A
   `judge_note` is advisory and can never override the mechanical verdict.
+- `tools/replay-candidate.py` — the replay & variance gate (Phase 4). Primary + two fresh-session
+  replays at identical benchmark version and budget; downgrades a non-reproducible `allow` to `probe`,
+  never upgrades. Writes `candidates/<id>/replays/` + a campaign `replay-report`.
+- `tools/render-promotion-bundle.py` — the promotion bundle + PR path (Phase 5). Joins the Phase 3 and
+  replay-adjusted verdicts with the diff, manifests, scorer/replay results, cost comparison, redaction
+  report, and human checklist. Promotable only if the replay-adjusted verdict is `allow` AND redaction
+  is clean; otherwise archived-only. Promotes nothing — promotion is a reviewed PR on an isolated
+  branch (`.github/PULL_REQUEST_TEMPLATE/gepa-promotion.md`).
 
 ## Shadow honesty
 

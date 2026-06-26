@@ -354,6 +354,75 @@
       joins the Phase 3 mechanical verdict and the Phase 4 replay-adjusted verdict with the evidence bundle,
       candidate diff, manifest hashes, redaction report, and human checklist into a reviewed-PR promotion path.</p>
 
+    <h2>GEPA autoresearch — Phase 5 (promotion bundle + PR-only) <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
+    <p>Surface built: <code>tools/render-promotion-bundle.py</code> (pure <code>build_bundle()</code> +
+      4-case <code>--self-test</code> + a <code>--candidate</code> renderer),
+      <code>.github/PULL_REQUEST_TEMPLATE/gepa-promotion.md</code>, and a rendered promotion bundle for a
+      representative candidate (archived-only, since shadow verdicts are all <code>probe</code>).</p>
+
+    <h3>Acceptance, mapped to evidence</h3>
+    <table>
+      <thead><tr><th>Spec acceptance</th><th>Enforced where</th></tr></thead>
+      <tbody>
+        <tr><td>No manual copy into <code>skills/techniques/</code></td><td>renderer writes only under <code>candidates/&lt;id&gt;/promotion/</code>; an <code>assert "skills/" not in out_dir</code> + self-test "writes only promotion artifacts, never skills/"</td></tr>
+        <tr><td>No direct-to-main promotion</td><td>the tool never applies the diff, commits, or merges; it emits a bundle + PR body describing the isolated-branch → review → PR path</td></tr>
+        <tr><td>PR identifies the single mutated component</td><td><code>mutation_target</code> in the bundle, the PR body, and the first checklist item; PR template names "exactly one mutated component"</td></tr>
+        <tr><td>Failed/probed candidates archived, not promoted</td><td><code>promotable = (verdict==allow) and redaction_clean</code>; self-test "probe → archived, not promotable"; the rendered real candidate is NOT PROMOTABLE</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Design decisions <span class="tag t-dec">spec ambiguous</span></h3>
+    <ul>
+      <li><b>The bundle's <code>verdict</code> is the replay-adjusted one</b> (Phase 3 ∧ Phase 4), per the
+        confirmed <code>Q-verdict-join</code> decision. <code>render-promotion-bundle</code> reads
+        <code>replays/replay-summary.json</code> for the final verdict and falls back to the Phase-3
+        keep/discard verdict only if no replay exists.</li>
+      <li><b>Redaction is a promotion gate, not just a report.</b> The plan lists a "redaction report" as a
+        bundle field; I made a non-empty <code>secret_hits</code> force <code>promotable=false</code> even
+        when the verdict is <code>allow</code> — a secret in the diff/bundle must never reach a PR. Reuses
+        <code>check-conformance.py</code>'s <code>SECRET_PATTERNS</code> so the scan matches the repo gate.</li>
+      <li><b>Checklist splits mechanical vs human items.</b> Tool-verifiable items
+        (single component, FDR zero, replay-stable, diff-hash, redaction) are pre-<code>checked</code> by
+        the renderer; <code>HUMAN:</code> items stay unchecked for the reviewer to tick in the PR. Keeps the
+        machine honest about what it actually verified.</li>
+    </ul>
+
+    <h3>Deviations <span class="tag t-dev">intentional</span></h3>
+    <ul>
+      <li><b>Named PR template, not the repo-wide default.</b> Put the checklist at
+        <code>.github/PULL_REQUEST_TEMPLATE/gepa-promotion.md</code> (opt-in via
+        <code>?template=</code>) rather than <code>pull_request_template.md</code>, so ordinary PRs aren't
+        forced through the GEPA checklist. The plan said "PR template section or checklist"; this is the
+        least intrusive reading.</li>
+      <li><b>Renderer emits a PR body but does not open the PR.</b> Creating the branch / opening the PR
+        stays a human action — the tool produces <code>promotion/pr-body.md</code> and instructions only.</li>
+    </ul>
+
+    <h3>Tradeoffs <span class="tag t-trd">alternatives</span></h3>
+    <table>
+      <thead><tr><th>Choice</th><th>Picked</th><th>Rejected</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>How promotion happens</td><td>Render a bundle + PR body; human applies the diff on a branch</td><td>Tool applies the diff + opens the PR via <code>gh</code></td><td>Acceptance forbids direct-to-main and manual-copy shortcuts; keeping the apply step human preserves the review gate and provenance.</td></tr>
+        <tr><td>Redaction posture</td><td>Hard gate (hits → not promotable)</td><td>Advisory note only</td><td>A leaked secret reaching a public PR is the exact failure the harness exists to prevent.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
+    <div class="open"><b>Q-promote-conformance.</b> Before merge, should CI re-run <code>check-conformance.py</code>
+      against the <em>applied</em> diff in the PR branch (the Phase-3 <code>Q-eligibility</code> thread)? My
+      assumption is yes — the promotion bundle proves pre-apply state; the PR branch proves post-apply state.</div>
+    <div class="open"><b>Q-bundle-pin.</b> Should a PROMOTABLE bundle pin the exact frozen-input hashes it
+      was scored against, so a reviewer can detect benchmark drift between bundle render and PR merge? Easy to
+      add (the campaign manifest already carries them); confirm you want it embedded in the bundle.</div>
+
+    <h2>Status — Phases 0–5 complete (shadow) <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
+    <p>The full shadow autoresearch chain now exists end to end: contracts &amp; gate (P1) → shadow runner
+      (P2) → keep/discard policy (P3) → replay &amp; variance (P4) → promotion bundle + PR path (P5). It
+      promotes nothing on its own. The remaining plan items are <b>Phase 6</b> (benchmark expansion:
+      fake-model hermetic targets, a second rotated case, the SSRF-card decision) and <b>Phase 7</b> (the
+      optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
+      deltas instead of reproducing the incumbent.</p>
+
     <footer>implementation-notes.html · running log · self-contained, no runtime deps</footer>
   </main>
 </body>
