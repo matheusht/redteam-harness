@@ -14,16 +14,23 @@ routes_to: ["vulns/llm05-improper-output-handling", "vulns/injection"]
 
 activation:
   strong:
-    - "user/model-controlled content flows into a renderer or executor (markdown→HTML, mermaid/diagram, template engine, SQL/string builder, dangerouslySetInnerHTML)"
-    - "escaping/validation lives in a DIFFERENT module than the sink, or multiple producers feed one sink"
-    - "a 'rich' output surface that interprets its input (charts, diagrams, embeds) rather than displaying it literally"
+    - "user/model-controlled content flows into a TRULY UNSAFE sink: dangerouslySetInnerHTML / raw innerHTML, a template or SQL/string builder, an executor (eval, shell)"
+    - "a renderer reached WITH a sink-danger tell: a known sanitizer bypass, an active-HTML / raw-HTML allowance, or a confirmed execution route past the escaper"
+    - "escaping/validation lives in a DIFFERENT module than the sink, or multiple producers feed one sink (one may skip the escape)"
   weak:
+    - "model/user output merely rendered through a markdown / diagram / rich pipeline that normally sanitizes (markdown→HTML, mermaid, charts, embeds) — render PRESENCE alone is weak"
     - "any reflected user content appearing in page source"
     - "a feature that historically implies injection (HTML email, SVG, iframe) without confirmed execution"
   negative:
     - "the sink renders inside a sandbox / strips scripts / framework auto-escapes → reflected but inert"
     - "CSP or framework escaping blocks execution of the injected marker"
 ---
+
+> **Activation-strength rule (load-bearing).** A render/rich-output surface being *present* is **weak**:
+> most such pipelines sanitize, so the prior is "inert until proven otherwise." Escalate to **strong**
+> ONLY with a sink-danger tell — an unsafe sink (dangerouslySetInnerHTML, raw template/SQL builder,
+> executor), a known sanitizer bypass, an active-HTML allowance, or a confirmed execution route. This
+> keeps the harness skeptical: "output is rendered" is not, by itself, a strong signal.
 
 # Sink trusts an upstream sanitizer
 
