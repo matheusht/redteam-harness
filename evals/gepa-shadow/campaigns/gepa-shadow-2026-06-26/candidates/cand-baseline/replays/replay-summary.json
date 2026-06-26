@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-baseline",
+  "phase3_verdict": "probe",
+  "verdict": "probe",
+  "stable": true,
+  "policy_ok": true,
+  "protected_stable": true,
+  "coverage_stable": true,
+  "cost_variance": {
+    "runs": [
+      5.0,
+      5.0,
+      5.0
+    ],
+    "min": 5.0,
+    "max": 5.0,
+    "spread": 0.0,
+    "mean": 5.0
+  },
+  "runs": 3,
+  "reasons": []
+}

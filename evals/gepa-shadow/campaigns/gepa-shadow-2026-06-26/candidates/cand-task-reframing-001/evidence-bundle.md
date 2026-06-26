@@ -28,3 +28,11 @@ construction — the value proven now is that the gate + scorer + report path ru
 - touches only `skills/techniques/task-reframing/` → passes the single-mutation / allowlist check
 - touches no immutable file → passes the scope fence
 - budget unchanged, evidence bundle present, diff hash matches → ALLOW
+
+## Replay (Phase 4)
+
+Replay artifacts: `replays/primary.json`, `replays/replay-1.json`, `replays/replay-2.json`,
+`replays/replay-summary.json`. Primary + two fresh-session replays at identical benchmark version and
+budget. Shadow mode is deterministic, so the replays are identical reproductions (cost spread 0) and
+the result is replay-stable. Final verdict after the replay gate: **probe** (eligible, not better —
+no model-generated delta yet).

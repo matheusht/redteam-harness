@@ -1,0 +1,26 @@
+{
+  "run_id": "replay-1",
+  "session_id": "cand-new-output-anchored-review-session-1",
+  "fresh_session": true,
+  "benchmark_version": "bench-849b7a9ff86e",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "clean_confirmed_coverage": [
+    "hermetic:bola-legacy-route",
+    "routing:case-2026-06-b2b-agentic-chat",
+    "routing:synthetic-negative-controls"
+  ],
+  "protected_cases": {
+    "routing:case-2026-06-b2b-agentic-chat": true,
+    "routing:synthetic-negative-controls": true,
+    "hermetic:bola-legacy-route": true,
+    "false-discovery": true
+  },
+  "cost": {
+    "model_calls": 0,
+    "target_calls": 5
+  }
+}

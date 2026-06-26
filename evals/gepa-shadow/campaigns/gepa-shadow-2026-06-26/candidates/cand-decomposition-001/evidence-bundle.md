@@ -25,3 +25,9 @@ Phase 2; behavioral evaluation is Phase 3+.
 - touches only `skills/techniques/decomposition/` → single-mutation / allowlist ok
 - no immutable file → scope fence ok
 - budget unchanged, bundle present, diff hash matches → ALLOW
+
+## Replay (Phase 4)
+
+Replay artifacts under `replays/` (primary + two fresh-session replays + `replay-summary.json`), at
+identical benchmark version and budget. Deterministic shadow benchmark → identical reproductions, cost
+spread 0, replay-stable. Final verdict after the replay gate: **probe**.

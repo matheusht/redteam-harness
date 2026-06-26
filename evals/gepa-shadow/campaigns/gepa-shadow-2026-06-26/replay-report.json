@@ -1,0 +1,40 @@
+{
+  "campaign_id": "gepa-shadow-2026-06-26",
+  "benchmark_version": "bench-849b7a9ff86e",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-decomposition-001",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-invalid-edits-gold",
+      "final_verdict": "block",
+      "note": "blocked at contract gate; no replay"
+    },
+    {
+      "candidate_id": "cand-new-output-anchored-review",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-task-reframing-001",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    }
+  ]
+}
