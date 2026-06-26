@@ -57,9 +57,12 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       a blind orchestrator/evaluator driver that feeds real subagent outputs through the frozen scorers
       and emits a single QUALIFIED/BLOCKED verdict (QUALIFIED ⇒ all routing dims PASS AND invalid-accept
       rate 0). Adapter + contract + briefs + crosswalk + self-test landed; CI runs the self-test.
-      **First live blind run captured** (`runs/2026-06-25/`): evaluator FP discipline PASS (0/8 invalid
-      accepts), routing BLOCKED on two activation-recall cells (render-strength over-rated weak→strong;
-      a3 selector cross-link dropped). Honest BLOCKED — gold/router NOT edited to manufacture a pass.
+      **Live blind runs captured** (`runs/2026-06-25{,b,c}/`): run 1 BLOCKED → three **card** clarifications
+      (render presence = weak; legacy↔selector co-activation; selector activation-vs-adjudication) →
+      run c **QUALIFIED** (both routing cases PASS, evaluator 0/8 invalid accepts). **Gold never edited** —
+      every fix was a generalizable Plane-1 card clarification surfaced by a blind run. QUALIFIED on two
+      cases is necessary-not-sufficient; rotate a fresh sanitized case before declaring routing broadly
+      qualified (candidate source under evaluation: sanitized web-CTF archetypes).
 - [x] **Cost/budget accounting** — `run_cost` on findings; `tools/run-hermetic-bola.py` emits a per-run
       target-call/budget ledger so "equal coverage at ≥10% lower cost" becomes measurable.
 - [x] **Adversarial candidate corpus (prepared, not launched)** — `fixtures/adversarial-candidates/`:

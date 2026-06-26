@@ -13,7 +13,7 @@ routes_to: ["vulns/broken-object-level-authz", "vulns/llm06-excessive-agency"]
 
 activation:
   strong:
-    - "a request param or body field names an owner/user/account/tenant/org id that is NOT the session principal (e.g. ownerId, userId, accountId, tenantId, companyId in the body/query)"
+    - "a request param or body field that NAMES A SELECTOR of whose data/permissions apply is PRESENT (ownerId, userId, accountId, tenantId, companyId in the body/query) — presence alone is strong; you do NOT need to have already shown it differs from the principal"
     - "the same endpoint behaves differently with the selector present vs absent (present → it scopes the read to that id; absent → it falls back to the caller)"
     - "a sibling/newer version of the same endpoint DOES validate the selector (its mere existence says the team knows it needs validating — see pattern.legacy-route-differential)"
   weak:
@@ -25,6 +25,12 @@ activation:
 ---
 
 # Client-supplied selector trusted for authorization
+
+> **Activation vs adjudication (load-bearing).** Activation keys on the selector field being *present*
+> and *functioning* as a chooser of whose data/permissions apply — that is **strong**, on sight.
+> Whether it actually differs from the principal, or is safely re-resolved server-side, is the
+> **adjudication** question (held vs exploited), decided later with controls — NOT a precondition for
+> a strong activation. Guilty until the server is shown to re-resolve it.
 
 **Idea.** The server lets the client say *whose* data to act on, then acts on it without proving the
 caller is allowed to. The authenticated principal is the source of truth for authorization; the

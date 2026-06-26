@@ -16,7 +16,7 @@ activation:
     - "versioned route pairs for the same resource (/v1 vs /v2, /api vs /internal, legacy vs new)"
     - "a guard / validation call present in one handler and absent in its sibling for the same action"
     - "the frontend calls the new route, but the old one is still mounted and responds"
-    - "a legacy/older endpoint honors a client-supplied owner/tenant selector while the canonical sibling DENIES the same actor for the same object (the guard was added to the canonical version and never back-ported)"
+    - "a legacy/older endpoint honors a client-supplied owner/tenant selector while the canonical sibling DENIES the same actor for the same object (the guard was added to the canonical version and never back-ported) — CO-ACTIVATE pattern.client-supplied-selector-authz"
   weak:
     - "method variants on the same path that branch into different handlers (GET vs POST, query vs body)"
     - "a route named with a deprecation hint (legacy, old, compat, v0) that still answers"
@@ -26,6 +26,11 @@ activation:
 ---
 
 # Legacy / sibling route enforces differently
+
+> **Co-activation rule.** When the differential is *driven by* a client-controlled owner / tenant /
+> resource selector (the legacy route trusts the selector, the canonical one re-resolves it), this card
+> and `pattern.client-supplied-selector-authz` fire **together** — co-activate both, don't pick one.
+> The route is the delivery mechanism; the selector is the trust bug.
 
 **Idea.** Authorization that lives at the *route perimeter* gets duplicated per version, and one copy
 drifts. The new route gets the guard; the old route keeps serving the unguarded path the team thinks
