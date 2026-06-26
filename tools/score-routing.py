@@ -54,6 +54,14 @@ def score(gold, out):
     stubs = [r for r in out.get("loaded_routes", []) if str(r).startswith("stub:")]
     dims["stub_safety"] = (not stubs if gold.get("stub_routes_forbidden") else True, stubs)
 
+    gaps_expected = set(gold.get("coverage_gaps", []))
+    if gaps_expected:
+        flagged = set(out.get("coverage_gaps", []))
+        forced = sorted(k for k in gaps_expected if got.get(k) and got[k][0] and got[k][1] == "strong")
+        missed = sorted(gaps_expected - flagged)
+        gap_ok = not missed and not forced
+        dims["coverage_honesty"] = (gap_ok, {"unflagged": missed, "force_fit_strong": forced} if not gap_ok else [])
+
     if gold.get("must_not_confirm_blind"):
         confirmed = [c for c, v in verdicts.items() if v == "confirmed"]
         dims["no_blind_confirm"] = (not confirmed, confirmed)

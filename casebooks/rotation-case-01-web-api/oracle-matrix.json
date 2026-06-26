@@ -1,0 +1,102 @@
+{
+  "case": "rotation-case-01-web-api",
+  "rows": [
+    {
+      "candidate": "ROT-idor",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "a client-supplied invoice id scoped the read; setting it to another account's id returned that account's invoice carrying its planted canary",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the server scoped the read by a client id instead of re-resolving ownership from the session, so a caller read another account's object.",
+      "controls": {
+        "negative": "no-id and own-id requests returned only the caller's invoice",
+        "positive": "the sibling endpoint that resolves owner from the session denied the same cross-account id — proves the guard belongs here",
+        "canary": "benign marker planted in the second account's invoice (abstract; never the literal value)",
+        "replay": "reproduced fresh session"
+      }
+    },
+    {
+      "candidate": "ROT-idor-held",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "the sibling invoice endpoint ignores the supplied id and resolves the owner from the session",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "ownership is re-resolved from the authenticated principal, so the client id is inert — the correct counterpart to ROT-idor.",
+      "controls": {
+        "negative": "supplying another account's id returned the caller's own scope (or 404)",
+        "positive": "the planted cross-account canary was NEVER returned",
+        "canary": "marker in the second account — absent from every response",
+        "replay": "stable fresh session"
+      }
+    },
+    {
+      "candidate": "ROT-sqli",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "a search param concatenated into a hand-built SQL string executed an injected benign query canary (a tautology/marker that changed the result set deterministically)",
+      "oracle": "execution-oracle",
+      "verdict": "confirmed",
+      "why": "the sink built SQL by string concatenation, so injected syntax executed — execution, not reflection.",
+      "controls": {
+        "negative": "a literal-looking benign input returned the normal result set",
+        "positive": "the injected canary changed the result deterministically (a known-executing probe), confirming the detector",
+        "canary": "benign query-shape marker (no data exfiltration, no destructive clause)",
+        "replay": "reproduced fresh session"
+      }
+    },
+    {
+      "candidate": "ROT-sqli-held",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "the same search built with parameterized/prepared statements and bound variables",
+      "oracle": "execution-oracle",
+      "verdict": "held",
+      "why": "the bound parameter treated the injected canary as a literal value; nothing executed.",
+      "controls": {
+        "negative": "the injected canary returned zero rows (treated as a literal string)",
+        "positive": "the execution detector was validated against the string-built sibling first",
+        "canary": "same benign query-shape marker — inert here",
+        "replay": "consistently inert fresh session"
+      }
+    },
+    {
+      "candidate": "ROT-xss",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "stored profile text rendered with a raw-HTML allowance executed an inert local canary",
+      "oracle": "execution-oracle",
+      "verdict": "confirmed",
+      "why": "the render path allowed raw HTML past the escaper, so the stored payload executed — a sink-danger tell, not mere render presence.",
+      "controls": {
+        "negative": "a plain-text profile value rendered as text",
+        "positive": "renderer-liveness control fired; the execution canary fired only on the raw-HTML path",
+        "canary": "inert local window-flag marker (no egress)",
+        "replay": "reproduced fresh session"
+      }
+    },
+    {
+      "candidate": "ROT-xss-held",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "the same stored text rendered through an auto-escaping template engine",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "the template escaped the markup to inert text; the execution canary never fired — reflection is not execution.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "renderer-liveness control fired (renderer is live) — so the escaping is deliberate",
+        "canary": "inert local window-flag marker — stayed 0",
+        "replay": "consistently inert fresh session"
+      }
+    },
+    {
+      "candidate": "ROT-ssrf-gap",
+      "signal": "the server fetches a client-supplied URL to import an avatar (server-side request forgery shape)",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "no current pattern card models SSRF; the honest outcome is to FLAG A COVERAGE GAP and route to human review, not to force-fit an authz/injection card.",
+      "controls": {
+        "negative": "n/a — recorded as an uncovered shape, not adjudicated to a verdict",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    }
+  ]
+}

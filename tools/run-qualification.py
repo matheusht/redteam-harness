@@ -51,9 +51,10 @@ SFD = _mod("score_false_discovery", "score-false-discovery.py")
 
 def gold_by_case():
     out = {}
-    for fn in ("case-a.gold.json", "case-b.gold.json"):
-        g = load(os.path.join(GOLD_DIR, fn))
-        out[g["case"]] = g
+    for fn in sorted(os.listdir(GOLD_DIR)):
+        if fn.endswith(".gold.json"):
+            g = load(os.path.join(GOLD_DIR, fn))
+            out[g["case"]] = g
     return out
 
 
@@ -98,8 +99,9 @@ def translate(orch, crosswalk):
             held.append(key)
         rv[r["id"]] = r.get("default_verdict")
     verdicts = [{"candidate": cand, "verdict": rv.get(rid)} for cand, rid in cwc.get("must_refute", {}).items()]
+    gaps = [rowmap[r["id"]] for r in orch["rows"] if r.get("coverage_gap") and rowmap.get(r["id"])]
     return {"case": orch["case"], "activations": activations, "held": held, "verdicts": verdicts,
-            "loaded_routes": orch.get("loaded_routes", [])}
+            "loaded_routes": orch.get("loaded_routes", []), "coverage_gaps": gaps}
 
 
 def qualify(orchestrator_outputs, evaluator_output):

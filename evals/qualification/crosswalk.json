@@ -21,5 +21,16 @@
       "b4": "model-output-rendered"
     },
     "must_refute": { "S1": "b4" }
+  },
+  "rotation-case-01-web-api": {
+    "rows": {
+      "r1": "invoice-id-selector",
+      "r2": "owner-from-session",
+      "r3": "sql-string-builder",
+      "r4": "sql-parameterized",
+      "r5": "profile-render-escaped",
+      "r6": "ssrf-fetch"
+    },
+    "must_refute": { "C-render-escaped": "r5" }
   }
 }

@@ -60,9 +60,13 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       **Live blind runs captured** (`runs/2026-06-25{,b,c}/`): run 1 BLOCKED → three **card** clarifications
       (render presence = weak; legacy↔selector co-activation; selector activation-vs-adjudication) →
       run c **QUALIFIED** (both routing cases PASS, evaluator 0/8 invalid accepts). **Gold never edited** —
-      every fix was a generalizable Plane-1 card clarification surfaced by a blind run. QUALIFIED on two
-      cases is necessary-not-sufficient; rotate a fresh sanitized case before declaring routing broadly
-      qualified (candidate source under evaluation: sanitized web-CTF archetypes).
+      every fix was a generalizable Plane-1 card clarification surfaced by a blind run.
+- [x] **Rotation case** (`casebooks/rotation-case-01-web-api/`, `runs/2026-06-25-rotation01/`): a fresh
+      web/API surface (billing/profile; seeded from sanitized web archetypes, csivitu/ctf-challenges MIT,
+      nothing vendored), routed blind by a **Sonnet** router → **QUALIFIED**. Generalized the same two
+      cards to a new surface, recognized held siblings, refused an escaped render, and honestly flagged an
+      **SSRF coverage gap** (new `coverage_honesty` scorer dimension) instead of force-fitting a card.
+      Routing now qualified on TWO surfaces. **Open coverage gap:** no SSRF pattern card (candidate next).
 - [x] **Cost/budget accounting** — `run_cost` on findings; `tools/run-hermetic-bola.py` emits a per-run
       target-call/budget ledger so "equal coverage at ≥10% lower cost" becomes measurable.
 - [x] **Adversarial candidate corpus (prepared, not launched)** — `fixtures/adversarial-candidates/`:
