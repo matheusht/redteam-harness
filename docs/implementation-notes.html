@@ -203,6 +203,79 @@
       not a full JSON-Schema validator; deeper schema validation stays Phase 2.5. Run it with
       <code>python3 tools/check-conformance.py</code>.</p>
 
+    <h2>GEPA autoresearch — Phase 3 (keep/discard) <span class="tag t-dec">rev 4 · 2026-06-26</span></h2>
+    <p>Implementing <code>docs/gepa-autoresearch-implementation-plan.md</code> Phases 3–4. Phases 0–2
+      landed earlier (commits <code>1c7d4ab</code> docs/roadmap, <code>b4b8b4a</code> campaign/candidate
+      contracts + gate, <code>6fcc780</code> shadow runner). This section is the running record for the
+      scoring policy and the replay gate.</p>
+
+    <div class="open" style="border-left-color:var(--green);background:#dce8df">
+      <b style="color:var(--green)">The framing that colors all of Phases 3–4.</b> Shadow mode has
+      <em>no model in the loop yet</em>. With no GEPA-generated behavioral change to measure, every
+      gate-passing candidate reproduces the incumbent scoreboard — so the honest verdict is
+      <code>probe</code> (eligible, not better) and replays are trivially stable. The machinery is proven;
+      a winning candidate is not claimed. Real deltas arrive when the GEPA adapter is wired (post-Phase-5).
+    </div>
+
+    <h3>Acceptance, mapped to evidence</h3>
+    <table>
+      <thead><tr><th>Spec acceptance</th><th>Enforced where</th></tr></thead>
+      <tbody>
+        <tr><td>False-discovery regression is always <code>block</code></td><td><code>score-candidate.decide()</code> hard veto on <code>false_discovery_rate&gt;0</code>; self-test "FDR regression → block even with new coverage"</td></tr>
+        <tr><td>Duplicate coverage does not count</td><td><code>new_distinct = candidate_cov − incumbent_cov</code> (set diff on dedup keys); self-test "duplicate coverage, no cost win → probe"</td></tr>
+        <tr><td>Equal coverage, &lt;10% cost cut → not accepted</td><td>cost-only win needs <code>reduction_pct≥10</code>; self-tests at 5% (probe) and 12% (allow)</td></tr>
+        <tr><td>Mechanical failure not overridable by an LLM judge</td><td><code>judge_note</code> recorded but never read by <code>decide()</code>; self-test "conformance fail + glowing judge note → still block"</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Design decisions <span class="tag t-dec">spec ambiguous</span></h3>
+    <ul>
+      <li><b>Coverage = set of <code>dedup_key</code> strings.</b> The plan says "distinct clean confirmed
+        coverage case" without fixing a representation. I used the dedup_key space
+        <code>finding.schema.json</code> already defines, so "distinct" is a literal set difference and
+        duplicate coverage contributes zero. Novelty is therefore only as good as dedup_key quality.</li>
+      <li><b>Cost = <code>model_calls + target_calls</code>, equal weight.</b> "Reduce cost by ≥10%" named
+        no unit. I used the call-count ledger already in the evidence contract's <code>run_cost</code>;
+        it is stable and model-independent. Tokens stay recorded but are excluded from the ratio.</li>
+      <li><b>"discard or return probe" → always <code>probe</code>.</b> An eligible-but-not-better candidate
+        is kept as <code>probe</code>, never silently discarded; discard is a human action in PR review.</li>
+      <li><b>Shadow eligibility flags derived from the gate.</b> For a gate-passing shadow candidate,
+        <code>conformance_passed / evidence_contract_complete / budget_unchanged / single_mutation</code>
+        are set true — the contract gate already enforces budget/single-mutation/bundle, and the tree is
+        conformance-green in CI. Must be sourced per-candidate once a model generates real diffs (see Q).</li>
+    </ul>
+
+    <h3>Deviations <span class="tag t-dev">intentional</span></h3>
+    <ul>
+      <li><b>Block strictly dominates utility.</b> Every eligibility veto is computed <em>before</em> the
+        utility rule and short-circuits to <code>block</code> even when the candidate also adds coverage.
+        Faithful reading of "mechanical failures cannot be overridden," but stricter than the bare utility text.</li>
+      <li><b><code>score-candidate</code> integrated into the shadow runner.</b> The plan lists it standalone;
+        I also wired it into <code>run-gepa-shadow.py</code> so the report shows a live keep/discard verdict
+        per candidate. The pure function stays independently testable; the integration is additive.</li>
+    </ul>
+
+    <h3>Tradeoffs <span class="tag t-trd">alternatives</span></h3>
+    <table>
+      <thead><tr><th>Choice</th><th>Picked</th><th>Rejected</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Coverage novelty</td><td>Deterministic set-diff on dedup keys</td><td>LLM "is this really new?" judge</td><td>CI-runnable and un-gameable; cost is dedup_key-quality sensitivity, not policy risk.</td></tr>
+        <tr><td>Cost unit</td><td>Call-count</td><td>Token-count</td><td>Calls are coarse but stable run-to-run; tokens are noisy + model-dependent. Tokens stay in the ledger for humans.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
+    <div class="open"><b>Q-cost.</b> Is <code>model_calls + target_calls</code> at equal weight the cost you
+      want for the 10% rule, or should target calls be weighted differently / tokens included? Is 10% the bar?</div>
+    <div class="open"><b>Q-probe.</b> Are probed candidates retained indefinitely for inspection, or
+      garbage-collected after N campaigns?</div>
+    <div class="open"><b>Q-eligibility.</b> In a non-shadow run, should <code>conformance_passed</code> come
+      from re-running <code>check-conformance.py</code> against the applied diff in an isolated
+      branch/worktree? That's my assumption, not yet built.</div>
+
+    <h2>GEPA autoresearch — Phase 4 (replay &amp; variance) <span class="tag t-q">in progress</span></h2>
+    <p style="color:var(--muted)">Notes land here as the phase is implemented.</p>
+
     <footer>implementation-notes.html · running log · self-contained, no runtime deps</footer>
   </main>
 </body>

@@ -54,6 +54,12 @@
         }
       },
       "coverage_delta_vs_baseline": 0,
+      "keep_discard": {
+        "verdict": "probe",
+        "reasons": [
+          "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+        ]
+      },
       "promoted": false
     },
     {
@@ -86,6 +92,12 @@
         }
       },
       "coverage_delta_vs_baseline": 0,
+      "keep_discard": {
+        "verdict": "probe",
+        "reasons": [
+          "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+        ]
+      },
       "promoted": false
     },
     {
@@ -99,6 +111,12 @@
       ],
       "scored": null,
       "coverage_delta_vs_baseline": null,
+      "keep_discard": {
+        "verdict": "block",
+        "reasons": [
+          "blocked at contract gate"
+        ]
+      },
       "promoted": false
     },
     {
@@ -131,6 +149,12 @@
         }
       },
       "coverage_delta_vs_baseline": 0,
+      "keep_discard": {
+        "verdict": "probe",
+        "reasons": [
+          "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+        ]
+      },
       "promoted": false
     },
     {
@@ -163,6 +187,12 @@
         }
       },
       "coverage_delta_vs_baseline": 0,
+      "keep_discard": {
+        "verdict": "probe",
+        "reasons": [
+          "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+        ]
+      },
       "promoted": false
     }
   ],

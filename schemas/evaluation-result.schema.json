@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evaluation-result",
+  "description": "The mechanical keep/discard decision for one GEPA candidate vs the incumbent (GEPA Phase 3). Eligibility gates are hard vetoes — any failure forces 'block' and no LLM judge note can override it. Only an eligible candidate reaches the utility rule: it is 'allow' if it adds at least one distinct clean confirmed coverage case, or preserves coverage at >=10% lower cost; otherwise 'probe'. Produced by tools/score-candidate.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidate_id", "campaign_id", "eligibility", "coverage", "cost", "verdict", "reasons"],
+  "properties": {
+    "candidate_id": { "type": "string" },
+    "campaign_id": { "type": "string" },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conformance_passed", "false_discovery_zero", "no_protected_regression", "evidence_contract_complete", "budget_unchanged", "single_mutation"],
+      "description": "Every flag must be true for the candidate to be eligible; any false forces verdict=block.",
+      "properties": {
+        "conformance_passed": { "type": "boolean" },
+        "false_discovery_zero": { "type": "boolean", "description": "candidate invalid_accept_rate == 0; a regression here is a hard veto" },
+        "no_protected_regression": { "type": "boolean", "description": "every case the incumbent passed, the candidate still passes" },
+        "evidence_contract_complete": { "type": "boolean" },
+        "budget_unchanged": { "type": "boolean" },
+        "single_mutation": { "type": "boolean", "description": "candidate mutates only its one declared component" }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incumbent", "candidate", "new_distinct", "lost"],
+      "description": "clean_confirmed_coverage keys (dedup_key space). new_distinct counts only keys the incumbent did NOT already cover — duplicate coverage does not count.",
+      "properties": {
+        "incumbent": { "type": "array", "items": { "type": "string" } },
+        "candidate": { "type": "array", "items": { "type": "string" } },
+        "new_distinct": { "type": "array", "items": { "type": "string" } },
+        "lost": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incumbent", "candidate", "reduction_pct"],
+      "properties": {
+        "incumbent": { "type": "number", "minimum": 0 },
+        "candidate": { "type": "number", "minimum": 0 },
+        "reduction_pct": { "type": ["number", "null"], "description": "percent cheaper than incumbent; >=10 required for a cost-only win" }
+      }
+    },
+    "verdict": { "enum": ["allow", "block", "probe"] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "judge_note": { "type": ["string", "null"], "description": "ADVISORY ONLY. Recorded for the human reviewer; it can never change the mechanical verdict (a mechanical failure cannot be overridden by an LLM judge)." }
+  }
+}

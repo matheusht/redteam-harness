@@ -21,6 +21,8 @@ jobs:
         run: python3 tools/hash-campaign-inputs.py --self-test
       - name: GEPA shadow runner (self-test)
         run: python3 tools/run-gepa-shadow.py --self-test
+      - name: Keep/discard candidate policy (self-test)
+        run: python3 tools/score-candidate.py --self-test
       - name: First shadow campaign frozen-input integrity
         run: python3 tools/hash-campaign-inputs.py --check evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/campaign-manifest.json
       - name: Mechanical routing scorer (self-test)

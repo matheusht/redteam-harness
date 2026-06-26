@@ -54,6 +54,7 @@ def _mod(name, filename):
 CC = _mod("check_campaign", "check-campaign.py")
 RQ = _mod("run_qualification", "run-qualification.py")
 HB = _mod("run_hermetic_bola", "run-hermetic-bola.py")
+SC = _mod("score_candidate", "score-candidate.py")
 
 
 def baseline_scoreboard():
@@ -79,6 +80,41 @@ def baseline_scoreboard():
     }
 
 
+def _coverage_keys(sb):
+    keys = [f"routing:{c['case']}" for c in sb["routing"] if c["passed"]]
+    if sb["hermetic_bola"]["passed"]:
+        keys.append("hermetic:bola-legacy-route")
+    return sorted(keys)
+
+
+def _protected(sb):
+    p = {f"routing:{c['case']}": c["passed"] for c in sb["routing"]}
+    p["hermetic:bola-legacy-route"] = sb["hermetic_bola"]["passed"]
+    p["false-discovery"] = sb["false_discovery"]["passed"]
+    return p
+
+
+def _cost_of(sb):
+    return {"model_calls": 0, "target_calls": sb["hermetic_bola"]["target_calls"]}
+
+
+def incumbent_eval(sb):
+    return {"clean_confirmed_coverage": _coverage_keys(sb), "protected_cases": _protected(sb), "cost": _cost_of(sb)}
+
+
+def candidate_eval(cand, sb):
+    """Shadow candidate eval: no model in the loop yet, so it reproduces the incumbent scoreboard.
+    Gate-passing means single-mutation/budget/contract are already satisfied."""
+    return {
+        "candidate_id": cand.get("candidate_id"), "campaign_id": cand.get("campaign_id"),
+        "conformance_passed": True,
+        "false_discovery_rate": sb["false_discovery"]["invalid_accept_rate"],
+        "evidence_contract_complete": True, "budget_unchanged": True, "single_mutation": True,
+        "clean_confirmed_coverage": _coverage_keys(sb),
+        "protected_cases": _protected(sb), "cost": _cost_of(sb),
+    }
+
+
 def evaluate_campaign(campaign, candidates, root, scoreboard):
     results = []
     for cand in candidates:
@@ -91,11 +127,14 @@ def evaluate_campaign(campaign, candidates, root, scoreboard):
             "gate_reasons": reasons,
             "scored": None,
             "coverage_delta_vs_baseline": None,
+            "keep_discard": {"verdict": "block", "reasons": ["blocked at contract gate"]},
             "promoted": False,
         }
         if verdict == "allow":
             entry["scored"] = scoreboard
             entry["coverage_delta_vs_baseline"] = 0
+            kd = SC.decide(incumbent_eval(scoreboard), candidate_eval(cand, scoreboard))
+            entry["keep_discard"] = {"verdict": kd["verdict"], "reasons": kd["reasons"]}
         results.append(entry)
     return {
         "campaign_id": campaign.get("campaign_id"),
@@ -138,19 +177,31 @@ def render_md(report):
         "",
         "## Candidates",
         "",
-        "| candidate | track | gate | scored | Δcoverage | promoted |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| candidate | track | gate | scored | Δcoverage | keep/discard | promoted |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in report["candidates"]:
         scored = "QUALIFIED" if r["scored"] and r["scored"]["routing_qualified"] else ("—" if not r["scored"] else "scored")
         delta = "—" if r["coverage_delta_vs_baseline"] is None else str(r["coverage_delta_vs_baseline"])
-        lines.append(f"| {r['candidate_id']} | {r['track']} | {r['gate'].upper()} | {scored} | {delta} | {r['promoted']} |")
+        kd = r["keep_discard"]["verdict"].upper()
+        lines.append(f"| {r['candidate_id']} | {r['track']} | {r['gate'].upper()} | {scored} | {delta} | {kd} | {r['promoted']} |")
     blocked = [r for r in report["candidates"] if r["gate"] == "block"]
     if blocked:
         lines += ["", "## Blocked at the contract gate (retained, never promoted)"]
         for r in blocked:
             lines.append(f"- **{r['candidate_id']}**: " + "; ".join(r["gate_reasons"]))
-    lines += ["", f"_allowed: {len(report['allowed'])} · blocked: {len(report['blocked'])} · promoted: 0_", ""]
+    kd_counts = {}
+    for r in report["candidates"]:
+        v = r["keep_discard"]["verdict"]
+        kd_counts[v] = kd_counts.get(v, 0) + 1
+    kd_str = " · ".join(f"{k}: {kd_counts[k]}" for k in sorted(kd_counts))
+    lines += ["", "## Keep/discard policy (Phase 3)",
+              "Mechanical: eligibility gates are hard vetoes; an eligible candidate is `allow` only if it "
+              "adds a distinct clean confirmed coverage case or preserves coverage at >=10% lower cost. In "
+              "shadow mode every gate-passing candidate reproduces the incumbent scoreboard, so it is "
+              "`probe` (eligible, not better) — exactly right until a model generates a real behavioral delta.",
+              "", f"_keep/discard: {kd_str}_",
+              "", f"_allowed: {len(report['allowed'])} · blocked: {len(report['blocked'])} · promoted: 0_", ""]
     return "\n".join(lines)
 
 

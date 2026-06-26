@@ -24,7 +24,13 @@ campaigns/<campaign-id>/
   changes, frozen-input drift, diff-hash tamper, and missing bundles. A no-op baseline is an allowed control.
 - `tools/hash-campaign-inputs.py` — freeze a campaign's `frozen_inputs`, or `--check` a manifest for drift.
 - `tools/run-gepa-shadow.py` — gate every candidate, run the gate-passing ones through the frozen
-  scorers (`run-qualification.py` + `run-hermetic-bola.py`), write the report. `--campaign <manifest>`.
+  scorers (`run-qualification.py` + `run-hermetic-bola.py`), apply the keep/discard policy, write the
+  report. `--campaign <manifest>`.
+- `tools/score-candidate.py` — the keep/discard policy (Phase 3). Eligibility gates (conformance,
+  zero false-discovery, no protected regression, complete evidence contract, unchanged budget, single
+  mutation) are hard vetoes → `block`. An eligible candidate is `allow` only if it adds a distinct
+  clean confirmed coverage case or preserves coverage at ≥10% lower cost; otherwise `probe`. A
+  `judge_note` is advisory and can never override the mechanical verdict.
 
 ## Shadow honesty
 
