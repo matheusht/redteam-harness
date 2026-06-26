@@ -23,6 +23,7 @@ import importlib.util
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 
@@ -51,7 +52,28 @@ CONF = _mod("check_conformance", "check-conformance.py")
 
 BUNDLE_REQUIRED = ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff",
                    "scores", "false_discovery", "cost_comparison", "redaction_report",
-                   "review_checklist", "verdict"]
+                   "review_checklist", "verdict", "pinned"]
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _benchmark_version(campaign):
+    blob = "".join(sorted(spec["sha256"] for spec in campaign.get("frozen_inputs", {}).values()))
+    return "bench-" + hashlib.sha256(blob.encode()).hexdigest()[:12]
+
+
+def _head_commit():
+    try:
+        return subprocess.check_output(["git", "-C", ROOT, "rev-parse", "HEAD"],
+                                       stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:
+        return None
 
 
 def redaction_hits(texts):
@@ -68,7 +90,7 @@ def _sha256_text(text):
 
 
 def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, replay_summary,
-                 diff_text, bundle_text, paths):
+                 diff_text, bundle_text, paths, pinned):
     """Pure: returns (bundle_dict, promotable, redaction_list). No disk I/O."""
     phase3 = report_candidate["keep_discard"]["verdict"]
     final = replay_summary["verdict"] if replay_summary else phase3
@@ -111,9 +133,41 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         "redaction_report": {"scanned": True, "secret_hits": redaction},
         "review_checklist": checklist,
         "verdict": final,
+        "pinned": pinned,
     }
     promotable = (final == "allow") and redaction_clean
     return bundle, promotable, redaction
+
+
+def verify_drift(bundle, root):
+    """Re-hash the pinned inputs against the tree; return a list of drifts (empty == intact)."""
+    drifts = []
+    pinned = bundle.get("pinned", {})
+    cm = os.path.join(root, bundle["campaign_manifest"])
+    if not os.path.isfile(cm):
+        drifts.append(f"campaign manifest missing: {bundle['campaign_manifest']}")
+    elif sha256_file(cm) != pinned.get("campaign_manifest_hash"):
+        drifts.append("campaign manifest hash drifted")
+    dm = os.path.join(root, bundle["candidate_manifest"])
+    if not os.path.isfile(dm):
+        drifts.append(f"candidate manifest missing: {bundle['candidate_manifest']}")
+    elif sha256_file(dm) != pinned.get("candidate_manifest_hash"):
+        drifts.append("candidate manifest hash drifted")
+    campaign = load(cm) if os.path.isfile(cm) else {"frozen_inputs": {}}
+    fi = campaign.get("frozen_inputs", {})
+    for name, want in pinned.get("frozen_input_hashes", {}).items():
+        spec = fi.get(name)
+        if not spec:
+            drifts.append(f"frozen input '{name}' no longer in campaign manifest")
+            continue
+        p = os.path.join(root, spec["path"])
+        if not os.path.isfile(p):
+            drifts.append(f"frozen input '{name}' file missing")
+        elif sha256_file(p) != want:
+            drifts.append(f"frozen input '{name}' drifted ({spec['path']})")
+    if _benchmark_version(campaign) != pinned.get("benchmark_version"):
+        drifts.append("benchmark_version drifted")
+    return drifts
 
 
 def validate_bundle(bundle):
@@ -200,8 +254,15 @@ def render_cli(campaign_path, candidate_id):
     diff_text = read(os.path.join(cand_dir, "candidate.diff"))
     bundle_text = read(os.path.join(cand_dir, "evidence-bundle.md"))
 
+    pinned = {
+        "rendered_at_commit": _head_commit(),
+        "campaign_manifest_hash": sha256_file(campaign_path),
+        "candidate_manifest_hash": sha256_file(os.path.join(cand_dir, "candidate-manifest.json")),
+        "frozen_input_hashes": {name: spec["sha256"] for name, spec in campaign.get("frozen_inputs", {}).items()},
+        "benchmark_version": _benchmark_version(campaign),
+    }
     bundle, promotable, _ = build_bundle(campaign, candidate_manifest, rc, report["baseline_scoreboard"],
-                                         replay_summary, diff_text, bundle_text, paths)
+                                         replay_summary, diff_text, bundle_text, paths, pinned)
     missing = validate_bundle(bundle)
     if missing:
         print(f"bundle invalid, missing: {missing}")
@@ -232,16 +293,18 @@ def self_test():
     rc = {"candidate_id": "c", "keep_discard": {"verdict": "allow"}}
     paths = {"candidate_manifest": "cm.json", "campaign_manifest": "camp.json", "diff": "c.diff",
              "scores": "report.json", "replay_summary": "rs.json"}
+    pinned = {"campaign_manifest_hash": "x", "candidate_manifest_hash": "y",
+              "frozen_input_hashes": {}, "benchmark_version": "bench-0"}
 
     b, promotable, red = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
-                                      diff_text, "# clean bundle\n", paths)
+                                      diff_text, "# clean bundle\n", paths, pinned)
     if not promotable or validate_bundle(b) or b["verdict"] != "allow":
         ok = False; print("[self-test] allow + stable + clean should be promotable & schema-complete")
     else:
         print("[self-test] allow + stable + clean -> promotable: ok")
 
     _, prom_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
-                                    diff_text, "# clean\n", paths)
+                                    diff_text, "# clean\n", paths, pinned)
     if prom_probe:
         ok = False; print("[self-test] probe candidate must NOT be promotable")
     else:
@@ -250,11 +313,32 @@ def self_test():
     secret_diff = diff_text + "Authorization: Bearer abcdef0123456789xyz\n"
     cm2 = dict(cm, candidate_hash=_sha256_text(secret_diff))
     _, prom_secret, red2 = build_bundle(campaign, cm2, rc, scoreboard, {"verdict": "allow", "stable": True},
-                                        secret_diff, "# clean\n", paths)
+                                        secret_diff, "# clean\n", paths, pinned)
     if prom_secret or not red2:
         ok = False; print("[self-test] secret in diff must block promotion via redaction")
     else:
         print("[self-test] secret in diff -> redaction blocks promotion: ok")
+
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "evals"), exist_ok=True)
+        open(os.path.join(d, "evals", "gold.json"), "w").write('{"k":1}\n')
+        gold_hash = sha256_file(os.path.join(d, "evals", "gold.json"))
+        camp = {"campaign_id": "c", "frozen_inputs": {"gold": {"path": "evals/gold.json", "sha256": gold_hash}}}
+        open(os.path.join(d, "campaign.json"), "w").write(json.dumps(camp))
+        open(os.path.join(d, "cand.json"), "w").write('{"candidate_id":"c"}\n')
+        drift_bundle = {
+            "campaign_manifest": "campaign.json", "candidate_manifest": "cand.json",
+            "pinned": {"campaign_manifest_hash": sha256_file(os.path.join(d, "campaign.json")),
+                       "candidate_manifest_hash": sha256_file(os.path.join(d, "cand.json")),
+                       "frozen_input_hashes": {"gold": gold_hash}, "benchmark_version": _benchmark_version(camp)},
+        }
+        if verify_drift(drift_bundle, d):
+            ok = False; print("[self-test] intact bundle reported drift")
+        open(os.path.join(d, "evals", "gold.json"), "w").write('{"k":2}\n')  # tamper the gold
+        if not verify_drift(drift_bundle, d):
+            ok = False; print("[self-test] gold drift not detected")
+        else:
+            print("[self-test] intact -> no drift; tampered gold -> drift blocks: ok")
 
     with tempfile.TemporaryDirectory() as d:
         p = os.path.join(d, "promotion")
@@ -270,9 +354,23 @@ def self_test():
     return 0 if ok else 1
 
 
+def verify_cli(bundle_path):
+    bundle = load(bundle_path)
+    drifts = verify_drift(bundle, ROOT)
+    if drifts:
+        print(f"DRIFT — bundle {bundle.get('candidate_id')} no longer matches the tree; re-render/replay required:")
+        for d in drifts:
+            print(f"  - {d}")
+        return 1
+    print(f"intact — bundle {bundle.get('candidate_id')} pins match the tree")
+    return 0
+
+
 def main(argv):
     if len(argv) == 2 and argv[1] == "--self-test":
         return self_test()
+    if len(argv) == 3 and argv[1] == "--verify":
+        return verify_cli(argv[2])
     camp = cand = None
     i = 1
     while i < len(argv):

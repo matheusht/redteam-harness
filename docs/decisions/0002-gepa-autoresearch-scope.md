@@ -256,3 +256,21 @@ Phase 5 (promotion bundle + PR-only promotion) is the confirmed next slice. The 
 assembles the Phase 3 mechanical verdict, the Phase 4 replay-adjusted verdict, the evidence bundle, the
 candidate diff, the manifest hashes, a redaction report, and a human checklist, and promotes only
 through a reviewed PR.
+
+## Phase 5–6 policy decisions (confirmed 2026-06-26)
+
+| Question | Decision | Notes |
+| --- | --- | --- |
+| CI re-run conformance on the applied PR diff? | **Yes, mandatory** | The promotion bundle is pre-apply evidence; PR CI on the applied branch is post-apply truth. A promotable bundle is necessary but not sufficient. Required PR checks: conformance, scorer self-tests, bundle schema, redaction scan, single-component/touched-file check, no evaluator/oracle/gold/casebook/budget mutation. |
+| Pin frozen-input hashes in the bundle? | **Yes, block on drift** | The bundle pins `rendered_at_commit`, campaign/candidate manifest hashes, `frozen_input_hashes`, and `benchmark_version`. If any drift between render and merge, the PR blocks and requires re-render/replay — otherwise a candidate valid against yesterday's evaluator could merge against today's. |
+| Phase 6 first priority | **Fake-model hermetic targets** | GEPA needs a broader frozen evaluator before any "better" claim is trusted. BOLA is the only hermetic target today. |
+| Fake-model target order | LLM05 render-escape → LLM07 prompt-canary → LLM06 capability-dispatch → model-router differential | LLM05/07 are easiest to make deterministic; LLM06 needs dispatch semantics; router-differential composes backends, so last. |
+| SSRF card now? | **Yes — scoped pattern first**, not an exploit card | `skills/patterns/ssrf-server-side-fetch/`: recognize server-side fetch of client-supplied URLs, route to review/held, benign canary-safe probes only, counterexamples, no payload arsenal. Loopback/metadata fetch review-gated; live external callbacks need explicit scope. |
+| Second rotated case now? | **Yes during Phase 6, not before starting** | Should be AI-agentic/tool-use shaped (tool dispatch vs listing, capability selectors, indirect prompt injection, router inconsistency, output→sink), not another generic web billing case. Required before claiming broad routing maturity. |
+| Real GEPA adapter now? | **No — after benchmark expansion** | GEPA against a shallow frozen eval just produces candidates into a shallow pool. Only allowed Phase-6 GEPA work: keep new hermetic targets on the interfaces the shadow runner already expects. |
+| Docker-heavy targets? | **Avoid for now** | Canned deterministic targets first; dockerized targets reserved for later higher-fidelity replay. |
+
+Phase 6 is built as three slices: **6A** promotion-integrity hardening (applied-diff CI + bundle hash
+pinning + drift block); **6B** fake-model hermetic targets (LLM05/07/06 + router-differential, each with
+confirmed / held / false-positive rows + budget ledger + self-test); **6C** scoped SSRF pattern + routing
+gold + a second agentic rotated case + re-run qualification.

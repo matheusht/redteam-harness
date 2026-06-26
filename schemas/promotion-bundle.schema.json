@@ -4,7 +4,7 @@
   "description": "The review surface assembled when a shadow candidate is proposed for Plane-1 promotion. It carries everything a human needs to approve a PR without re-running the campaign: the diff, both manifests, scorer + replay results, the false-discovery result, a cost comparison, a redaction report, and a human checklist. Promotion is PR-only; this bundle never auto-merges. Rendering is Phase 5; the schema is fixed now so the earlier phases emit compatible artifacts.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff", "scores", "false_discovery", "cost_comparison", "redaction_report", "review_checklist", "verdict"],
+  "required": ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff", "scores", "false_discovery", "cost_comparison", "redaction_report", "review_checklist", "verdict", "pinned"],
   "properties": {
     "candidate_id": { "type": "string" },
     "campaign_id": { "type": "string" },
@@ -58,6 +58,19 @@
         }
       }
     },
-    "verdict": { "enum": ["allow", "block", "probe"], "description": "the keep/discard policy verdict (Phase 3); promotion still requires human PR review" }
+    "verdict": { "enum": ["allow", "block", "probe"], "description": "the replay-adjusted verdict (Phase 3 keep/discard ∧ Phase 4 replay); promotion still requires human PR review" },
+    "pinned": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["campaign_manifest_hash", "candidate_manifest_hash", "frozen_input_hashes", "benchmark_version"],
+      "description": "What this bundle was scored against. PR CI re-hashes these against the tree at merge time; any drift blocks the merge and forces a re-render/replay (a candidate valid against yesterday's evaluator must not merge against today's).",
+      "properties": {
+        "rendered_at_commit": { "type": ["string", "null"], "description": "git HEAD at render time, best-effort" },
+        "campaign_manifest_hash": { "type": "string" },
+        "candidate_manifest_hash": { "type": "string" },
+        "frozen_input_hashes": { "type": "object", "additionalProperties": { "type": "string" }, "description": "logical-name -> sha256, copied from the campaign manifest's frozen_inputs" },
+        "benchmark_version": { "type": "string", "description": "hash of the frozen-input hash set" }
+      }
+    }
   }
 }

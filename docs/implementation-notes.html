@@ -354,6 +354,16 @@
       joins the Phase 3 mechanical verdict and the Phase 4 replay-adjusted verdict with the evidence bundle,
       candidate diff, manifest hashes, redaction report, and human checklist into a reviewed-PR promotion path.</p>
 
+    <h2>GEPA autoresearch — Phase 6A (promotion integrity hardening) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
+    <p>Implements the two confirmed Phase-5 answers. The promotion bundle gained a required
+      <code>pinned</code> block — <code>rendered_at_commit</code>, campaign + candidate manifest hashes,
+      <code>frozen_input_hashes</code>, and <code>benchmark_version</code> — and
+      <code>render-promotion-bundle.py --verify</code> re-hashes them against the tree, exiting non-zero on
+      any drift. CI runs that verify on the committed bundle, and (because the workflow already triggers on
+      <code>pull_request</code>) re-runs full conformance + every self-test on the applied branch. The PR
+      template now lists the post-apply CI gate explicitly. Decision: drift is a hard block — a candidate
+      scored against yesterday's evaluator must never merge against today's.</p>
+
     <h2>GEPA autoresearch — Phase 5 (promotion bundle + PR-only) <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
     <p>Surface built: <code>tools/render-promotion-bundle.py</code> (pure <code>build_bundle()</code> +
       4-case <code>--self-test</code> + a <code>--candidate</code> renderer),
@@ -407,13 +417,14 @@
       </tbody>
     </table>
 
-    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
-    <div class="open"><b>Q-promote-conformance.</b> Before merge, should CI re-run <code>check-conformance.py</code>
-      against the <em>applied</em> diff in the PR branch (the Phase-3 <code>Q-eligibility</code> thread)? My
-      assumption is yes — the promotion bundle proves pre-apply state; the PR branch proves post-apply state.</div>
-    <div class="open"><b>Q-bundle-pin.</b> Should a PROMOTABLE bundle pin the exact frozen-input hashes it
-      was scored against, so a reviewer can detect benchmark drift between bundle render and PR merge? Easy to
-      add (the campaign manifest already carries them); confirm you want it embedded in the bundle.</div>
+    <h3>Open questions — RESOLVED <span class="tag t-dec">rev 6 · 2026-06-26</span></h3>
+    <div class="open" style="border-left-color:var(--green);background:#dce8df"><b style="color:var(--green)">Q-promote-conformance → YES (built in 6A).</b>
+      CI re-runs conformance + all self-tests on the applied PR branch; the bundle is pre-apply evidence,
+      the branch is post-apply truth. A promotable bundle is necessary but not sufficient.</div>
+    <div class="open" style="border-left-color:var(--green);background:#dce8df"><b style="color:var(--green)">Q-bundle-pin → YES (built in 6A).</b>
+      The bundle now carries a required <code>pinned</code> block (campaign/candidate manifest hashes,
+      frozen-input hashes, <code>benchmark_version</code>, render commit). <code>render-promotion-bundle.py
+      --verify</code> re-hashes them and blocks on drift; wired into CI.</div>
 
     <h2>Status — Phases 0–5 complete (shadow) <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
     <p>The full shadow autoresearch chain now exists end to end: contracts &amp; gate (P1) → shadow runner

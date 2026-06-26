@@ -21,6 +21,13 @@ PROMOTABLE (replay-adjusted verdict = allow AND redaction clean).
 - [ ] Diff hash matches `candidate_hash`
 - [ ] Scope fence held: no evaluator / oracle / gold / casebook / budget / schema file touched
 
+### Post-apply CI (mandatory — the bundle is pre-apply evidence, the branch is post-apply truth)
+- [ ] `tools/check-conformance.py` green on the **applied** diff in this branch
+- [ ] Scorer + gate + replay + renderer self-tests green
+- [ ] `render-promotion-bundle.py --verify <bundle>` reports **no drift** (pinned campaign/candidate
+      manifest hashes, frozen-input hashes, and `benchmark_version` still match the tree) — drift blocks
+      the merge and requires a re-render/replay
+
 ### Human review
 - [ ] I read the candidate diff; the change is benign and in scope
 - [ ] The evidence-bundle justification holds

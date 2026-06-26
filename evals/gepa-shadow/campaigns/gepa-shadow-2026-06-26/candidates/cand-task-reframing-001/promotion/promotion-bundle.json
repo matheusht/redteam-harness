@@ -65,5 +65,22 @@
       "checked": false
     }
   ],
-  "verdict": "probe"
+  "verdict": "probe",
+  "pinned": {
+    "rendered_at_commit": "dc7ca674a5b16fb27febbc92d2fa0248eb04becf",
+    "campaign_manifest_hash": "27b3fb1dd04d500237f0c8812704356c88da2d065149cfdfad625da77486503a",
+    "candidate_manifest_hash": "20be38166999cbcec4e6f1b67c853986df6696f2340ebfae8912c36000ffa7a8",
+    "frozen_input_hashes": {
+      "evals:routing:gold:case-a.gold": "245c011a425a849456d07d4c0dfa9706443bcd34de3812c8645cf8d7b4323a4a",
+      "evals:routing:gold:case-b.gold": "d30ce98d015690f8abd9b54c271a24feedcbc44f5854526007239edb00020933",
+      "evals:routing:gold:rotation-01.gold": "81544abdcbf98735e397fd1b9fc307e456ac9acffe0b5874efa96c68c75619c7",
+      "evals:qualification:crosswalk": "14f5e074549a39dd297e5d947774f9422cf1c6392cfedb70ea18f627d5d9f428",
+      "fixtures:false-discovery:corpus": "a9fbc12b1796a5681e43190abb1e2b747e2bca102570dfdc2b480c43078a7f54",
+      "fixtures:adversarial-candidates:corpus": "e7726374ff8f13c69fde8a5f79d946d7aa9bcd7c550d620f13e80254715082f8",
+      "evals:hermetic:targets:bola-legacy-route:target": "7a380c720058f7ec23ed38074f4f2a50e8c6152edb99ade96a3d50320082b6f3",
+      "tools:score-routing": "43725a16e40d59bd9640b417a9d20553af9e46afb6b4141c5337be5286363a6c",
+      "tools:score-false-discovery": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f"
+    },
+    "benchmark_version": "bench-849b7a9ff86e"
+  }
 }
