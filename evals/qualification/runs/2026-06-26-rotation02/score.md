@@ -1,6 +1,6 @@
 # Rotation qualification — rotation-case-02-agentic-tooluse — 2026-06-26 — QUALIFIED
 
-The second rotation gate, **agentic/tool-use** shaped (not Adapta, not the rotation-01 web API). Built
+The second rotation gate, **agentic/tool-use** shaped (not the original live case, not the rotation-01 web API). Built
 to (a) exercise the new `pattern.ssrf-server-side-fetch` card on a fresh surface and (b) stretch the
 router until it finds the next honest coverage gap. Blind **Sonnet** router (Opus main / Sonnet
 sub-reasoning per the project orchestration), reading only `skills/` + `engine/routing.md`.
@@ -60,6 +60,6 @@ in `case.yml#coverage_gaps` and `docs/ROADMAP.md`.
 - Mechanical scoring via `tools/score-routing.py` over the crosswalk-translated output.
 
 ## Boundary
-Routing is now QUALIFIED on **three surfaces** (Adapta agentic-chat + rotation-01 web API + rotation-02
+Routing is now QUALIFIED on **three surfaces** (original agentic-chat case + rotation-01 web API + rotation-02
 agentic tool-use). The SSRF card is exercised; indirect prompt injection is the next honest gap.
 Autoresearch remains blocked on the other Phase-3 preconditions.

@@ -2,7 +2,7 @@
 
 Purpose: give the **signal + adjudication oracles** something real-shaped to calibrate against,
 **without** carrying any client's verbatim system prompt into the portable harness. Derived
-*abstractly* from confirmed prior findings (an Adapta engagement, SR-001/002). **No client secrets,
+*abstractly* from confirmed prior findings (a prior engagement, SR-001/002). **No client secrets,
 no verbatim instructions** — only the *shapes* that distinguish a real leak from a hallucination.
 
 > Chain-of-custody note: the real verbatim ground truth stays in the **engagement** plane

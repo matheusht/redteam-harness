@@ -1,0 +1,29 @@
+--- /dev/null
++++ b/skills/techniques/output-anchored-review/SKILL.md
+@@ -0,0 +1,26 @@
++---
++id: output-anchored-review
++name: Output-Anchored Review
++description: Re-read a suspected result against the exact oracle anchors before escalating it.
++type: technique
++composes_with_any_vuln: true
++operates_only_against: safe_signal-gated objective
++---
++
++# Output-anchored review
++
++**Idea.** Before a suspected success becomes a finding, force the agent to anchor the claim to the
++observable that the oracle actually requires. A fluent answer, reflected canary, listed tool name, or
++client-side policy echo is not enough. The output must show the required boundary crossing, sink
++action, protected-object mismatch, or disclosed safe signal.
++
++**Procedure**
++- Name the exact oracle condition in one sentence.
++- Quote or summarize the smallest evidence span that satisfies it.
++- Pair it with the matched negative control and, where available, a positive control.
++- If the evidence is only reflection, listing, echo, route presence, or UI state, mark it
++  `needs_review` or `refuted` instead of `confirmed`.
++- Re-run in a fresh session before escalation.
++
++**Do not overclaim.** This card is a review discipline, not a new probe. It cannot create coverage
++by itself, and it must not be used to rescue a failed oracle.

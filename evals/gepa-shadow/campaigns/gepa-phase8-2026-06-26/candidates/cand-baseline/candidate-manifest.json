@@ -1,0 +1,17 @@
+{
+  "candidate_id": "cand-baseline",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "parent": "baseline",
+  "track": "task-reframing",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [],
+  "diff": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-baseline/candidate.diff",
+  "candidate_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-baseline/evidence-bundle.md",
+  "is_baseline": true,
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  }
+}

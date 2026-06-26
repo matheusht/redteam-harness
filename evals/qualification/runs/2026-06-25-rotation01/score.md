@@ -1,7 +1,7 @@
 # Rotation qualification — rotation-case-01-web-api — 2026-06-25 — QUALIFIED
 
 The "rotate a fresh case" gate. A blind router routes a **new surface** (a billing/profile web API,
-unrelated to Adapta) to test generalization rather than memorization. Seeded from public web archetypes
+unrelated to the original live case) to test generalization rather than memorization. Seeded from public web archetypes
 (csivitu/ctf-challenges, MIT) — inspiration only, nothing vendored.
 
 ## Verdict: QUALIFIED
@@ -43,5 +43,5 @@ SSRF (server fetches a client-supplied URL) has **no pattern card**. The router 
 Candidate follow-up: a dedicated SSRF pattern card. Tracked in `case.yml#coverage_gaps`.
 
 ## Boundary
-Routing is now QUALIFIED on **two surfaces** (Adapta agentic-chat + this web API). Stronger evidence the
+Routing is now QUALIFIED on **two surfaces** (original agentic-chat case + this web API). Stronger evidence the
 router isn't engagement-shaped. Autoresearch remains blocked on the other Phase-3 preconditions.

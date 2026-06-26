@@ -1,0 +1,10 @@
+--- a/skills/techniques/decomposition/SKILL.md
++++ b/skills/techniques/decomposition/SKILL.md
+@@ -28,3 +28,7 @@
+ artifact**, not individual chunks.
+ 
+ **Pairs well with:** task-reframing (reframe each chunk as a legitimate sub-task).
++## Shadow variant: chunk ledger and recomposition check
++
++Each chunk gets a ledger row: requested unit, returned unit, missing boundary, token/call cost, and matched control. Recomposition is scored only after the assembled artifact is checked against the oracle and replayed in a fresh session. If any chunk relies on an inferred bridge that the target never emitted, the chain stays `needs_review` instead of becoming confirmed coverage.
++

@@ -10,7 +10,7 @@ engagement `_TEMPLATE`, sanitized calibration fixture.
 
 ## Phase 1 — first vertical slice: LLM07 (in progress)
 - [ ] Review pass on the heart (`CLAUDE.md`, `llm07` card, both oracles).
-- [ ] First live engagement: LLM07 vs Adapta, end-to-end through the harness — negative control,
+- [ ] First live engagement: LLM07 vs a signed live target, end-to-end through the harness — negative control,
       ladder, two-layer adjudication, contamination ruleout, fresh-session replay, records emitted.
 - [ ] Capture the engagement's `winners.md` (abstract) + observed defenses (`loses_to`).
 - **Exit criterion:** the loop closes once, with a properly-adjudicated verdict (even "guard holds"
@@ -73,31 +73,34 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       candidates that mutate budget / mutate the scorer / duplicate coverage / omit controls / overfit
       visible cases, plus one valid additive candidate that must be retained. This is the Phase-3 gate
       fixture, staged now.
-- [ ] **Phase 2.5B — hermetic benchmark.** Started with the **no-model BOLA legacy-route** target
+- [x] **Phase 2.5B — hermetic benchmark.** Started with the **no-model BOLA legacy-route** target
       (`evals/hermetic/targets/bola-legacy-route/`, pure HTTP/status/body differential, deterministic,
-      no LLM). Next: a **canned/fake-model** harness for LLM05 / LLM07 / model-router / LLM06
-      (recorded deterministic outputs only — a real LLM drifts and cannot anchor a frozen benchmark).
+      no LLM), then added the canned/fake-model harness for LLM05 / LLM07 / model-router / LLM06
+      (`tools/run-hermetic-fakemodel.py`). Recorded deterministic outputs anchor the frozen benchmark.
 
 ## Phase 2 — breadth (second slice + harvest)
 - [ ] LLM01 prompt-injection card live (indirect, inert canary in an ingested surface).
-- [ ] LLM02 sensitive-info, LLM05 improper-output-handling, LLM06 excessive-agency cards.
+- [x] LLM05 improper-output-handling + LLM06 excessive-agency cards (first-class vuln cards).
+- [ ] LLM02 sensitive-info card.
 - [ ] Harvest prior engagement learnings into technique "winning variants" (abstract, scrubbed).
 - [ ] MITRE ATLAS cross-walk on each card.
 
-## Phase 3A — GEPA shadow autoresearch (planned; no automatic promotion)
-- [ ] **Campaign/candidate contracts**: add campaign manifest, candidate manifest, promotion bundle,
+## Phase 3A — GEPA shadow autoresearch (active in shadow; no automatic promotion)
+- [x] **Campaign/candidate contracts**: add campaign manifest, candidate manifest, promotion bundle,
       and hash checks for mutable allowlist, evaluator/scorer/gold/casebook hashes, model settings,
       budgets, lineage, and protected cases. Candidate artifacts are JSON manifest + Markdown evidence
       bundle + diff.
-- [ ] **Standalone GEPA adapter first**: use GEPA directly with a narrow custom adapter; DSPy remains a
-      later bounded spike for stable typed LM modules if it proves useful.
-- [ ] **Multi-track, single-mutation campaign**: first shadow campaign may cover `task-reframing`,
+- [x] **Standalone GEPA adapter first (Phase 8)**: `tools/run-gepa-real.py` now provides a narrow
+      standalone adapter surface: `--backend gepa` uses GEPA `optimize_anything` when installed/configured,
+      `--backend deterministic` is the CI-safe control, and `--backend auto` falls back honestly.
+      DSPy remains shelved unless a bounded spike later proves value.
+- [x] **Multi-track, single-mutation campaign**: first shadow campaign may cover `task-reframing`,
       `decomposition`, and one new technique-card candidate, but each candidate mutates exactly one
       declared component.
-- [ ] **Keep-if-better ratchet, shadow only**: propose technique variant → run on frozen slice → keep
+- [x] **Keep-if-better ratchet, shadow only**: propose technique variant → run on frozen slice → keep
       only if it beats the incumbent on **gated `clean_confirmed_coverage`** or equal coverage with at
       least 10% lower cost. Output is an evidence bundle, not a Plane-1 edit.
-- [ ] **Replay and promotion bundle**: primary run + two fresh-session replays, protected-case
+- [x] **Replay and promotion bundle**: primary run + two fresh-session replays, protected-case
       regression check, false-discovery scorer, cost comparison, redaction report, and PR-only human
       review before any promotion.
 - [x] **Benchmark expansion before real ratchet (Phase 6)**: fake-model hermetic targets for LLM05 /
@@ -105,11 +108,18 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       wired into the shadow runner's frozen evaluator. SSRF decided: `pattern.ssrf-server-side-fetch`
       added (scoped pattern, review/held posture). Second rotation `rotation-case-02-agentic-tooluse`
       QUALIFIED — routing now qualified on three surfaces.
-- [ ] **Next coverage gap (surfaced by rotation-02, honest):** indirect prompt injection (untrusted
-      retrieved content reaching the model's instruction channel) has no pattern card. Candidate next
-      slice: a scoped `pattern.indirect-prompt-injection` card. Promotion integrity hardened (Phase 6A):
-      promotion bundles pin frozen-input hashes + manifest hashes and block on drift; PR CI re-runs
-      conformance on the applied diff.
+- [x] **Indirect prompt injection gap closed:** scoped `pattern.indirect-prompt-injection` card added;
+      `transitive-sanitizer-reliance` explicitly points prompt-channel injection out of scope. rotation-02
+      remains frozen as the historical pre-card gap record.
+- [x] **Phase 8 adapter campaign:** `gepa-phase8-2026-06-26` freezes the broad evaluator, generates
+      three scoped candidate deltas + a no-op baseline + an invalid gold-touch control, runs gate →
+      scorer → replay → promotion bundle, and promotes nothing. Local run used deterministic backend
+      because GEPA is not installed/configured in this environment; `--backend gepa` is wired for the
+      standalone `optimize_anything` API.
+- [ ] **Next: candidate-applied evaluation.** The current shadow scorer gates candidate artifacts but
+      does not apply their diffs to an isolated orchestrator/session, so allowed candidates correctly land
+      on `probe`. The next learning-pressure slice must apply one candidate in a temporary workspace and
+      run the same frozen benchmarks against that candidate behavior.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,

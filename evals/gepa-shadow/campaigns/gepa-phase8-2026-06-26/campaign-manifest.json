@@ -1,0 +1,149 @@
+{
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "created": "2026-06-26",
+  "description": "Phase 8 GEPA adapter campaign. Generates one candidate per approved track through the standalone adapter surface, retains a no-op baseline, and includes one deliberately invalid gold-touch control. Shadow only: candidates are gated, scored, replayed, and bundled; no diff is applied or promoted.",
+  "tracks": [
+    { "name": "task-reframing", "mutation_target": "skills/techniques/task-reframing/", "kind": "existing-card-variant" },
+    { "name": "decomposition", "mutation_target": "skills/techniques/decomposition/", "kind": "existing-card-variant" },
+    { "name": "new-technique-card", "mutation_target": "skills/techniques/output-anchored-review/", "kind": "new-technique-card" }
+  ],
+  "mutable_allowlist": [
+    "skills/techniques/task-reframing/",
+    "skills/techniques/decomposition/",
+    "skills/techniques/output-anchored-review/"
+  ],
+  "immutable": [
+    "engine/",
+    "skills/oracles/",
+    "skills/patterns/",
+    "skills/vulns/"
+  ],
+  "frozen_inputs": {
+    "evals:routing:gold:case-a.gold": {
+      "path": "evals/routing/gold/case-a.gold.json",
+      "sha256": "245c011a425a849456d07d4c0dfa9706443bcd34de3812c8645cf8d7b4323a4a"
+    },
+    "evals:routing:gold:case-b.gold": {
+      "path": "evals/routing/gold/case-b.gold.json",
+      "sha256": "d30ce98d015690f8abd9b54c271a24feedcbc44f5854526007239edb00020933"
+    },
+    "evals:routing:gold:rotation-01.gold": {
+      "path": "evals/routing/gold/rotation-01.gold.json",
+      "sha256": "f860ca5806ec19a01bad36fe6fef2a4aba09e91e4e7bdd0b45a767f5fd0d187c"
+    },
+    "evals:routing:gold:rotation-02.gold": {
+      "path": "evals/routing/gold/rotation-02.gold.json",
+      "sha256": "5ca144658a10928087d00dc1c73659336a070a0a2fdb515a3a945b1e3abc9bd6"
+    },
+    "evals:qualification:crosswalk": {
+      "path": "evals/qualification/crosswalk.json",
+      "sha256": "c2c2729ef61b3773cd4a54117dca7fe9cc08f6f31c09f87a88deab1560cbde55"
+    },
+    "evals:qualification:examples:orchestrator-case-a": {
+      "path": "evals/qualification/examples/orchestrator-case-a.json",
+      "sha256": "15a1db34ce325aff5754569e301011bcac969586e7d744617d55d794849f9fc5"
+    },
+    "evals:qualification:examples:orchestrator-case-b": {
+      "path": "evals/qualification/examples/orchestrator-case-b.json",
+      "sha256": "de368478c902619351b482b9ae55ff93de119c2fff6002f846273d5816d58bc2"
+    },
+    "evals:qualification:examples:evaluator": {
+      "path": "evals/qualification/examples/evaluator.json",
+      "sha256": "cee71d95d596356b36375c1390c379e1b5248bbe97d55437a9d60d2acca192dd"
+    },
+    "evals:qualification:runs:2026-06-25-rotation01:orchestrator-rotation-01": {
+      "path": "evals/qualification/runs/2026-06-25-rotation01/orchestrator-rotation-01.json",
+      "sha256": "fa3f5841cfeee139f41504918e6cf00ff48d6bc983700472371bc2581dc62d68"
+    },
+    "evals:qualification:runs:2026-06-26-rotation02:orchestrator": {
+      "path": "evals/qualification/runs/2026-06-26-rotation02/orchestrator.json",
+      "sha256": "28df11ae62edaf248a1ea507432a771bbda4fcecb2baf7ae179dec4a2c3b9034"
+    },
+    "fixtures:false-discovery:corpus": {
+      "path": "fixtures/false-discovery/corpus.json",
+      "sha256": "a9fbc12b1796a5681e43190abb1e2b747e2bca102570dfdc2b480c43078a7f54"
+    },
+    "fixtures:adversarial-candidates:corpus": {
+      "path": "fixtures/adversarial-candidates/corpus.json",
+      "sha256": "e7726374ff8f13c69fde8a5f79d946d7aa9bcd7c550d620f13e80254715082f8"
+    },
+    "evals:hermetic:targets:bola-legacy-route:target": {
+      "path": "evals/hermetic/targets/bola-legacy-route/target.json",
+      "sha256": "7a380c720058f7ec23ed38074f4f2a50e8c6152edb99ade96a3d50320082b6f3"
+    },
+    "evals:hermetic:targets:llm05-render-escape:target": {
+      "path": "evals/hermetic/targets/llm05-render-escape/target.json",
+      "sha256": "554bd588aea5645688ccbd0d7ff712fa8364ecf061366085f6a383cd4fb49c77"
+    },
+    "evals:hermetic:targets:llm07-prompt-canary:target": {
+      "path": "evals/hermetic/targets/llm07-prompt-canary/target.json",
+      "sha256": "22f6760cf08ea1864c5d5551b3f07d0461bc7a39079dcb4ae02014f40cd30724"
+    },
+    "evals:hermetic:targets:llm06-capability-dispatch:target": {
+      "path": "evals/hermetic/targets/llm06-capability-dispatch/target.json",
+      "sha256": "8ce6a201217d27e3c1fa20707126566c914c01437adfc621df0400bb8b347368"
+    },
+    "evals:hermetic:targets:model-router-differential:target": {
+      "path": "evals/hermetic/targets/model-router-differential/target.json",
+      "sha256": "6af0b2fdf44248659a90b33590996cd14bbc23ad0ef7c9edaf2b03f5cd62ed1f"
+    },
+    "tools:score-routing": {
+      "path": "tools/score-routing.py",
+      "sha256": "43725a16e40d59bd9640b417a9d20553af9e46afb6b4141c5337be5286363a6c"
+    },
+    "tools:score-false-discovery": {
+      "path": "tools/score-false-discovery.py",
+      "sha256": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f"
+    },
+    "tools:run-qualification": {
+      "path": "tools/run-qualification.py",
+      "sha256": "37a8c5313dadbc6822cb304e74e43ec0afa6fc3c265b73fc3ae953d018c9108e"
+    },
+    "tools:run-hermetic-bola": {
+      "path": "tools/run-hermetic-bola.py",
+      "sha256": "7059958939b50030c85dbce039eb533b9d463e2d298d824d503495455ea9c1fc"
+    },
+    "tools:run-hermetic-fakemodel": {
+      "path": "tools/run-hermetic-fakemodel.py",
+      "sha256": "43c845de5659c0ed6247bb4f9cf8e40014895c8b3b32cfe2e66765a2034080ad"
+    },
+    "tools:check-campaign": {
+      "path": "tools/check-campaign.py",
+      "sha256": "3ea011945494baf85f897ff38b89b5570aa5d9f2b3586add102af6ce3c1bd1dc"
+    },
+    "tools:run-gepa-shadow": {
+      "path": "tools/run-gepa-shadow.py",
+      "sha256": "408ed4f97e0c584d2f6794fa4c95fe283276c3079b7c8637576564940a0530a4"
+    },
+    "tools:replay-candidate": {
+      "path": "tools/replay-candidate.py",
+      "sha256": "e75da056796118d502040af88fdeeff52e332a6d72ff4edeaaac2657514e4ad4"
+    },
+    "tools:render-promotion-bundle": {
+      "path": "tools/render-promotion-bundle.py",
+      "sha256": "40bb438a77f0e9a7fb79084d22d9b27f92ff527504b4cb040f46345c378971c1"
+    },
+    "tools:score-candidate": {
+      "path": "tools/score-candidate.py",
+      "sha256": "954a842f350335451130804bd336481a195ff1ccec28009caa46e8de2140b65a"
+    },
+    "tools:run-gepa-real": {
+      "path": "tools/run-gepa-real.py",
+      "sha256": "3d000284fb0a4718fa9d91f37a4ed2e6372a2d76e1b2026a10ea01c342c2122c"
+    }
+  },
+  "budgets": { "model_calls": 40, "target_calls": 80, "tokens": null },
+  "benchmark_set": [
+    "routing:case-a",
+    "routing:case-b",
+    "routing:rotation-case-01-web-api",
+    "routing:rotation-case-02-agentic-tooluse",
+    "false-discovery",
+    "adversarial-candidates",
+    "hermetic:bola-legacy-route",
+    "hermetic:llm05-render-escape",
+    "hermetic:llm07-prompt-canary",
+    "hermetic:llm06-capability-dispatch",
+    "hermetic:model-router-differential"
+  ]
+}

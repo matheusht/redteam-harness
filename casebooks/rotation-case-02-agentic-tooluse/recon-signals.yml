@@ -1,6 +1,6 @@
 case: rotation-case-02-agentic-tooluse
 
-# SECOND rotation case. AI-agentic / tool-use shaped (NOT a generic web billing case, NOT Adapta).
+# SECOND rotation case. AI-agentic / tool-use shaped (not a generic web billing case, not the original live case).
 # Purpose: stretch the router toward agentic behaviour and exercise the new SSRF pattern card, while
 # surfacing indirect prompt injection as a fresh HONEST coverage gap (no dedicated pattern card yet).
 # Each positive has a held/refuted sibling. Synthetic; no live target, no vendored challenge text.

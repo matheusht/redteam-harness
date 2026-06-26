@@ -1,0 +1,23 @@
+{
+  "candidate_id": "cand-gepa-invalid-gold-touch",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "gate": "block",
+  "gate_reasons": [
+    "touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+    "touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
+  ],
+  "keep_discard": {
+    "verdict": "block",
+    "reasons": [
+      "blocked at contract gate"
+    ]
+  },
+  "coverage_delta_vs_baseline": null,
+  "replay": {
+    "candidate_id": "cand-gepa-invalid-gold-touch",
+    "final_verdict": "block",
+    "note": "blocked at contract gate; no replay"
+  },
+  "promoted": false,
+  "note": "scores.json is a per-candidate index into report.json/replay-report.json; it is not a promotion artifact."
+}

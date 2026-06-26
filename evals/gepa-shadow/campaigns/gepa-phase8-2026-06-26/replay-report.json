@@ -1,0 +1,40 @@
+{
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "benchmark_version": "bench-5ab498b94cb5",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-gepa-decomposition-001",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-gepa-invalid-gold-touch",
+      "final_verdict": "block",
+      "note": "blocked at contract gate; no replay"
+    },
+    {
+      "candidate_id": "cand-gepa-new-technique-card-001",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    }
+  ]
+}

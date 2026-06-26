@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-gepa-new-technique-card-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "generated_on": "2026-06-26",
+  "backend": "deterministic",
+  "fallback_reason": null,
+  "track": {
+    "name": "new-technique-card",
+    "mutation_target": "skills/techniques/output-anchored-review/",
+    "kind": "new-technique-card"
+  },
+  "component": "skills/techniques/output-anchored-review/SKILL.md",
+  "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "output_sha256": "ed55e1f62942c8347c90398b154fcbe6b5982d2036f88b45ac1286b644c64513",
+  "diff_sha256": "55eef7ee4fc37cd1e3fdfee8a849512d857104f3d6691b92b9a5a28e7f822f6e",
+  "adapter_feedback": "Evaluator feedback: keep the candidate scoped to one declared technique component; preserve safe-signal discipline; require controls, replay, contamination rule-out, budget awareness, and a one-sentence claim test. Do not mutate scorers, oracles, gold, budgets, casebooks, or vulnerability cards. No live target behavior is available in this shadow campaign. New technique should be conservative, evidence-anchored, and useful across vuln cards without becoming a payload library.",
+  "summary": "Created a conservative review technique that turns ambiguous suspected wins into oracle-anchored checks.",
+  "adapter_score": 0.61,
+  "model_calls": 0,
+  "tokens": null,
+  "note": "Trace intentionally stores hashes and summaries, not raw secrets or live engagement data."
+}

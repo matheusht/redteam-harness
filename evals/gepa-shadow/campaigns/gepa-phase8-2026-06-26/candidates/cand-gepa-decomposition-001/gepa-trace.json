@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-gepa-decomposition-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "generated_on": "2026-06-26",
+  "backend": "deterministic",
+  "fallback_reason": null,
+  "track": {
+    "name": "decomposition",
+    "mutation_target": "skills/techniques/decomposition/",
+    "kind": "existing-card-variant"
+  },
+  "component": "skills/techniques/decomposition/SKILL.md",
+  "input_sha256": "9da966880c4e7f9deba8543f3f6efae41493feae6f103334d6de4116ea1e5827",
+  "output_sha256": "c6d0ed0571dc572fc5acf5d6cb9568d2996d95d095ce9ab22fa937cb06c5ab6c",
+  "diff_sha256": "ad21661d0671538bfec2a701d8630fe924f898496d48dcf9d32859369640c451",
+  "adapter_feedback": "Evaluator feedback: keep the candidate scoped to one declared technique component; preserve safe-signal discipline; require controls, replay, contamination rule-out, budget awareness, and a one-sentence claim test. Do not mutate scorers, oracles, gold, budgets, casebooks, or vulnerability cards. No live target behavior is available in this shadow campaign. Current weakness to address: chunking can hide loss of context; make chunk boundaries and recomposition checks explicit.",
+  "summary": "Added a scoped decomposition variant that tightens oracle anchoring and replay discipline.",
+  "adapter_score": 0.49,
+  "model_calls": 0,
+  "tokens": null,
+  "note": "Trace intentionally stores hashes and summaries, not raw secrets or live engagement data."
+}

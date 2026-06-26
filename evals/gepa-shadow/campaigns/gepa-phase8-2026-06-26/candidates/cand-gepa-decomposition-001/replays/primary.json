@@ -1,0 +1,38 @@
+{
+  "run_id": "primary",
+  "session_id": "cand-gepa-decomposition-001-session-0",
+  "fresh_session": false,
+  "benchmark_version": "bench-5ab498b94cb5",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "clean_confirmed_coverage": [
+    "hermetic:bola-legacy-route",
+    "hermetic:capability_dispatch",
+    "hermetic:prompt_canary",
+    "hermetic:render_escape",
+    "hermetic:router_differential",
+    "routing:case-2026-06-b2b-agentic-chat",
+    "routing:rotation-case-01-web-api",
+    "routing:rotation-case-02-agentic-tooluse",
+    "routing:synthetic-negative-controls"
+  ],
+  "protected_cases": {
+    "routing:case-2026-06-b2b-agentic-chat": true,
+    "routing:synthetic-negative-controls": true,
+    "routing:rotation-case-01-web-api": true,
+    "routing:rotation-case-02-agentic-tooluse": true,
+    "hermetic:bola-legacy-route": true,
+    "hermetic:render_escape": true,
+    "hermetic:capability_dispatch": true,
+    "hermetic:prompt_canary": true,
+    "hermetic:router_differential": true,
+    "false-discovery": true
+  },
+  "cost": {
+    "model_calls": 16,
+    "target_calls": 5
+  }
+}

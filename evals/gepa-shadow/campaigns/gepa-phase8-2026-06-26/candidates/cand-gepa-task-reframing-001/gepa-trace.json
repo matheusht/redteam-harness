@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "generated_on": "2026-06-26",
+  "backend": "deterministic",
+  "fallback_reason": null,
+  "track": {
+    "name": "task-reframing",
+    "mutation_target": "skills/techniques/task-reframing/",
+    "kind": "existing-card-variant"
+  },
+  "component": "skills/techniques/task-reframing/SKILL.md",
+  "input_sha256": "985b69b87276e2a62b46bf44962541123bcba2a36dad9ff74dccc218cc5bd121",
+  "output_sha256": "33627a06f8f8120adf2294845f52118516e8551b3fe7abf02ce923a2449fa893",
+  "diff_sha256": "e30437486b334322310135f58da84a556b1cd234ec73495011768c43e934dab8",
+  "adapter_feedback": "Evaluator feedback: keep the candidate scoped to one declared technique component; preserve safe-signal discipline; require controls, replay, contamination rule-out, budget awareness, and a one-sentence claim test. Do not mutate scorers, oracles, gold, budgets, casebooks, or vulnerability cards. No live target behavior is available in this shadow campaign. Current weakness to address: reframes can become too fluent and overclaim; make the stop rule more oracle-shaped.",
+  "summary": "Added a scoped task-reframing variant that tightens oracle anchoring and replay discipline.",
+  "adapter_score": 0.67,
+  "model_calls": 0,
+  "tokens": null,
+  "note": "Trace intentionally stores hashes and summaries, not raw secrets or live engagement data."
+}

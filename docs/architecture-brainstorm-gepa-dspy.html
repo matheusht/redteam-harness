@@ -840,7 +840,7 @@
           <tr>
             <td>Rotated casebook</td>
             <td>Add a fresh sanitized case not derived from the original live run.</td>
-            <td>Prevents Adapta-shaped optimization.</td>
+            <td>Prevents original-engagement-shaped optimization.</td>
             <td><code>casebooks/rotation-case-01-web-api/</code></td>
             <td>Public-source contamination.</td>
             <td>Includes positives and held/refuted rows; no raw flags, names, or secrets.</td>
@@ -1078,8 +1078,22 @@
             <td>One isolated routing/evaluator normalization module if useful.</td>
             <td>DSPy shows measurable value or stays out.</td>
           </tr>
+          <tr>
+            <td>8 — standalone adapter</td>
+            <td>GEPA adapter surface, generated candidate artifacts, full shadow scoring/replay/bundle chain.</td>
+            <td>Adapter produces scoped deltas and promotes nothing; candidate-applied evaluation remains next.</td>
+          </tr>
         </tbody>
       </table>
+
+      <div class="callout">
+        <strong>Status update, 2026-06-26:</strong> phases 0–8 now exist in shadow. The local Phase 8 run
+        used the deterministic backend because GEPA is not installed/configured in this environment, while
+        <code>tools/run-gepa-real.py --backend gepa</code> is wired for the standalone GEPA
+        <code>optimize_anything</code> API. DSPy was spiked and shelved. The next honest build is
+        candidate-applied evaluation: applying one candidate diff in an isolated workspace/session and
+        measuring behavior against the same frozen evaluator.
+      </div>
     </section>
 
     <section>

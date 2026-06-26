@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-gepa-decomposition-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "parent": "incumbent",
+  "track": "decomposition",
+  "mutation_target": "skills/techniques/decomposition/",
+  "touched_files": [
+    "skills/techniques/decomposition/SKILL.md"
+  ],
+  "diff": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-decomposition-001/candidate.diff",
+  "candidate_hash": "ad21661d0671538bfec2a701d8630fe924f898496d48dcf9d32859369640c451",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-decomposition-001/evidence-bundle.md",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "model_settings": {
+    "model": "deterministic",
+    "effort": "phase8-shadow"
+  }
+}

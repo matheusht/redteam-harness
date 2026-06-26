@@ -1,0 +1,105 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "candidate_manifest": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-task-reframing-001/candidate-manifest.json",
+  "campaign_manifest": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/campaign-manifest.json",
+  "diff": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-task-reframing-001/candidate.diff",
+  "scores": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/report.json",
+  "replays": [
+    "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-task-reframing-001/replays/replay-summary.json"
+  ],
+  "false_discovery": {
+    "invalid_accept_rate": 0.0,
+    "passed": true
+  },
+  "cost_comparison": {
+    "incumbent": {
+      "model_calls": 0,
+      "target_calls": 5
+    },
+    "candidate": {
+      "model_calls": 0,
+      "target_calls": 5
+    },
+    "delta_pct": 0.0
+  },
+  "redaction_report": {
+    "scanned": true,
+    "secret_hits": []
+  },
+  "review_checklist": [
+    {
+      "item": "Single mutated component identified: skills/techniques/task-reframing/",
+      "checked": true
+    },
+    {
+      "item": "No immutable file touched (contract gate allowed the candidate)",
+      "checked": true
+    },
+    {
+      "item": "False-discovery invalid_accept_rate == 0",
+      "checked": true
+    },
+    {
+      "item": "Replay-stable: primary + 2 fresh-session replays reproduced",
+      "checked": true
+    },
+    {
+      "item": "Diff hash matches candidate_hash",
+      "checked": true
+    },
+    {
+      "item": "Redaction clean: no secret shapes in diff or evidence bundle",
+      "checked": true
+    },
+    {
+      "item": "HUMAN: read the diff; the change is benign and in scope",
+      "checked": false
+    },
+    {
+      "item": "HUMAN: the evidence bundle justification holds",
+      "checked": false
+    },
+    {
+      "item": "HUMAN: approve Plane-1 promotion via this PR (no direct-to-main, no manual copy)",
+      "checked": false
+    }
+  ],
+  "verdict": "probe",
+  "pinned": {
+    "rendered_at_commit": "15d7b18d79d3011d9b20bfd4669c76dd21f1ab33",
+    "campaign_manifest_hash": "41bf783c1a54b9b32d629c75a542deed25dcc3dcd0bb8f35e83c89e2f78df398",
+    "candidate_manifest_hash": "da21c545b4c80655d23c412abe25b77eea74fe6b946bace1bcb8292797e6943a",
+    "frozen_input_hashes": {
+      "evals:routing:gold:case-a.gold": "245c011a425a849456d07d4c0dfa9706443bcd34de3812c8645cf8d7b4323a4a",
+      "evals:routing:gold:case-b.gold": "d30ce98d015690f8abd9b54c271a24feedcbc44f5854526007239edb00020933",
+      "evals:routing:gold:rotation-01.gold": "f860ca5806ec19a01bad36fe6fef2a4aba09e91e4e7bdd0b45a767f5fd0d187c",
+      "evals:routing:gold:rotation-02.gold": "5ca144658a10928087d00dc1c73659336a070a0a2fdb515a3a945b1e3abc9bd6",
+      "evals:qualification:crosswalk": "c2c2729ef61b3773cd4a54117dca7fe9cc08f6f31c09f87a88deab1560cbde55",
+      "evals:qualification:examples:orchestrator-case-a": "15a1db34ce325aff5754569e301011bcac969586e7d744617d55d794849f9fc5",
+      "evals:qualification:examples:orchestrator-case-b": "de368478c902619351b482b9ae55ff93de119c2fff6002f846273d5816d58bc2",
+      "evals:qualification:examples:evaluator": "cee71d95d596356b36375c1390c379e1b5248bbe97d55437a9d60d2acca192dd",
+      "evals:qualification:runs:2026-06-25-rotation01:orchestrator-rotation-01": "fa3f5841cfeee139f41504918e6cf00ff48d6bc983700472371bc2581dc62d68",
+      "evals:qualification:runs:2026-06-26-rotation02:orchestrator": "28df11ae62edaf248a1ea507432a771bbda4fcecb2baf7ae179dec4a2c3b9034",
+      "fixtures:false-discovery:corpus": "a9fbc12b1796a5681e43190abb1e2b747e2bca102570dfdc2b480c43078a7f54",
+      "fixtures:adversarial-candidates:corpus": "e7726374ff8f13c69fde8a5f79d946d7aa9bcd7c550d620f13e80254715082f8",
+      "evals:hermetic:targets:bola-legacy-route:target": "7a380c720058f7ec23ed38074f4f2a50e8c6152edb99ade96a3d50320082b6f3",
+      "evals:hermetic:targets:llm05-render-escape:target": "554bd588aea5645688ccbd0d7ff712fa8364ecf061366085f6a383cd4fb49c77",
+      "evals:hermetic:targets:llm07-prompt-canary:target": "22f6760cf08ea1864c5d5551b3f07d0461bc7a39079dcb4ae02014f40cd30724",
+      "evals:hermetic:targets:llm06-capability-dispatch:target": "8ce6a201217d27e3c1fa20707126566c914c01437adfc621df0400bb8b347368",
+      "evals:hermetic:targets:model-router-differential:target": "6af0b2fdf44248659a90b33590996cd14bbc23ad0ef7c9edaf2b03f5cd62ed1f",
+      "tools:score-routing": "43725a16e40d59bd9640b417a9d20553af9e46afb6b4141c5337be5286363a6c",
+      "tools:score-false-discovery": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f",
+      "tools:run-qualification": "37a8c5313dadbc6822cb304e74e43ec0afa6fc3c265b73fc3ae953d018c9108e",
+      "tools:run-hermetic-bola": "7059958939b50030c85dbce039eb533b9d463e2d298d824d503495455ea9c1fc",
+      "tools:run-hermetic-fakemodel": "43c845de5659c0ed6247bb4f9cf8e40014895c8b3b32cfe2e66765a2034080ad",
+      "tools:check-campaign": "3ea011945494baf85f897ff38b89b5570aa5d9f2b3586add102af6ce3c1bd1dc",
+      "tools:run-gepa-shadow": "408ed4f97e0c584d2f6794fa4c95fe283276c3079b7c8637576564940a0530a4",
+      "tools:replay-candidate": "e75da056796118d502040af88fdeeff52e332a6d72ff4edeaaac2657514e4ad4",
+      "tools:render-promotion-bundle": "40bb438a77f0e9a7fb79084d22d9b27f92ff527504b4cb040f46345c378971c1",
+      "tools:score-candidate": "954a842f350335451130804bd336481a195ff1ccec28009caa46e8de2140b65a",
+      "tools:run-gepa-real": "3d000284fb0a4718fa9d91f37a4ed2e6372a2d76e1b2026a10ea01c342c2122c"
+    },
+    "benchmark_version": "bench-5ab498b94cb5"
+  }
+}

@@ -1,10 +1,10 @@
 # GEPA shadow campaigns
 
-Phase 2 of the GEPA autoresearch plan (`docs/gepa-autoresearch-implementation-plan.md`,
-`docs/decisions/0002-gepa-autoresearch-scope.md`). This directory holds **shadow** campaigns: GEPA
-proposes candidate technique-card variants, the frozen evaluators gate and score them, and a human
-promotes through PR review. The shadow runner **promotes nothing** — it never writes under `skills/`
-and never applies a candidate's diff.
+GEPA/autoresearch shadow campaigns (`docs/gepa-autoresearch-implementation-plan.md`,
+`docs/decisions/0002-gepa-autoresearch-scope.md`). This directory holds **shadow** campaigns:
+optimizer/adapters propose candidate technique-card variants, the frozen evaluators gate and score
+them, and a human promotes through PR review. The shadow runner **promotes nothing** — it never
+writes under `skills/` and never applies a candidate's diff.
 
 ## Layout
 
@@ -15,7 +15,10 @@ campaigns/<campaign-id>/
     candidate-manifest.json     # lineage, single mutation target, touched files, diff hash, bundle ref
     candidate.diff              # proposed patch (NOT applied in shadow mode)
     evidence-bundle.md          # human/model review surface
+    gepa-trace.json             # Phase 8 optimizer trace/summary for generated candidates
+    scores.json                 # per-candidate index into report/replay results
   report.json / report.md       # runner output: gate verdict + scoreboard per candidate
+  replay-report.json/.md        # primary + two replay summary
 ```
 
 ## Tools
@@ -24,8 +27,13 @@ campaigns/<campaign-id>/
   changes, frozen-input drift, diff-hash tamper, and missing bundles. A no-op baseline is an allowed control.
 - `tools/hash-campaign-inputs.py` — freeze a campaign's `frozen_inputs`, or `--check` a manifest for drift.
 - `tools/run-gepa-shadow.py` — gate every candidate, run the gate-passing ones through the frozen
-  scorers (`run-qualification.py` + `run-hermetic-bola.py`), apply the keep/discard policy, write the
-  report. `--campaign <manifest>`.
+  scorers (`run-qualification.py` + `run-hermetic-bola.py` + `run-hermetic-fakemodel.py`), apply the
+  keep/discard policy, write the report. `--campaign <manifest>`.
+- `tools/run-gepa-real.py` — Phase 8 adapter/driver. Generates candidate artifacts, then optionally
+  runs shadow scoring, replay, promotion-bundle rendering, and per-candidate `scores.json`. Backends:
+  `--backend deterministic` (CI-safe control), `--backend gepa` (GEPA `optimize_anything` when the
+  package and LM config exist), and `--backend auto` (GEPA if available, otherwise an explicit
+  deterministic fallback recorded in `gepa-trace.json`).
 - `tools/score-candidate.py` — the keep/discard policy (Phase 3). Eligibility gates (conformance,
   zero false-discovery, no protected regression, complete evidence contract, unchanged budget, single
   mutation) are hard vetoes → `block`. An eligible candidate is `allow` only if it adds a distinct
@@ -42,11 +50,13 @@ campaigns/<campaign-id>/
 
 ## Shadow honesty
 
-There is no model in the loop yet, so candidates are scored against the campaign's frozen baseline
-benchmark outputs (`evals/qualification/examples/`). Coverage delta vs the incumbent is therefore 0 by
-construction. Phase 2 proves the gate → scorer → report chain runs end to end and that an invalid
-candidate (one that edits the gold) is blocked. Per-candidate model-generated outputs, the
-keep/discard utility comparison (Phase 3), and replay (Phase 4) come next. Promotion stays PR-only.
+The Phase 8 adapter can produce real candidate deltas, but the current shadow scorer still does not
+apply those diffs to a live orchestrator/session. Candidates are therefore scored against the
+campaign-selected frozen benchmark outputs, and coverage delta vs the incumbent is 0 by construction.
+That is intentional: this layer proves optimizer → manifest/diff/evidence → contract gate → frozen
+scorers → replay → promotion bundle. The next substantive phase is **candidate-applied evaluation**:
+apply exactly one candidate in an isolated temporary workspace/session and run the same frozen
+benchmarks against that candidate behavior.
 
 ## First campaign: `gepa-shadow-2026-06-26`
 
@@ -57,4 +67,33 @@ blocked at the gate. Run it with:
 
 ```
 python3 tools/run-gepa-shadow.py --campaign evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/campaign-manifest.json
+```
+
+This campaign is historical provenance. Later routing/crosswalk expansion intentionally drifted some
+of its pinned inputs, so CI no longer treats it as the active frozen-input sentinel. Use the Phase 8
+campaign below for current integrity checks.
+
+## Phase 8 adapter campaign: `gepa-phase8-2026-06-26`
+
+This campaign freezes the broader evaluator (routing case-a/b + rotation-01 + rotation-02,
+false-discovery, adversarial candidates, no-model BOLA, and four fake-model hermetic targets). It
+generates:
+
+- one `task-reframing` candidate;
+- one `decomposition` candidate;
+- one new `output-anchored-review` technique-card candidate;
+- a no-op baseline; and
+- one invalid gold-touch control that must block.
+
+Local execution used the deterministic backend because GEPA is not installed/configured in this
+environment:
+
+```
+python3 tools/run-gepa-real.py --campaign evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/campaign-manifest.json --backend deterministic
+```
+
+To run an actual GEPA optimization later, install/configure GEPA and use:
+
+```
+python3 tools/run-gepa-real.py --campaign evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/campaign-manifest.json --backend gepa
 ```

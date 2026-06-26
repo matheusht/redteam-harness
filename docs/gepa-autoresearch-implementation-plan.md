@@ -1,6 +1,6 @@
 # GEPA / Autoresearch Implementation Plan
 
-**Status:** implementation plan; not yet implemented  
+**Status:** implemented through Phase 8 in shadow; candidate-applied evaluation not yet built  
 **Date:** 2026-06-26  
 **Related:** `docs/decisions/0002-gepa-autoresearch-scope.md`, `docs/architecture-brainstorm-gepa-dspy.html`, `docs/autoresearch-evaluation-rfc.html`, `docs/ROADMAP.md`
 
@@ -10,7 +10,7 @@ The harness should take a bigger GEPA slice than a toy prompt demo, but keep eve
 verifiable. The first campaign may explore multiple tracks, while each candidate mutates exactly one
 declared component. GEPA proposes; frozen evaluators gate; humans promote through PR review.
 
-The near-term goal is a **Phase 3A shadow autoresearch loop**:
+The near-term goal was a **Phase 3A shadow autoresearch loop**:
 
 ```text
 campaign manifest
@@ -22,7 +22,10 @@ campaign manifest
   → PR-only human promotion
 ```
 
-DSPy remains a future spike, not a prerequisite.
+That loop now exists through Phase 8: contracts, scorer, replay, promotion bundle, benchmark
+expansion, DSPy spike (shelved), and a standalone GEPA adapter surface. DSPy remains parked, not a
+prerequisite. The current limitation is explicit: candidate diffs are generated and gated, but not
+yet applied to a temporary orchestrator/session for behavioral measurement.
 
 ## Phase 0 — Documentation and roadmap alignment
 
@@ -276,7 +279,72 @@ Acceptance:
 - It does not become required for GEPA.
 - If it does not clearly help, shelve it.
 
-## Phase 8 — Future review tracks
+## Phase 8 — Standalone GEPA adapter + first adapter campaign
+
+Purpose: replace hand-authored placeholder candidates with adapter-generated candidate artifacts
+while preserving the same immutable evaluator and PR-only promotion path.
+
+Implementation surface:
+
+- `tools/run-gepa-real.py`
+- `evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/`
+- `.github/workflows/conformance.yml`
+- `evals/gepa-shadow/README.md`
+
+Adapter contract:
+
+- Input: one declared campaign track, current component text read from `HEAD`, evaluator feedback,
+  fixed campaign budgets, and frozen benchmark hashes.
+- Output:
+  - `candidate-manifest.json`;
+  - `candidate.diff`;
+  - `evidence-bundle.md`;
+  - `gepa-trace.json`;
+  - `scores.json` after the scoring chain runs.
+- Backends:
+  - `deterministic` — CI-safe control backend;
+  - `gepa` — standalone GEPA `optimize_anything` backend when GEPA + LM config exist;
+  - `auto` — GEPA if available, otherwise explicit deterministic fallback.
+
+Acceptance:
+
+- At least one real candidate diff is generated under a single declared mutation target.
+- The no-op baseline is retained.
+- A deliberately invalid candidate blocks mechanically.
+- Scoring, replay, and promotion bundle artifacts render.
+- No diff is applied to Plane 1.
+- No candidate promotes automatically.
+
+Current result:
+
+- Local environment did not have GEPA installed/configured, so the committed run uses the
+  deterministic backend. The GEPA backend path is wired but must be exercised in an environment with
+  GEPA and an LM configured.
+- All allowed candidates correctly remain `probe`: the frozen scorer gates artifacts but does not
+  apply candidate diffs to a live orchestrator/session.
+
+## Phase 9 — Candidate-applied evaluation (next)
+
+Purpose: create actual learning pressure. The harness needs to evaluate candidate behavior, not just
+candidate provenance.
+
+Implementation surface:
+
+- temporary workspace/session materializer;
+- one-candidate-at-a-time diff application;
+- runner that loads the mutated card for a frozen benchmark;
+- rollback/cleanup guard;
+- score/replay/promotion integration using the same Phase 3–5 machinery.
+
+Acceptance:
+
+- Applies exactly one candidate diff in an isolated temporary workspace.
+- Re-runs the frozen benchmark with the mutated component loaded.
+- Blocks if the diff touches undeclared or immutable files.
+- Produces a candidate-specific scoreboard instead of reproducing the incumbent by construction.
+- Still promotes nothing automatically.
+
+## Phase 10 — Future review tracks
 
 These are approved directions, not current implementation permissions.
 
@@ -323,13 +391,8 @@ Level 4 requires a separate design review.
 
 ## Recommended immediate build order
 
-1. Add campaign, candidate, and promotion schemas.
-2. Add campaign hash/check tooling.
-3. Add GEPA shadow runner with baseline/no-op candidate support.
-4. Run first GEPA campaign over three independent tracks:
-   - `task-reframing`;
-   - `decomposition`;
-   - one new technique candidate.
-5. Add replay gate.
-6. Add promotion bundle renderer.
-7. Expand fake-model hermetic targets and/or make the SSRF card decision.
+1. Build candidate-applied evaluation in an isolated temporary workspace.
+2. Run the Phase 8 campaign through candidate-applied evaluation with deterministic backend first.
+3. Install/configure GEPA and run `tools/run-gepa-real.py --backend gepa` on the same frozen campaign.
+4. Compare deterministic control vs GEPA-generated candidates.
+5. Promote only if a candidate becomes replay-stable `allow` and passes the existing PR-only bundle.

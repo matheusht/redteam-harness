@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GEPA shadow campaign runner (Phase 2).
+"""GEPA shadow campaign runner (Phase 2+).
 
 The deterministic spine of a shadow campaign: it gates every candidate through the contract fence
 (tools/check-campaign.py), runs the gate-passing ones through the FROZEN scorers
@@ -17,11 +17,11 @@ NOTHING — it never writes under skills/ and never applies a candidate's diff.
       v
   report.json + report.md   (promoted_any is always false)
 
-Shadow honesty: in Phase 2 there is no model in the loop, so candidates are scored against the
-campaign's frozen baseline benchmark outputs (evals/qualification/examples/). Coverage delta vs the
-incumbent is therefore 0 by construction; the value proven here is that the gate -> scorer -> report
-chain runs end to end and that an invalid candidate is blocked. Per-candidate model-generated outputs
-and the keep/discard utility comparison are Phase 3+.
+Shadow honesty: this runner gates candidate artifacts but does not apply a candidate diff to a live
+orchestrator. Candidates are scored against campaign-selected frozen benchmark outputs. Coverage
+delta vs the incumbent is therefore 0 by construction here; the value proven is the contract gate,
+frozen evaluator, keep/discard, replay, and promotion-bundle chain. Candidate-applied evaluation is
+the next layer.
 
 Usage:
   python3 tools/run-gepa-shadow.py --campaign <campaign-manifest.json>
@@ -58,10 +58,29 @@ HF = _mod("run_hermetic_fakemodel", "run-hermetic-fakemodel.py")
 SC = _mod("score_candidate", "score-candidate.py")
 
 
-def baseline_scoreboard():
+def qualification_orchestrators(campaign=None):
+    """Campaign-selected frozen orchestrator outputs for routing qualification."""
+    mapping = {
+        "routing:case-a": os.path.join(EXAMPLES, "orchestrator-case-a.json"),
+        "routing:case-b": os.path.join(EXAMPLES, "orchestrator-case-b.json"),
+        "routing:rotation-case-01-web-api": os.path.join(
+            ROOT, "evals", "qualification", "runs", "2026-06-25-rotation01", "orchestrator-rotation-01.json"
+        ),
+        "routing:rotation-case-02-agentic-tooluse": os.path.join(
+            ROOT, "evals", "qualification", "runs", "2026-06-26-rotation02", "orchestrator.json"
+        ),
+    }
+    if campaign:
+        wanted = set(campaign.get("benchmark_set", []))
+        paths = [p for key, p in mapping.items() if key in wanted]
+    else:
+        paths = [mapping["routing:case-a"], mapping["routing:case-b"]]
+    return [load(p) for p in paths if os.path.isfile(p)]
+
+
+def baseline_scoreboard(campaign=None):
     """The frozen, candidate-independent benchmark result the campaign measures against."""
-    orchs = [load(os.path.join(EXAMPLES, "orchestrator-case-a.json")),
-             load(os.path.join(EXAMPLES, "orchestrator-case-b.json"))]
+    orchs = qualification_orchestrators(campaign)
     evaluator = load(os.path.join(EXAMPLES, "evaluator.json"))
     qual = RQ.qualify(orchs, evaluator)
 
@@ -119,7 +138,7 @@ def incumbent_eval(sb):
 
 
 def candidate_eval(cand, sb):
-    """Shadow candidate eval: no model in the loop yet, so it reproduces the incumbent scoreboard.
+    """Shadow candidate eval: candidate diff is not applied, so it reproduces the incumbent scoreboard.
     Gate-passing means single-mutation/budget/contract are already satisfied."""
     return {
         "candidate_id": cand.get("candidate_id"), "campaign_id": cand.get("campaign_id"),
@@ -179,9 +198,9 @@ def render_md(report):
     lines = [
         f"# GEPA shadow campaign — {report['campaign_id']}",
         "",
-        "Shadow run: candidates are gated and scored against the frozen baseline benchmark outputs. "
-        "Nothing is applied or promoted (`promoted_any: false`). Coverage delta is 0 by construction "
-        "in Phase 2 — model-in-the-loop generation and keep/discard utility are Phase 3+.",
+        "Shadow run: candidates are gated and scored against the campaign-selected frozen benchmark "
+        "outputs. Nothing is applied or promoted (`promoted_any: false`). Coverage delta is 0 by "
+        "construction in this runner because candidate diffs are not applied to an orchestrator.",
         "",
         "## Baseline scoreboard (incumbent control)",
         f"- routing qualified: **{sb['routing_qualified']}** "
@@ -218,7 +237,8 @@ def render_md(report):
               "Mechanical: eligibility gates are hard vetoes; an eligible candidate is `allow` only if it "
               "adds a distinct clean confirmed coverage case or preserves coverage at >=10% lower cost. In "
               "shadow mode every gate-passing candidate reproduces the incumbent scoreboard, so it is "
-              "`probe` (eligible, not better) — exactly right until a model generates a real behavioral delta.",
+              "`probe` (eligible, not better) — exactly right until candidate-applied evaluation measures "
+              "a real behavioral delta.",
               "", f"_keep/discard: {kd_str}_",
               "", f"_allowed: {len(report['allowed'])} · blocked: {len(report['blocked'])} · promoted: 0_", ""]
     return "\n".join(lines)
@@ -227,7 +247,7 @@ def render_md(report):
 def run_cli(campaign_path):
     campaign = load(campaign_path)
     candidates = discover_candidates(campaign_path)
-    report = evaluate_campaign(campaign, candidates, ROOT, baseline_scoreboard())
+    report = evaluate_campaign(campaign, candidates, ROOT, baseline_scoreboard(campaign))
 
     out_dir = os.path.dirname(campaign_path)
     with open(os.path.join(out_dir, "report.json"), "w") as fh:

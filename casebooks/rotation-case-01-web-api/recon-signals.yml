@@ -1,9 +1,9 @@
 case: rotation-case-01-web-api
 
-# ROTATION case (NOT Adapta). Web/API archetypes seeded from public web-security shapes — inspiration
+# ROTATION case (not the original live case). Web/API archetypes seeded from public web-security shapes — inspiration
 # only, no flags / challenge names / solutions / challenge text vendored. Seed source acknowledged in
 # case.yml. Purpose: test whether the router generalizes to a NEW surface (a billing/profile API)
-# without memorizing the Adapta agentic-chat case. Each positive has a held/refuted sibling, plus one
+# without memorizing the first agentic-chat case. Each positive has a held/refuted sibling, plus one
 # deliberate coverage-gap (SSRF) that NO current pattern card covers.
 signals:
   - observation: "a request includes a record id (invoiceId) in the query that selects which account's invoice is returned"

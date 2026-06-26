@@ -133,7 +133,7 @@
         corrected to "LLM07 full card; rest planned/stub."</li>
       <li><b>README layout updated</b>: <code>patterns/</code>, <code>casebooks/</code>, and
         <code>engine/routing.md</code> now shown.</li>
-      <li><b>Casebook anonymized</b> (Q3): renamed <code>adapta-b2b-2026-06</code> →
+      <li><b>Casebook anonymized</b> (Q3): renamed a client-specific casebook id →
         <code>case-2026-06-b2b-agentic-chat</code> across all files. Took the stricter habit.</li>
       <li><b>Stub routes made non-loadable</b>: <code>routes_to</code> ids that have no card are now
         prefixed <code>stub:</code>; <code>technique.schema.md</code> states a <code>stub:</code> entry
@@ -399,7 +399,7 @@
       client-supplied URL; route to review/held; internal/metadata probes are operator-gated; no payload
       arsenal), a second <b>agentic/tool-use</b> rotation case (<code>rotation-case-02-agentic-tooluse</code>),
       its frozen gold + crosswalk + qualification input, and re-ran blind qualification on <b>Sonnet</b>.
-      Result: <b>QUALIFIED</b> — routing now qualified on three surfaces (Adapta + web API + agentic).</p>
+      Result: <b>QUALIFIED</b> — routing now qualified on three surfaces (original live case + web API + agentic).</p>
 
     <h3>The honest loop (this is the method, not a detour)</h3>
     <p>Run 1 <b>BLOCKED</b>: the router put a vuln id inside <code>cards</code> and force-fit
@@ -435,10 +435,10 @@
         text before applying.</li>
     </ul>
 
-    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
-    <div class="open"><b>Q-ipi-card.</b> rotation-02 surfaced indirect prompt injection as a real coverage gap.
-      Build a scoped <code>pattern.indirect-prompt-injection</code> card next, or hold it as a tracked gap until
-      a third case confirms it (the same bar SSRF had to clear)?</div>
+    <h3>Open questions — RESOLVED <span class="tag t-dec">rev 7 · 2026-06-26</span></h3>
+    <div class="open" style="border-left-color:var(--green);background:#dce8df"><b style="color:var(--green)">Q-ipi-card → built in rev 7.</b>
+      A scoped <code>pattern.indirect-prompt-injection</code> card now owns untrusted content entering the
+      model's instruction/prompt channel. rotation-02 remains frozen as the historical pre-card gap.</div>
 
     <h2>GEPA autoresearch — Phase 6B (fake-model hermetic targets) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
     <p>Four deterministic canned-output targets (<code>llm05-render-escape</code>,
@@ -553,13 +553,57 @@
       frozen-input hashes, <code>benchmark_version</code>, render commit). <code>render-promotion-bundle.py
       --verify</code> re-hashes them and blocks on drift; wired into CI.</div>
 
-    <h2>Status — Phases 0–5 complete (shadow) <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
+    <h2>Historical status — Phases 0–5 complete (shadow) <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
     <p>The full shadow autoresearch chain now exists end to end: contracts &amp; gate (P1) → shadow runner
       (P2) → keep/discard policy (P3) → replay &amp; variance (P4) → promotion bundle + PR path (P5). It
       promotes nothing on its own. The remaining plan items are <b>Phase 6</b> (benchmark expansion:
       fake-model hermetic targets, a second rotated case, the SSRF-card decision) and <b>Phase 7</b> (the
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
+
+    <h2>GEPA autoresearch — Phase 8 (standalone adapter + first adapter campaign) <span class="tag t-dec">rev 8 · 2026-06-26</span></h2>
+    <p>Built <code>tools/run-gepa-real.py</code>, the first real optimizer adapter surface. It reads the
+      declared mutable component from <code>HEAD</code> (not the dirty worktree), supplies evaluator feedback,
+      asks a backend for a text variant, writes <code>candidate-manifest.json</code>,
+      <code>candidate.diff</code>, <code>evidence-bundle.md</code>, <code>gepa-trace.json</code>, then runs the
+      existing gate → scorer → replay → promotion-bundle chain and emits per-candidate
+      <code>scores.json</code>. It never applies the diff and never writes under <code>skills/</code>.</p>
+
+    <h3>Backends</h3>
+    <ul>
+      <li><b><code>--backend deterministic</code></b>: CI-safe control backend. This is what the committed
+        Phase 8 campaign used because GEPA is not installed/configured in this environment.</li>
+      <li><b><code>--backend gepa</code></b>: wired to GEPA's standalone <code>optimize_anything</code> API
+        (<code>gepa.optimize_anything</code>) when the package and LM config are present.</li>
+      <li><b><code>--backend auto</code></b>: tries GEPA, falls back to deterministic, and records the
+        fallback reason in the adapter report/trace.</li>
+    </ul>
+
+    <h3>Phase 8 campaign evidence</h3>
+    <table>
+      <thead><tr><th>Artifact</th><th>What it proves</th></tr></thead>
+      <tbody>
+        <tr><td><code>evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/</code></td><td>Broad frozen campaign: routing case-a/b + rotation-01 + rotation-02, false-discovery, adversarial corpus, BOLA, and four fake-model hermetic targets.</td></tr>
+        <tr><td>3 generated candidates</td><td><code>task-reframing</code>, <code>decomposition</code>, and new <code>output-anchored-review</code> candidate diffs, each scoped to one declared mutation target.</td></tr>
+        <tr><td><code>cand-gepa-invalid-gold-touch</code></td><td>Deliberate bad control; blocks mechanically on immutable/gold touch. The bundle now correctly leaves the immutable-touch checklist item unchecked for blocked candidates.</td></tr>
+        <tr><td><code>report.md</code> + <code>replay-report.md</code> + promotion bundles</td><td>The full Phase 3–5 chain runs. Allowed candidates are <code>probe</code>, not <code>allow</code>, because the current scorer does not apply their diffs.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Honest limitation / next phase</h3>
+    <p>This is adapter-generation, not behavioral optimization yet. The frozen scorer gates candidate
+      artifacts and protects against cheating, but it still scores against incumbent benchmark outputs.
+      The next substantive build is <b>candidate-applied evaluation</b>: apply exactly one candidate diff in
+      an isolated temporary workspace/session, load that mutated card, and run the same frozen benchmarks
+      against that candidate's behavior. Until that exists, Phase 8 candidates should remain
+      <code>probe</code> unless they are blocked.</p>
+
+    <h2>Status — Phases 0–8 complete (shadow adapter; no auto-promotion) <span class="tag t-dec">rev 8 · 2026-06-26</span></h2>
+    <p>The shadow autoresearch chain now reaches the adapter boundary: contracts &amp; gate (P1) → shadow
+      runner (P2) → keep/discard policy (P3) → replay &amp; variance (P4) → promotion bundle + PR path
+      (P5) → benchmark expansion and integrity hardening (P6) → DSPy spike shelved (P7) → standalone GEPA
+      adapter surface and first adapter campaign (P8). Nothing self-promotes; GEPA/DSPy do not alter
+      oracles, scorers, gold, casebooks, budgets, or sealed data.</p>
 
     <footer>implementation-notes.html · running log · self-contained, no runtime deps</footer>
   </main>

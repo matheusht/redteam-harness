@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-gepa-new-technique-card-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "parent": "incumbent",
+  "track": "new-technique-card",
+  "mutation_target": "skills/techniques/output-anchored-review/",
+  "touched_files": [
+    "skills/techniques/output-anchored-review/SKILL.md"
+  ],
+  "diff": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-new-technique-card-001/candidate.diff",
+  "candidate_hash": "55eef7ee4fc37cd1e3fdfee8a849512d857104f3d6691b92b9a5a28e7f822f6e",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-new-technique-card-001/evidence-bundle.md",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "model_settings": {
+    "model": "deterministic",
+    "effort": "phase8-shadow"
+  }
+}

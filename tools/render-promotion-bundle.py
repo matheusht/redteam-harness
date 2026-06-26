@@ -107,10 +107,11 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
     single_component = all(t == mt or t.startswith(mt) for t in touched)
     diff_hash_ok = _sha256_text(diff_text) == candidate_manifest.get("candidate_hash")
     replay_stable = bool(replay_summary and replay_summary.get("stable"))
+    contract_gate_allow = report_candidate.get("gate") == "allow"
 
     checklist = [
         {"item": f"Single mutated component identified: {mt}", "checked": single_component},
-        {"item": "No immutable file touched (scope fence held at the contract gate)", "checked": True},
+        {"item": "No immutable file touched (contract gate allowed the candidate)", "checked": contract_gate_allow},
         {"item": "False-discovery invalid_accept_rate == 0", "checked": bool(fdr["passed"])},
         {"item": "Replay-stable: primary + 2 fresh-session replays reproduced", "checked": replay_stable},
         {"item": "Diff hash matches candidate_hash", "checked": diff_hash_ok},

@@ -21,18 +21,20 @@ jobs:
         run: python3 tools/hash-campaign-inputs.py --self-test
       - name: GEPA shadow runner (self-test)
         run: python3 tools/run-gepa-shadow.py --self-test
+      - name: GEPA Phase 8 adapter (self-test)
+        run: python3 tools/run-gepa-real.py --self-test
       - name: Keep/discard candidate policy (self-test)
         run: python3 tools/score-candidate.py --self-test
       - name: Replay & variance gate (self-test)
         run: python3 tools/replay-candidate.py --self-test
       - name: Promotion bundle renderer (self-test)
         run: python3 tools/render-promotion-bundle.py --self-test
-      - name: Promotion bundle hash-pin integrity (no drift between render and merge)
-        run: python3 tools/render-promotion-bundle.py --verify evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-task-reframing-001/promotion/promotion-bundle.json
       - name: DSPy spike — routing normalizer baseline (deterministic, self-test)
         run: python3 experiments/dspy-routing-normalizer/normalize.py --self-test
-      - name: First shadow campaign frozen-input integrity
-        run: python3 tools/hash-campaign-inputs.py --check evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/campaign-manifest.json
+      - name: Phase 8 adapter campaign frozen-input integrity
+        run: python3 tools/hash-campaign-inputs.py --check evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/campaign-manifest.json
+      - name: Phase 8 promotion bundle hash-pin integrity
+        run: python3 tools/render-promotion-bundle.py --verify evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-task-reframing-001/promotion/promotion-bundle.json
       - name: Mechanical routing scorer (self-test)
         run: python3 tools/score-routing.py --self-test
       - name: False-discovery scorer (self-test)

@@ -1,11 +1,11 @@
 # Lessons — rotation-case-01-web-api (portable, scrubbed)
 
-A deliberately non-Adapta case used to **rotate** the routing qualification eval, so a QUALIFIED verdict
+A deliberately unrelated case used to **rotate** the routing qualification eval, so a QUALIFIED verdict
 means the router generalizes rather than memorizing one engagement. Seeded from public web-archetype
 shapes (csivitu/ctf-challenges, MIT) — inspiration only, nothing vendored.
 
 ## Same cards, a different surface
-The billing/profile API exercises the SAME two pattern cards as Adapta on an unrelated surface:
+The billing/profile API exercises the same two pattern cards as the original live case on an unrelated surface:
 - a client-supplied **invoice id** → `pattern.client-supplied-selector-authz` (the IDOR/BOLA shape),
 - a SQL **string-builder** sink and a **render** sink → `pattern.transitive-sanitizer-reliance`,
   one as a *strong* unsafe sink (string-built SQL / raw-HTML allowance), one as a *weak* render

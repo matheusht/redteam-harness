@@ -1,0 +1,21 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "gate": "allow",
+  "gate_reasons": [],
+  "keep_discard": {
+    "verdict": "probe",
+    "reasons": [
+      "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+    ]
+  },
+  "coverage_delta_vs_baseline": 0,
+  "replay": {
+    "candidate_id": "cand-gepa-task-reframing-001",
+    "final_verdict": "probe",
+    "stable": true,
+    "cost_spread": 0.0
+  },
+  "promoted": false,
+  "note": "scores.json is a per-candidate index into report.json/replay-report.json; it is not a promotion artifact."
+}
