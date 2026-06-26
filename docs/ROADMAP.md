@@ -135,8 +135,12 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
 - [ ] **Autonomous PoC ladder**: Level 0 evidence explanation → Level 1 benign canary proof → Level 2
       local hermetic PoC → Level 3 scoped live PoC with human confirmation → Level 4 autonomous exploit
       chaining (separate review).
-- [ ] **DSPy spike**: test one isolated module (routing/evaluator output normalization) only after the
-      standalone GEPA adapter is useful; no full DSPy rewrite without measurable benefit.
+- [x] **DSPy spike (Phase 7) — done, SHELVED.** Built an isolated routing-output normalizer
+      (`experiments/dspy-routing-normalizer/`): a deterministic stdlib baseline (5/5 on the observed
+      messy-output failure modes, CI-tested) + an optional guarded DSPy module. DSPy showed no gain over
+      the deterministic baseline on these cases, so it stays parked, not adopted; revisit only on
+      pure-prose outputs, evaluator-adjudication normalization, or once several stable LM programs exist.
+      No full DSPy rewrite.
 
 ## Phase 4 — scale (only when a concrete wall appears)
 - [ ] Pack mode / multi-account concurrency (config knob 1→N), gated on `scope.md`.

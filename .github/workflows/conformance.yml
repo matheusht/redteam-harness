@@ -29,6 +29,8 @@ jobs:
         run: python3 tools/render-promotion-bundle.py --self-test
       - name: Promotion bundle hash-pin integrity (no drift between render and merge)
         run: python3 tools/render-promotion-bundle.py --verify evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/candidates/cand-task-reframing-001/promotion/promotion-bundle.json
+      - name: DSPy spike — routing normalizer baseline (deterministic, self-test)
+        run: python3 experiments/dspy-routing-normalizer/normalize.py --self-test
       - name: First shadow campaign frozen-input integrity
         run: python3 tools/hash-campaign-inputs.py --check evals/gepa-shadow/campaigns/gepa-shadow-2026-06-26/campaign-manifest.json
       - name: Mechanical routing scorer (self-test)

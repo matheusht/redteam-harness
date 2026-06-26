@@ -354,6 +354,46 @@
       joins the Phase 3 mechanical verdict and the Phase 4 replay-adjusted verdict with the evidence bundle,
       candidate diff, manifest hashes, redaction report, and human checklist into a reviewed-PR promotion path.</p>
 
+    <h2>Indirect-prompt-injection card + Phase 7 (DSPy spike) <span class="tag t-dec">rev 7 · 2026-06-26</span></h2>
+    <p><b>Closed the rotation-02 gap:</b> built the scoped <code>pattern.indirect-prompt-injection</code>
+      card (untrusted content reaching the model's instruction/prompt channel; explicit boundary vs the
+      data-sink card and the authz card; benign canary-instruction probes, tool-driving injection
+      operator-gated, no payload arsenal). Pointed <code>transitive-sanitizer-reliance</code>'s
+      <code>out_of_scope</code> tier at the new card. A blind Sonnet router routes the indirect-injection
+      shape to it (strong, no force-fit) — gap closed. rotation-02's frozen gold is left as the historical
+      pre-card record (same as rotation-01 + SSRF); a future rotation-03 is the surface to exercise it
+      under a gold that expects it.</p>
+
+    <h3>Phase 7 — DSPy spike: built, evaluated, SHELVED</h3>
+    <p><code>experiments/dspy-routing-normalizer/</code> — an isolated spike testing whether DSPy normalizes
+      a blind router's messy output into the strict contract better than the status quo. The eval
+      (<code>cases.json</code>) pins the real failure modes from the rotation runs (vuln id in
+      <code>cards</code>, prose-wrapped JSON, gap row with a stray card, non-vocab strength, stringy bools).</p>
+    <ul>
+      <li><b>Design decision (spec ambiguous):</b> chose <b>routing-output normalization</b> as the first
+        DSPy target (over evaluator normalization) because the failure modes are already observed and
+        labelable. Shipped a deterministic stdlib baseline as the control AND an optional guarded DSPy
+        module — so the experiment runs in CI without the dependency.</li>
+      <li><b>Deviation (intentional):</b> the DSPy path is gated behind <code>import dspy</code> + a
+        configured LM and skips cleanly otherwise. It is never required by GEPA or the conformance path;
+        only the deterministic baseline self-test runs in CI. This honors "DSPy must not become required."</li>
+      <li><b>Tradeoff:</b> a deterministic regex/coercion normalizer vs an LM. The baseline scores
+        <b>5/5</b> on every observed failure mode; DSPy would add a heavy dependency + per-call LM cost for
+        no demonstrated gain here.</li>
+      <li><b>Conclusion (per the plan's "shelve if it doesn't help"):</b> DSPy is <b>parked, not adopted</b>.
+        Revisit only on (1) pure-prose outputs with no recoverable JSON, (2) normalizing the evaluator's
+        natural-language adjudication, or (3) once several stable LM programs exist to amortize the dep.</li>
+    </ul>
+
+    <h2>Status — Phases 0–7 complete (shadow) <span class="tag t-dec">rev 7 · 2026-06-26</span></h2>
+    <p>The full plan is now walked end to end in shadow: contracts &amp; gate (P1) → shadow runner (P2) →
+      keep/discard (P3) → replay (P4) → promotion bundle + PR (P5) → promotion-integrity + fake-model
+      targets + SSRF/second-rotation (P6) → DSPy spike, shelved (P7). Routing is qualified on three
+      surfaces; the evaluator spans BOLA + four fake-model oracles; six pattern cards exist (SSRF and
+      indirect-prompt-injection added this cycle). Nothing self-promotes. The one remaining substantive
+      build is the <b>real GEPA adapter</b> — now justified, since the frozen evaluator is wide enough that
+      a model-generated candidate would be scored against real breadth rather than a shallow pool.</p>
+
     <h2>GEPA autoresearch — Phase 6C (SSRF pattern + second agentic rotation) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
     <p>Built the scoped <code>pattern.ssrf-server-side-fetch</code> card (recognize a server-side fetch of a
       client-supplied URL; route to review/held; internal/metadata probes are operator-gated; no payload

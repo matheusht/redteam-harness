@@ -1,0 +1,66 @@
+{
+  "_note": "Messy routing outputs (the exact failure modes the blind rotation runs produced) paired with the strict, normalized form. The eval measures whether a normalizer maps raw -> normalized. The deterministic baseline is the control; the DSPy module is the spike.",
+  "cases": [
+    {
+      "id": "vuln-id-in-cards",
+      "why": "rotation-02 run 1: the router put a vuln id inside `cards`",
+      "raw": "{\"case\":\"c\",\"rows\":[{\"id\":\"g1\",\"cards\":[\"pattern.client-supplied-selector-authz\",\"llm06.excessive-agency\",\"vulns/broken-object-level-authz\"],\"strength\":\"strong\",\"held\":false,\"default_verdict\":null,\"coverage_gap\":false}],\"loaded_routes\":[\"pattern.client-supplied-selector-authz\"]}",
+      "expected": {
+        "case": "c",
+        "rows": [
+          { "id": "g1", "cards": ["pattern.client-supplied-selector-authz"], "strength": "strong", "held": false, "default_verdict": null, "coverage_gap": false }
+        ],
+        "loaded_routes": ["llm06.excessive-agency", "pattern.client-supplied-selector-authz", "vulns/broken-object-level-authz"]
+      }
+    },
+    {
+      "id": "prose-wrapped",
+      "why": "the model wrapped the JSON in explanation prose + a code fence",
+      "raw": "Sure, here is my routing analysis.\n```json\n{\"case\":\"c\",\"rows\":[{\"id\":\"g3\",\"cards\":[\"pattern.ssrf-server-side-fetch\"],\"strength\":\"strong\",\"held\":false,\"default_verdict\":null,\"coverage_gap\":false}],\"loaded_routes\":[]}\n```\nHope that helps!",
+      "expected": {
+        "case": "c",
+        "rows": [
+          { "id": "g3", "cards": ["pattern.ssrf-server-side-fetch"], "strength": "strong", "held": false, "default_verdict": null, "coverage_gap": false }
+        ],
+        "loaded_routes": []
+      }
+    },
+    {
+      "id": "coverage-gap-with-stray-card",
+      "why": "a coverage_gap row that still carried a force-fit card",
+      "raw": "{\"rows\":[{\"id\":\"g5\",\"cards\":[\"pattern.transitive-sanitizer-reliance\"],\"strength\":\"strong\",\"held\":false,\"default_verdict\":null,\"coverage_gap\":true}]}",
+      "expected": {
+        "case": null,
+        "rows": [
+          { "id": "g5", "cards": [], "strength": "weak", "held": false, "default_verdict": null, "coverage_gap": true }
+        ],
+        "loaded_routes": []
+      }
+    },
+    {
+      "id": "bad-strength-vocab-and-missing-fields",
+      "why": "non-vocab strength + a held row missing default_verdict/coverage_gap",
+      "raw": "{\"rows\":[{\"id\":\"g6\",\"cards\":[\"pattern.transitive-sanitizer-reliance\"],\"strength\":\"high\",\"held\":false},{\"id\":\"g4\",\"cards\":[\"pattern.ssrf-server-side-fetch\"],\"strength\":\"none\",\"held\":true}]}",
+      "expected": {
+        "case": null,
+        "rows": [
+          { "id": "g6", "cards": ["pattern.transitive-sanitizer-reliance"], "strength": "strong", "held": false, "default_verdict": null, "coverage_gap": false },
+          { "id": "g4", "cards": ["pattern.ssrf-server-side-fetch"], "strength": "negative", "held": true, "default_verdict": null, "coverage_gap": false }
+        ],
+        "loaded_routes": []
+      }
+    },
+    {
+      "id": "stringy-bools-and-verdict",
+      "why": "string 'true'/'false' bools + a stray verdict casing",
+      "raw": "{\"rows\":[{\"id\":\"g2\",\"cards\":[\"pattern.client-supplied-selector-authz\"],\"strength\":\"negative\",\"held\":\"true\",\"default_verdict\":\"Refuted\",\"coverage_gap\":\"false\"}]}",
+      "expected": {
+        "case": null,
+        "rows": [
+          { "id": "g2", "cards": ["pattern.client-supplied-selector-authz"], "strength": "negative", "held": true, "default_verdict": "refuted", "coverage_gap": false }
+        ],
+        "loaded_routes": []
+      }
+    }
+  ]
+}
