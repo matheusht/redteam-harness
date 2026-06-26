@@ -1,0 +1,44 @@
+id: rotation-case-01-web-api
+date: 2026-06
+kind: rotation_eval_case
+target_class: generic web/REST API (billing + profile), single-tenant per-user ownership
+surfaces:
+  - billing_api        # per-user invoice read, id-keyed
+  - search_api         # query endpoint over a datastore
+  - profile_render     # stored user text rendered back to a page
+  - avatar_import      # server-side fetch of a client-supplied URL
+auth_model: session-authenticated per-user ownership
+scope_ref: "synthetic rotation case — no live target; built to rotate the qualification eval"
+
+seed_provenance:
+  source: "csivitu/ctf-challenges (csictf 2020), MIT-licensed — used ONLY as web-archetype inspiration"
+  vendored: "nothing — no flags, challenge names, solutions, or challenge text entered this repo"
+  note: "shapes are abstracted/sanitized into recon→activation→oracle rows, the same Plane-1 governance as a live engagement"
+
+confirmed_findings:
+  - label: ROT-idor
+    pattern: pattern.client-supplied-selector-authz
+    one_line: "a client-supplied invoice id scoped the read, so a caller fetched another account's invoice (victim canary returned)."
+  - label: ROT-sqli
+    pattern: pattern.transitive-sanitizer-reliance
+    one_line: "a search param concatenated into a hand-built SQL string executed an injected benign query canary."
+  - label: ROT-xss
+    pattern: pattern.transitive-sanitizer-reliance
+    one_line: "stored profile text rendered with a raw-HTML allowance executed an inert local canary."
+
+refuted_or_held:
+  - label: ROT-idor-held
+    why: "sibling endpoint resolves owner from the session; the planted cross-account canary was never returned."
+  - label: ROT-sqli-held
+    why: "parameterized/bound query; the injected canary was treated as a literal, no execution."
+  - label: ROT-xss-held
+    why: "auto-escaping template rendered the payload as inert text; execution canary never fired."
+
+coverage_gaps:
+  - label: ROT-ssrf-gap
+    shape: "server fetches a client-supplied URL (avatar import)"
+    why: "no current pattern card models server-side request forgery; the router should flag the gap, not force-fit a card. Candidate for a future SSRF pattern card (id TBD)."
+
+sanitization:
+  scrubbed: true
+  attestation: "fully synthetic; no live ids/tokens/secrets; seed source used as archetype inspiration only, nothing vendored."

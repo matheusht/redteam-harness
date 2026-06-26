@@ -1,0 +1,12 @@
+{
+  "case": "rotation-case-01-web-api",
+  "instructions": "You are the routing orchestrator. Same contract as the other cases. NOTE: if an observation describes a vulnerability shape that NO pattern card models, do not force-fit a card — set coverage_gap:true and leave cards empty. Use the row ids verbatim.",
+  "rows": [
+    { "id": "r1", "observation": "a request includes a record id (invoiceId) in the query that selects which account's invoice is returned", "where": "billing_api request" },
+    { "id": "r2", "observation": "the invoice endpoint resolves the owner from the authenticated session and ignores any supplied id", "where": "billing_api request" },
+    { "id": "r3", "observation": "a search parameter is concatenated into a SQL query string built by hand", "where": "search_api" },
+    { "id": "r4", "observation": "the same search uses parameterized / prepared statements with bound variables", "where": "search_api" },
+    { "id": "r5", "observation": "stored profile text is rendered back through an auto-escaping template engine", "where": "profile_render" },
+    { "id": "r6", "observation": "the server fetches a URL supplied in the request body to import an avatar image", "where": "avatar_import" }
+  ]
+}

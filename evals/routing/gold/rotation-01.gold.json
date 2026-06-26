@@ -1,0 +1,20 @@
+{
+  "case": "rotation-case-01-web-api",
+  "frozen": "2026-06-25",
+  "provenance": "human-authored from casebooks/rotation-case-01-web-api/{recon-signals.yml,oracle-matrix.json}; rotation case to prove the router generalizes off the Adapta shape. Do NOT let an agent regenerate.",
+  "expected_activations": [
+    { "observation_key": "invoice-id-selector", "cards": ["pattern.client-supplied-selector-authz"], "strength": "strong" },
+    { "observation_key": "sql-string-builder", "cards": ["pattern.transitive-sanitizer-reliance"], "strength": "strong" }
+  ],
+  "held_signals": [
+    { "observation_key": "owner-from-session", "cards": ["pattern.client-supplied-selector-authz"] },
+    { "observation_key": "sql-parameterized", "cards": ["pattern.transitive-sanitizer-reliance"] },
+    { "observation_key": "profile-render-escaped", "cards": ["pattern.transitive-sanitizer-reliance"] }
+  ],
+  "must_refute": [
+    { "candidate": "C-render-escaped" }
+  ],
+  "coverage_gaps": ["ssrf-fetch"],
+  "stub_routes_forbidden": true,
+  "must_not_confirm_blind": false
+}

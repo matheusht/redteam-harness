@@ -20,13 +20,16 @@ prior run). Those carry the answers. If you have already seen them, say so — t
       "cards": ["pattern.<id>", "..."],
       "strength": "strong | weak | negative",
       "held": true | false,
-      "default_verdict": "refuted | needs_review | held | null"
+      "default_verdict": "refuted | needs_review | held | null",
+      "coverage_gap": true | false
     }
   ],
   "loaded_routes": ["pattern.<id>", "vulns/<dir>", "..."]
 }
 ```
 Rules:
+- `coverage_gap` — set `true` (and leave `cards` empty) when the observation is a vulnerability shape
+  that NO pattern card models. Do NOT force-fit a card; flagging the gap honestly is the correct answer.
 - `cards` — every pattern card the observation activates (use the exact `id:` from the card front-matter).
 - `strength` — `negative` means a held defense tell, not a finding.
 - `held` — `true` when the observation is a correctly-enforced defense (the held counterexample).
