@@ -47,16 +47,24 @@ campaigns/<campaign-id>/
   report, and human checklist. Promotable only if the replay-adjusted verdict is `allow` AND redaction
   is clean; otherwise archived-only. Promotes nothing — promotion is a reviewed PR on an isolated
   branch (`.github/PULL_REQUEST_TEMPLATE/gepa-promotion.md`).
+- `tools/apply-candidate-eval.py` — candidate-applied evaluation (Phase 9). Gates each candidate, then
+  actually **applies its diff in an isolated `git worktree` at HEAD** (the live tree is asserted
+  byte-identical), re-runs `check-conformance.py` against the patched workspace, and feeds the measured
+  result through the keep/discard policy. A variant that breaks the harness now `block`s by measurement
+  (not assumption); a clean variant is `probe` until `--backend model` (an LM) re-routes against the
+  patched workspace to produce a real behavioral coverage delta. Promotes nothing.
 
 ## Shadow honesty
 
-The Phase 8 adapter can produce real candidate deltas, but the current shadow scorer still does not
-apply those diffs to a live orchestrator/session. Candidates are therefore scored against the
-campaign-selected frozen benchmark outputs, and coverage delta vs the incumbent is 0 by construction.
-That is intentional: this layer proves optimizer → manifest/diff/evidence → contract gate → frozen
-scorers → replay → promotion bundle. The next substantive phase is **candidate-applied evaluation**:
-apply exactly one candidate in an isolated temporary workspace/session and run the same frozen
-benchmarks against that candidate behavior.
+The Phase 8 adapter can produce real candidate deltas, but the frozen scorers do not read technique
+cards, so applying a card variant cannot move routing/coverage without a model. **Phase 9
+(`tools/apply-candidate-eval.py`)** now applies each candidate diff in an isolated `git worktree` and
+re-measures: the model-free signal it gains is **conformance against the patched tree** (a card-breaking
+variant blocks by measurement), while behavioral coverage delta stays 0 until `--backend model` puts an
+LM in the loop. So the chain is now optimizer → manifest/diff/evidence → contract gate → frozen
+scorers → replay → promotion bundle → **isolated apply + re-measure**. The remaining model-dependent
+step is re-routing the blind orchestrator against the patched workspace to earn a real `allow`/`block`
+from behavior rather than provenance.
 
 ## First campaign: `gepa-shadow-2026-06-26`
 

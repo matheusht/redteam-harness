@@ -1,0 +1,19 @@
+{
+  "candidate_id": "cand-gepa-invalid-gold-touch",
+  "track": "task-reframing",
+  "backend": "deterministic",
+  "gate": "block",
+  "gate_reasons": [
+    "touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+    "touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
+  ],
+  "diff_applies": null,
+  "isolation_ok": null,
+  "conformance_passed": null,
+  "coverage_delta_vs_incumbent": null,
+  "applied_verdict": "block",
+  "verdict_reasons": [
+    "blocked at contract gate; not applied"
+  ],
+  "promoted": false
+}

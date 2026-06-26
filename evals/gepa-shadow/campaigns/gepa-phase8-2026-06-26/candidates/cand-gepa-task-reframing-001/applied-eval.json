@@ -1,0 +1,16 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "track": "task-reframing",
+  "backend": "deterministic",
+  "gate": "allow",
+  "gate_reasons": [],
+  "diff_applies": true,
+  "isolation_ok": true,
+  "conformance_passed": true,
+  "coverage_delta_vs_incumbent": [],
+  "applied_verdict": "probe",
+  "verdict_reasons": [
+    "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+  ],
+  "promoted": false
+}

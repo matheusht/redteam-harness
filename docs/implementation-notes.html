@@ -561,6 +561,59 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 9 (candidate-applied evaluation) <span class="tag t-dec">rev 9 · 2026-06-26</span></h2>
+    <p>Built <code>tools/apply-candidate-eval.py</code>. Phases 2–8 gated and scored candidate
+      <em>artifacts</em> but never applied a diff, so coverage delta was 0 by construction and every clean
+      candidate landed on <code>probe</code>. Phase 9 actually <b>applies one candidate diff in an isolated
+      <code>git worktree</code> at HEAD</b>, re-measures, and feeds the measured result through the
+      keep/discard policy. On the Phase-8 campaign: 4 candidates apply clean (probe), the gold-touch blocks,
+      0 promoted.</p>
+
+    <h3>Design decisions <span class="tag t-dec">spec ambiguous</span></h3>
+    <ul>
+      <li><b>Isolation via a real <code>git worktree</code>, not a copy.</b> The candidate diff is
+        <code>git apply</code>-ed into a throwaway worktree at HEAD; the live tree's target file is asserted
+        byte-identical before/after (the isolation invariant). This both proves the diff is a genuine
+        applyable patch (Phase 8 only assumed it) and guarantees the apply can never touch Plane 1.</li>
+      <li><b>The model-free measured signal is conformance against the patched tree.</b> The frozen scorers
+        (routing/BOLA/fake-model) do not read technique cards, so a card variant cannot move them without an
+        LM. The one thing that <em>can</em> change model-free is whether the patched card still passes
+        <code>check-conformance.py</code> — so a variant that breaks front-matter / routes / refs now
+        <code>block</code>s by measurement. Phase 8's <code>conformance_passed: true</code> assumption became
+        a measured fact.</li>
+      <li><b>Honest neutral result, not a fabricated win.</b> Clean candidates are <code>probe</code> (no
+        behavioral delta deterministically), exactly as before — but now <em>because measurement showed no
+        change</em>, not because delta was hardcoded 0. The self-test proves the path produces
+        <code>allow</code> (added coverage) and <code>block</code> (broken conformance / protected regression)
+        when the measured scoreboard actually differs.</li>
+    </ul>
+
+    <h3>Deviations <span class="tag t-dev">intentional</span></h3>
+    <ul>
+      <li><b><code>budget_unchanged</code> is true by construction for gate-passing candidates.</b> The
+        contract gate already blocks any candidate whose budget differs from the campaign budget, so a
+        candidate that reaches the applied stage has an unchanged budget. (A first cut compared against a
+        non-existent scoreboard key and wrongly blocked every clean candidate; fixed.)</li>
+      <li><b><code>--backend model</code> is wired but gated.</b> Like <code>run-gepa-real</code>, the
+        model path (re-route the blind orchestrator against the patched workspace for a real coverage delta)
+        skips honestly when no LM is configured. CI runs only the deterministic self-test.</li>
+    </ul>
+
+    <h3>Tradeoffs <span class="tag t-trd">alternatives</span></h3>
+    <table>
+      <thead><tr><th>Choice</th><th>Picked</th><th>Rejected</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Workspace</td><td>git worktree at HEAD + <code>git apply</code></td><td>Temp copy + overlay</td><td>A real worktree proves the diff applies and reuses git's patch semantics; a copy would re-implement patching and not validate applicability.</td></tr>
+        <tr><td>Re-running benchmarks in the worktree</td><td>Conformance only (the model-free signal that can change)</td><td>Re-run every frozen scorer per candidate</td><td>The scorers are card-independent, so re-running them just reproduces the incumbent at real cost; conformance is the one that moves.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
+    <div class="open"><b>Q-applied-model.</b> The next step is <code>--backend model</code>: spin up the
+      worktree, then run a blind router/evaluator that reads the PATCHED cards and produce a real coverage
+      delta. Confirm that's the next slice (it's where genuine learning pressure starts) and that an LM in a
+      sandboxed session is acceptable for it.</div>
+
     <h2>GEPA autoresearch — Phase 8 (standalone adapter + first adapter campaign) <span class="tag t-dec">rev 8 · 2026-06-26</span></h2>
     <p>Built <code>tools/run-gepa-real.py</code>, the first real optimizer adapter surface. It reads the
       declared mutable component from <code>HEAD</code> (not the dirty worktree), supplies evaluator feedback,

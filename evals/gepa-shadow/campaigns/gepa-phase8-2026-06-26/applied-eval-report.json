@@ -1,0 +1,100 @@
+{
+  "campaign_id": "gepa-phase8-2026-06-26",
+  "backend": "deterministic",
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "track": "task-reframing",
+      "backend": "deterministic",
+      "gate": "allow",
+      "gate_reasons": [],
+      "diff_applies": true,
+      "isolation_ok": true,
+      "conformance_passed": true,
+      "coverage_delta_vs_incumbent": [],
+      "applied_verdict": "probe",
+      "verdict_reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-gepa-decomposition-001",
+      "track": "decomposition",
+      "backend": "deterministic",
+      "gate": "allow",
+      "gate_reasons": [],
+      "diff_applies": true,
+      "isolation_ok": true,
+      "conformance_passed": true,
+      "coverage_delta_vs_incumbent": [],
+      "applied_verdict": "probe",
+      "verdict_reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-gepa-invalid-gold-touch",
+      "track": "task-reframing",
+      "backend": "deterministic",
+      "gate": "block",
+      "gate_reasons": [
+        "touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+        "touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
+      ],
+      "diff_applies": null,
+      "isolation_ok": null,
+      "conformance_passed": null,
+      "coverage_delta_vs_incumbent": null,
+      "applied_verdict": "block",
+      "verdict_reasons": [
+        "blocked at contract gate; not applied"
+      ],
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-gepa-new-technique-card-001",
+      "track": "new-technique-card",
+      "backend": "deterministic",
+      "gate": "allow",
+      "gate_reasons": [],
+      "diff_applies": true,
+      "isolation_ok": true,
+      "conformance_passed": true,
+      "coverage_delta_vs_incumbent": [],
+      "applied_verdict": "probe",
+      "verdict_reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "track": "task-reframing",
+      "backend": "deterministic",
+      "gate": "allow",
+      "gate_reasons": [],
+      "diff_applies": true,
+      "isolation_ok": true,
+      "conformance_passed": true,
+      "coverage_delta_vs_incumbent": [],
+      "applied_verdict": "probe",
+      "verdict_reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "promoted": false
+    }
+  ],
+  "applied": [
+    "cand-baseline",
+    "cand-gepa-decomposition-001",
+    "cand-gepa-new-technique-card-001",
+    "cand-gepa-task-reframing-001"
+  ],
+  "blocked": [
+    "cand-gepa-invalid-gold-touch"
+  ],
+  "promoted_any": false,
+  "limitation": "deterministic backend: frozen scorers do not read technique cards, so behavioral coverage delta is 0 here; conformance against the patched tree is the measured model-free signal. A real coverage delta needs --backend model (an LM in the loop)."
+}

@@ -116,10 +116,16 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       scorer → replay → promotion bundle, and promotes nothing. Local run used deterministic backend
       because GEPA is not installed/configured in this environment; `--backend gepa` is wired for the
       standalone `optimize_anything` API.
-- [ ] **Next: candidate-applied evaluation.** The current shadow scorer gates candidate artifacts but
-      does not apply their diffs to an isolated orchestrator/session, so allowed candidates correctly land
-      on `probe`. The next learning-pressure slice must apply one candidate in a temporary workspace and
-      run the same frozen benchmarks against that candidate behavior.
+- [x] **Phase 9 — candidate-applied evaluation (`tools/apply-candidate-eval.py`).** Each gate-passing
+      candidate's diff is now **applied in an isolated `git worktree` at HEAD** (the live tree is asserted
+      byte-identical), conformance is re-run against the patched workspace, and the measured result feeds
+      the keep/discard policy. A variant that breaks the harness blocks by measurement; a clean variant is
+      `probe` (frozen scorers don't read technique cards, so no behavioral delta without a model). On the
+      Phase-8 campaign: 4 applied clean (probe), 1 gold-touch blocked, 0 promoted.
+- [ ] **Next: model-in-the-loop applied delta.** Wire `--backend model` to re-route the blind
+      orchestrator against the patched workspace, so a card variant can earn a real `allow`/`block` from
+      behavior (a true coverage delta) instead of provenance. This is the first point real learning
+      pressure appears; it needs an LM in the loop.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,
