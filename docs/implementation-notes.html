@@ -354,6 +354,47 @@
       joins the Phase 3 mechanical verdict and the Phase 4 replay-adjusted verdict with the evidence bundle,
       candidate diff, manifest hashes, redaction report, and human checklist into a reviewed-PR promotion path.</p>
 
+    <h2>GEPA autoresearch — Phase 6B (fake-model hermetic targets) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
+    <p>Four deterministic canned-output targets (<code>llm05-render-escape</code>,
+      <code>llm07-prompt-canary</code>, <code>llm06-capability-dispatch</code>,
+      <code>model-router-differential</code>) + <code>tools/run-hermetic-fakemodel.py</code>, built in the
+      confirmed order (LLM05/07 first, router last). Each ships a confirmed row, a held/refuted row, a
+      false-positive trap, a budget, and is covered by the runner's <code>--self-test</code> (per oracle:
+      confirmed-with-controls, budget-abort, detector-break).</p>
+
+    <h3>Design decisions <span class="tag t-dec">spec ambiguous</span></h3>
+    <ul>
+      <li><b>One generalized runner, not four.</b> The spec lists four targets; I built a single runner with
+        a per-oracle <code>derive()</code> and a <em>uniform</em> adjudication (leaking primary + firing
+        positive control + clean negatives), mirroring the BOLA harness. Keeps the oracles comparable and the
+        adjudication un-duplicated; the oracle type is target metadata.</li>
+      <li><b>The canned field IS the fake model; the oracle re-derives the observable.</b> Each request
+        carries a recorded <code>model_output</code> (or dispatch/policy fields) and an <code>expect</code>;
+        the runner derives <code>(signal, leak)</code> and flags any mismatch as detector drift — the same
+        "detector can be wrong" guard BOLA has. No real LLM, zero run-to-run drift.</li>
+      <li><b>Each target's FP trap encodes a real confusion.</b> Inert reflection (canary word, no markup),
+        near-miss fingerprint, listing-vs-dispatch, and different-backend-same-policy — the exact
+        force-fits the evaluator must refuse, not just generic negatives.</li>
+    </ul>
+
+    <h3>Deviations <span class="tag t-dev">intentional</span></h3>
+    <ul>
+      <li><b>Wired into the GEPA evaluator, not left standalone.</b> The four targets are added to the shadow
+        runner's baseline scoreboard (coverage + protected cases + cost) and pinned in the first campaign's
+        <code>frozen_inputs</code> + <code>benchmark_set</code>. This realizes the actual goal — a <em>wider</em>
+        frozen evaluator — rather than orphan targets. Downstream report, replays, and the promotion bundle
+        were regenerated; <code>benchmark_version</code> changed accordingly and the bundle pins were re-verified.</li>
+    </ul>
+
+    <h3>Tradeoffs <span class="tag t-trd">alternatives</span></h3>
+    <table>
+      <thead><tr><th>Choice</th><th>Picked</th><th>Rejected</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Determinism source</td><td>Canned <code>model_output</code> + oracle re-derivation</td><td>Record only the final boolean verdict</td><td>Re-deriving from the output exercises the detector and catches drift; a bare boolean would hide a broken oracle.</td></tr>
+        <tr><td>Target packaging</td><td>JSON targets + one generalized runner</td><td>Dockerized live-ish targets</td><td>Confirmed decision: canned deterministic first; docker reserved for later higher-fidelity replay.</td></tr>
+      </tbody>
+    </table>
+
     <h2>GEPA autoresearch — Phase 6A (promotion integrity hardening) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
     <p>Implements the two confirmed Phase-5 answers. The promotion bundle gained a required
       <code>pinned</code> block — <code>rendered_at_commit</code>, campaign + candidate manifest hashes,

@@ -54,6 +54,22 @@
     "tools:score-false-discovery": {
       "path": "tools/score-false-discovery.py",
       "sha256": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f"
+    },
+    "evals:hermetic:targets:llm05-render-escape:target": {
+      "path": "evals/hermetic/targets/llm05-render-escape/target.json",
+      "sha256": "554bd588aea5645688ccbd0d7ff712fa8364ecf061366085f6a383cd4fb49c77"
+    },
+    "evals:hermetic:targets:llm07-prompt-canary:target": {
+      "path": "evals/hermetic/targets/llm07-prompt-canary/target.json",
+      "sha256": "22f6760cf08ea1864c5d5551b3f07d0461bc7a39079dcb4ae02014f40cd30724"
+    },
+    "evals:hermetic:targets:llm06-capability-dispatch:target": {
+      "path": "evals/hermetic/targets/llm06-capability-dispatch/target.json",
+      "sha256": "8ce6a201217d27e3c1fa20707126566c914c01437adfc621df0400bb8b347368"
+    },
+    "evals:hermetic:targets:model-router-differential:target": {
+      "path": "evals/hermetic/targets/model-router-differential/target.json",
+      "sha256": "6af0b2fdf44248659a90b33590996cd14bbc23ad0ef7c9edaf2b03f5cd62ed1f"
     }
   },
   "budgets": { "model_calls": 40, "target_calls": 80, "tokens": null },
@@ -63,6 +79,10 @@
     "routing:rotation-case-01-web-api",
     "false-discovery",
     "adversarial-candidates",
-    "hermetic:bola-legacy-route"
+    "hermetic:bola-legacy-route",
+    "hermetic:llm05-render-escape",
+    "hermetic:llm07-prompt-canary",
+    "hermetic:llm06-capability-dispatch",
+    "hermetic:model-router-differential"
   ]
 }

@@ -54,6 +54,7 @@ def _mod(name, filename):
 CC = _mod("check_campaign", "check-campaign.py")
 RQ = _mod("run_qualification", "run-qualification.py")
 HB = _mod("run_hermetic_bola", "run-hermetic-bola.py")
+HF = _mod("run_hermetic_fakemodel", "run-hermetic-fakemodel.py")
 SC = _mod("score_candidate", "score-candidate.py")
 
 
@@ -68,6 +69,16 @@ def baseline_scoreboard():
     herm = HB.run(target)
     herm_ok = herm["verdict"] == target.get("expected_verdict") and not herm["mismatches"]
 
+    fakemodel = []
+    for ft in HF.bundled_targets():
+        fr = HF.run(ft)
+        fakemodel.append({
+            "oracle": ft["oracle"],
+            "verdict": fr["verdict"],
+            "passed": fr["verdict"] == ft.get("expected_verdict") and not fr["mismatches"],
+            "model_calls": fr["model_calls"],
+        })
+
     return {
         "routing_qualified": qual["qualified"],
         "routing": [{"case": r["case"], "passed": r["passed"]} for r in qual["routing"]],
@@ -77,6 +88,7 @@ def baseline_scoreboard():
         },
         "hermetic_bola": {"verdict": herm["verdict"], "passed": herm_ok,
                           "target_calls": herm["target_calls"], "budget": herm["budget"]},
+        "hermetic_fakemodel": fakemodel,
     }
 
 
@@ -84,18 +96,22 @@ def _coverage_keys(sb):
     keys = [f"routing:{c['case']}" for c in sb["routing"] if c["passed"]]
     if sb["hermetic_bola"]["passed"]:
         keys.append("hermetic:bola-legacy-route")
+    keys += [f"hermetic:{t['oracle']}" for t in sb.get("hermetic_fakemodel", []) if t["passed"]]
     return sorted(keys)
 
 
 def _protected(sb):
     p = {f"routing:{c['case']}": c["passed"] for c in sb["routing"]}
     p["hermetic:bola-legacy-route"] = sb["hermetic_bola"]["passed"]
+    for t in sb.get("hermetic_fakemodel", []):
+        p[f"hermetic:{t['oracle']}"] = t["passed"]
     p["false-discovery"] = sb["false_discovery"]["passed"]
     return p
 
 
 def _cost_of(sb):
-    return {"model_calls": 0, "target_calls": sb["hermetic_bola"]["target_calls"]}
+    fake_calls = sum(t["model_calls"] for t in sb.get("hermetic_fakemodel", []))
+    return {"model_calls": fake_calls, "target_calls": sb["hermetic_bola"]["target_calls"]}
 
 
 def incumbent_eval(sb):
@@ -174,6 +190,9 @@ def render_md(report):
         f"(passed={sb['false_discovery']['passed']})",
         f"- hermetic BOLA: {sb['hermetic_bola']['verdict']} (passed={sb['hermetic_bola']['passed']}, "
         f"{sb['hermetic_bola']['target_calls']}/{sb['hermetic_bola']['budget']} target calls)",
+        "- hermetic fake-model: " + (", ".join(
+            f"{t['oracle']}={t['verdict']}{'✓' if t['passed'] else '✗'}" for t in sb.get("hermetic_fakemodel", []))
+            or "—"),
         "",
         "## Candidates",
         "",

@@ -21,7 +21,33 @@
       "passed": true,
       "target_calls": 5,
       "budget": 8
-    }
+    },
+    "hermetic_fakemodel": [
+      {
+        "oracle": "render_escape",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      },
+      {
+        "oracle": "capability_dispatch",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      },
+      {
+        "oracle": "prompt_canary",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      },
+      {
+        "oracle": "router_differential",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      }
+    ]
   },
   "candidates": [
     {
@@ -51,7 +77,33 @@
           "passed": true,
           "target_calls": 5,
           "budget": 8
-        }
+        },
+        "hermetic_fakemodel": [
+          {
+            "oracle": "render_escape",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "capability_dispatch",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "prompt_canary",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "router_differential",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          }
+        ]
       },
       "coverage_delta_vs_baseline": 0,
       "keep_discard": {
@@ -89,7 +141,33 @@
           "passed": true,
           "target_calls": 5,
           "budget": 8
-        }
+        },
+        "hermetic_fakemodel": [
+          {
+            "oracle": "render_escape",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "capability_dispatch",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "prompt_canary",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "router_differential",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          }
+        ]
       },
       "coverage_delta_vs_baseline": 0,
       "keep_discard": {
@@ -146,7 +224,33 @@
           "passed": true,
           "target_calls": 5,
           "budget": 8
-        }
+        },
+        "hermetic_fakemodel": [
+          {
+            "oracle": "render_escape",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "capability_dispatch",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "prompt_canary",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "router_differential",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          }
+        ]
       },
       "coverage_delta_vs_baseline": 0,
       "keep_discard": {
@@ -184,7 +288,33 @@
           "passed": true,
           "target_calls": 5,
           "budget": 8
-        }
+        },
+        "hermetic_fakemodel": [
+          {
+            "oracle": "render_escape",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "capability_dispatch",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "prompt_canary",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "router_differential",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          }
+        ]
       },
       "coverage_delta_vs_baseline": 0,
       "keep_discard": {

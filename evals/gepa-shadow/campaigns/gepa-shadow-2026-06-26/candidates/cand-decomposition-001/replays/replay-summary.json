@@ -8,14 +8,14 @@
   "coverage_stable": true,
   "cost_variance": {
     "runs": [
-      5.0,
-      5.0,
-      5.0
+      21.0,
+      21.0,
+      21.0
     ],
-    "min": 5.0,
-    "max": 5.0,
+    "min": 21.0,
+    "max": 21.0,
     "spread": 0.0,
-    "mean": 5.0
+    "mean": 21.0
   },
   "runs": 3,
   "reasons": []

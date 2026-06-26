@@ -1,6 +1,6 @@
 {
   "campaign_id": "gepa-shadow-2026-06-26",
-  "benchmark_version": "bench-849b7a9ff86e",
+  "benchmark_version": "bench-0df6b853395f",
   "budget": {
     "model_calls": 40,
     "target_calls": 80,

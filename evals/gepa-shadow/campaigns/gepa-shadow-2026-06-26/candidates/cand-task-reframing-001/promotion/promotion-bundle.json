@@ -67,8 +67,8 @@
   ],
   "verdict": "probe",
   "pinned": {
-    "rendered_at_commit": "dc7ca674a5b16fb27febbc92d2fa0248eb04becf",
-    "campaign_manifest_hash": "27b3fb1dd04d500237f0c8812704356c88da2d065149cfdfad625da77486503a",
+    "rendered_at_commit": "b9195c8a5b07b19926ec3552dbd9d45085dc3e14",
+    "campaign_manifest_hash": "96a5a1228a32fc4f7f3a468449200d767243e5ac75ea3272458cdb48325cf5a9",
     "candidate_manifest_hash": "20be38166999cbcec4e6f1b67c853986df6696f2340ebfae8912c36000ffa7a8",
     "frozen_input_hashes": {
       "evals:routing:gold:case-a.gold": "245c011a425a849456d07d4c0dfa9706443bcd34de3812c8645cf8d7b4323a4a",
@@ -79,8 +79,12 @@
       "fixtures:adversarial-candidates:corpus": "e7726374ff8f13c69fde8a5f79d946d7aa9bcd7c550d620f13e80254715082f8",
       "evals:hermetic:targets:bola-legacy-route:target": "7a380c720058f7ec23ed38074f4f2a50e8c6152edb99ade96a3d50320082b6f3",
       "tools:score-routing": "43725a16e40d59bd9640b417a9d20553af9e46afb6b4141c5337be5286363a6c",
-      "tools:score-false-discovery": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f"
+      "tools:score-false-discovery": "e59a227309d0238bacab7ef1abe00b6c2748e504993f6403f77c81e23e6e5c2f",
+      "evals:hermetic:targets:llm05-render-escape:target": "554bd588aea5645688ccbd0d7ff712fa8364ecf061366085f6a383cd4fb49c77",
+      "evals:hermetic:targets:llm07-prompt-canary:target": "22f6760cf08ea1864c5d5551b3f07d0461bc7a39079dcb4ae02014f40cd30724",
+      "evals:hermetic:targets:llm06-capability-dispatch:target": "8ce6a201217d27e3c1fa20707126566c914c01437adfc621df0400bb8b347368",
+      "evals:hermetic:targets:model-router-differential:target": "6af0b2fdf44248659a90b33590996cd14bbc23ad0ef7c9edaf2b03f5cd62ed1f"
     },
-    "benchmark_version": "bench-849b7a9ff86e"
+    "benchmark_version": "bench-0df6b853395f"
   }
 }

@@ -2,7 +2,7 @@
   "run_id": "primary",
   "session_id": "cand-task-reframing-001-session-0",
   "fresh_session": false,
-  "benchmark_version": "bench-849b7a9ff86e",
+  "benchmark_version": "bench-0df6b853395f",
   "budget": {
     "model_calls": 40,
     "target_calls": 80,
@@ -10,6 +10,10 @@
   },
   "clean_confirmed_coverage": [
     "hermetic:bola-legacy-route",
+    "hermetic:capability_dispatch",
+    "hermetic:prompt_canary",
+    "hermetic:render_escape",
+    "hermetic:router_differential",
     "routing:case-2026-06-b2b-agentic-chat",
     "routing:synthetic-negative-controls"
   ],
@@ -17,10 +21,14 @@
     "routing:case-2026-06-b2b-agentic-chat": true,
     "routing:synthetic-negative-controls": true,
     "hermetic:bola-legacy-route": true,
+    "hermetic:render_escape": true,
+    "hermetic:capability_dispatch": true,
+    "hermetic:prompt_canary": true,
+    "hermetic:router_differential": true,
     "false-discovery": true
   },
   "cost": {
-    "model_calls": 0,
+    "model_calls": 16,
     "target_calls": 5
   }
 }

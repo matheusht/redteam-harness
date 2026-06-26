@@ -6,6 +6,7 @@ Shadow run: candidates are gated and scored against the frozen baseline benchmar
 - routing qualified: **True** (case-2026-06-b2b-agentic-chat✓, synthetic-negative-controls✓)
 - false-discovery: invalid_accept_rate=0.000 (passed=True)
 - hermetic BOLA: confirmed (passed=True, 5/8 target calls)
+- hermetic fake-model: render_escape=confirmed✓, capability_dispatch=confirmed✓, prompt_canary=confirmed✓, router_differential=confirmed✓
 
 ## Candidates
 

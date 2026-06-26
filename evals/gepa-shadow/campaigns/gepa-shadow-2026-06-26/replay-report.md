@@ -2,7 +2,7 @@
 
 Primary + two fresh-session replays per allowed candidate, identical benchmark version and budget. The replay gate downgrades non-reproducible `allow`s to `probe`; it never upgrades.
 
-Benchmark version: `bench-849b7a9ff86e`  ·  budget: `{"model_calls": 40, "target_calls": 80, "tokens": null}`
+Benchmark version: `bench-0df6b853395f`  ·  budget: `{"model_calls": 40, "target_calls": 80, "tokens": null}`
 
 | candidate | final verdict | replay-stable | cost spread |
 | --- | --- | --- | --- |
