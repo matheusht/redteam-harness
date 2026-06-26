@@ -227,3 +227,32 @@ That plan should decide:
 5. the promotion bundle format;
 6. which future capability, if any, gets a design-review placeholder first: live GEPA, evaluator
    co-evolution, SSRF pattern card, or PoC ladder.
+
+## Phase 3–4 policy decisions (confirmed 2026-06-26)
+
+After the Phase 3 (keep/discard) and Phase 4 (replay) implementations raised four open questions, the
+following are confirmed as policy. They are intentionally conservative: the measurement system is still
+young, so gate on reproducible security evidence, not on immature signals.
+
+| Question | Decision | Future revisit |
+| --- | --- | --- |
+| Cost unit | `cost = model_calls + target_calls`, equal weight; equal coverage needs ≥10% lower cost; tokens recorded, not gated | After real model-in-the-loop data, introduce a normalized weighted cost object; do not gate on tokens until token accounting is reliable across models |
+| Probe lifecycle | Archive forever, but active for 3 campaigns unless manually pinned; carry forward only probes tagged `needs_replay` / `needs_rotated_case` / `needs_benchmark` / `near_cost_threshold` / `interesting_failure`; otherwise archive-only after 3 campaigns | Add a GC/archive command later |
+| Replay floor | Primary + 2 fresh-session replays (require 3/3 on deterministic/hermetic evals) | N-of-M (e.g. 4/5, 5/7) only after measuring real-model variance; live engagements depend on scope/cost |
+| Cost variance | Record only, no gate | Advisory only: a future warning may mark a candidate `probe` if cost spread >20% across replays unless manually reviewed |
+
+Rationale highlights:
+
+- **Target calls count as much as model calls** — target calls create scope, rate-limit, and safety
+  pressure, so the cost metric weights them equally rather than discounting them.
+- **Indefinite probe piles become memory sludge** — autoresearch can start learning from stale
+  almost-wins, so probes stay archived but go inactive after 3 campaigns unless pinned.
+- **First real campaigns need strict reproducibility, not statistical fuzziness** — hence 3/3 now,
+  N-of-M only once natural model variance is measured.
+- **The safety issue is unstable security evidence, not small call-count jitter** — so cost variance is
+  advisory, never an early gate that would reject good candidates on measurement immaturity.
+
+Phase 5 (promotion bundle + PR-only promotion) is the confirmed next slice. The promotion bundle
+assembles the Phase 3 mechanical verdict, the Phase 4 replay-adjusted verdict, the evidence bundle, the
+candidate diff, the manifest hashes, a redaction report, and a human checklist, and promotes only
+through a reviewed PR.

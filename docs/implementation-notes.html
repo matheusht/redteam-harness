@@ -337,6 +337,23 @@
     <div class="open"><b>Q-verdict-join.</b> Confirm the final promote-eligibility verdict should be the
       replay-adjusted one (Phase 3 ∧ Phase 4), assembled into the Phase-5 promotion bundle.</div>
 
+    <h2>Policy decisions confirmed <span class="tag t-dec">rev 5 · 2026-06-26</span></h2>
+    <p>The four Phase 3–4 open questions are now answered (recorded durably in
+      <code>docs/decisions/0002-gepa-autoresearch-scope.md</code>). Current implementations stand; the
+      conservative posture is deliberate — gate on reproducible security evidence, not on immature signals.</p>
+    <table>
+      <thead><tr><th>Question</th><th>Decision</th><th>Future revisit</th></tr></thead>
+      <tbody>
+        <tr><td>Cost unit</td><td><code>model_calls + target_calls</code>, equal weight; ≥10% threshold; tokens recorded, not gated</td><td>Normalized weighted-cost object after real model-in-loop data; never gate on tokens until cross-model accounting is reliable</td></tr>
+        <tr><td>Probe lifecycle</td><td>Archive forever, active for 3 campaigns unless pinned; carry forward only tagged probes (<code>needs_replay</code>, <code>needs_rotated_case</code>, <code>needs_benchmark</code>, <code>near_cost_threshold</code>, <code>interesting_failure</code>)</td><td>Add a GC/archive command later</td></tr>
+        <tr><td>Replay floor</td><td>Primary + 2 fresh-session replays; 3/3 on deterministic/hermetic evals</td><td>N-of-M only after measuring real-model variance</td></tr>
+        <tr><td>Cost variance</td><td>Record only, advisory field; no gate</td><td>Advisory &gt;20% spread warning later, never an early gate</td></tr>
+      </tbody>
+    </table>
+    <p>Confirmed direction: <b>Phase 5 (promotion bundle + PR-only promotion) is the next slice</b> — it
+      joins the Phase 3 mechanical verdict and the Phase 4 replay-adjusted verdict with the evidence bundle,
+      candidate diff, manifest hashes, redaction report, and human checklist into a reviewed-PR promotion path.</p>
+
     <footer>implementation-notes.html · running log · self-contained, no runtime deps</footer>
   </main>
 </body>
