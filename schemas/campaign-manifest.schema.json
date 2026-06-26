@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "campaign-manifest",
+  "description": "Frozen description of one GEPA shadow campaign. Names the benchmark set, hashes every input that affects acceptance, fixes the budget, and declares what candidates MAY (mutable_allowlist) and MUST NOT (immutable) touch. Enforced mechanically by tools/check-campaign.py — a hash drift, an out-of-allowlist touch, or an immutable touch BLOCKS. The schema is the contract; the checker is the gate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["campaign_id", "created", "tracks", "mutable_allowlist", "immutable", "frozen_inputs", "budgets", "benchmark_set"],
+  "properties": {
+    "campaign_id": { "type": "string", "description": "stable id, e.g. gepa-shadow-2026-06-26" },
+    "created": { "type": "string", "description": "YYYY-MM-DD; supplied, never auto-generated" },
+    "description": { "type": "string" },
+    "tracks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Several tracks per campaign are allowed; each candidate still mutates exactly one declared component.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "mutation_target", "kind"],
+        "properties": {
+          "name": { "type": "string", "description": "e.g. task-reframing" },
+          "mutation_target": { "type": "string", "description": "the single component path a candidate on this track may change, e.g. skills/techniques/task-reframing/" },
+          "kind": { "enum": ["existing-card-variant", "new-technique-card"] }
+        }
+      }
+    },
+    "mutable_allowlist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Path prefixes a candidate is allowed to touch (the union of the tracks' mutation targets). A touched file outside this set blocks."
+    },
+    "immutable": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Path prefixes that define 'what winning means' — scorers, routing gold, crosswalk, casebook ground truth, corpora, hermetic targets, schemas, budgets. No candidate may touch these. The checker also enforces a built-in default set regardless of this list."
+    },
+    "frozen_inputs": {
+      "type": "object",
+      "description": "Every input that affects acceptance, hashed. The checker recomputes each sha256 and blocks on drift.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "description": "hex sha256 of the file at path" }
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "target_calls"],
+      "properties": {
+        "model_calls": { "type": "integer", "minimum": 0 },
+        "target_calls": { "type": "integer", "minimum": 0 },
+        "tokens": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "benchmark_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Logical benchmark ids run for scoring, e.g. routing:rotation-case-01-web-api, false-discovery, hermetic:bola-legacy-route."
+    }
+  }
+}

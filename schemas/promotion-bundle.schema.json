@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "promotion-bundle",
+  "description": "The review surface assembled when a shadow candidate is proposed for Plane-1 promotion. It carries everything a human needs to approve a PR without re-running the campaign: the diff, both manifests, scorer + replay results, the false-discovery result, a cost comparison, a redaction report, and a human checklist. Promotion is PR-only; this bundle never auto-merges. Rendering is Phase 5; the schema is fixed now so the earlier phases emit compatible artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff", "scores", "false_discovery", "cost_comparison", "redaction_report", "review_checklist", "verdict"],
+  "properties": {
+    "candidate_id": { "type": "string" },
+    "campaign_id": { "type": "string" },
+    "candidate_manifest": { "type": "string", "description": "path to candidate-manifest.json" },
+    "campaign_manifest": { "type": "string", "description": "path to campaign-manifest.json" },
+    "diff": { "type": "string", "description": "path to candidate.diff" },
+    "scores": { "type": "string", "description": "path to scores.json (scorer outputs + cost)" },
+    "replays": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "paths to fresh-session replay results (Phase 4); empty until replay is wired"
+    },
+    "false_discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invalid_accept_rate", "passed"],
+      "properties": {
+        "invalid_accept_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "passed": { "type": "boolean", "description": "must be true (rate == 0) — FDR regression is a hard veto, never a tradeoff" }
+      }
+    },
+    "cost_comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incumbent", "candidate"],
+      "properties": {
+        "incumbent": { "type": "object" },
+        "candidate": { "type": "object" },
+        "delta_pct": { "type": ["number", "null"], "description": "candidate cost relative to incumbent; negative = cheaper" }
+      }
+    },
+    "redaction_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scanned", "secret_hits"],
+      "properties": {
+        "scanned": { "type": "boolean" },
+        "secret_hits": { "type": "array", "items": { "type": "string" }, "description": "must be empty to promote" }
+      }
+    },
+    "review_checklist": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["item", "checked"],
+        "properties": {
+          "item": { "type": "string" },
+          "checked": { "type": "boolean" }
+        }
+      }
+    },
+    "verdict": { "enum": ["allow", "block", "probe"], "description": "the keep/discard policy verdict (Phase 3); promotion still requires human PR review" }
+  }
+}

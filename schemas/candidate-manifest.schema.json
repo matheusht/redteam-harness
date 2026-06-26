@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "candidate-manifest",
+  "description": "Machine truth for one GEPA candidate: its lineage, the single component it mutates, the files its diff touches, and the hash of that diff. tools/check-campaign.py gates it against the campaign manifest — a candidate that touches an undeclared or immutable file, drifts the diff hash, changes the budget, or omits its evidence bundle BLOCKS. A no-op baseline (is_baseline=true, no touched files) is a retained control, not a failure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidate_id", "campaign_id", "parent", "track", "mutation_target", "touched_files", "diff", "candidate_hash", "evidence_bundle"],
+  "properties": {
+    "candidate_id": { "type": "string", "description": "e.g. cand-task-reframing-001 or cand-baseline" },
+    "campaign_id": { "type": "string", "description": "must match the owning campaign manifest" },
+    "parent": { "type": "string", "description": "lineage: the incumbent candidate id, or 'baseline'" },
+    "track": { "type": "string", "description": "must name a track declared in the campaign" },
+    "mutation_target": { "type": "string", "description": "the single declared component this candidate changes; every touched file must fall under it" },
+    "touched_files": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "files changed by the diff; empty only for a baseline. All must be under mutation_target and none under an immutable prefix."
+    },
+    "diff": { "type": "string", "description": "path to candidate.diff (the proposed patch)" },
+    "candidate_hash": { "type": "string", "description": "hex sha256 of the diff file; mismatch blocks (tamper detection)" },
+    "evidence_bundle": { "type": "string", "description": "path to evidence-bundle.md; must exist on disk" },
+    "is_baseline": { "type": "boolean", "default": false, "description": "true for the no-op control candidate" },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "optional; if present MUST equal the campaign budgets. A candidate cannot quietly buy itself more budget.",
+      "properties": {
+        "model_calls": { "type": "integer", "minimum": 0 },
+        "target_calls": { "type": "integer", "minimum": 0 },
+        "tokens": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "model_settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "recorded for replayability",
+      "properties": {
+        "model": { "type": "string" },
+        "effort": { "type": "string" }
+      }
+    }
+  }
+}
