@@ -1,0 +1,20 @@
+{
+  "case": "rotation-case-02-agentic-tooluse",
+  "frozen": "2026-06-26",
+  "provenance": "human-authored from casebooks/rotation-case-02-agentic-tooluse/{recon-signals.yml,oracle-matrix.json}; second (agentic/tool-use) rotation to exercise pattern.ssrf-server-side-fetch and surface indirect-prompt-injection as an honest coverage gap. Do NOT let an agent regenerate.",
+  "expected_activations": [
+    { "observation_key": "tool-capability-selector", "cards": ["pattern.client-supplied-selector-authz", "pattern.ui-only-policy-enforcement"], "strength": "strong" },
+    { "observation_key": "agent-fetch-client-url", "cards": ["pattern.ssrf-server-side-fetch"], "strength": "strong" }
+  ],
+  "held_signals": [
+    { "observation_key": "tool-set-from-principal", "cards": ["pattern.client-supplied-selector-authz", "pattern.ui-only-policy-enforcement"] },
+    { "observation_key": "fetch-allowlisted", "cards": ["pattern.ssrf-server-side-fetch"] },
+    { "observation_key": "agent-output-escaped", "cards": ["pattern.transitive-sanitizer-reliance"] }
+  ],
+  "must_refute": [
+    { "candidate": "C-agent-output-render" }
+  ],
+  "coverage_gaps": ["indirect-prompt-injection"],
+  "stub_routes_forbidden": true,
+  "must_not_confirm_blind": false
+}

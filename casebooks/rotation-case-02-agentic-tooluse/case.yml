@@ -1,0 +1,41 @@
+id: rotation-case-02-agentic-tooluse
+date: 2026-06
+kind: rotation_eval_case
+target_class: AI agent platform with tool dispatch + retrieval (RAG) + a fetch tool
+surfaces:
+  - agent_tool_dispatch   # agent selects/dispatches tools
+  - agent_fetch_tool      # tool that fetches a client-supplied URL
+  - agent_rag_context     # retrieved content folded into the instruction context
+  - agent_output_render   # tool output rendered back to the operator
+auth_model: per-session granted tool set / policy-derived capabilities
+scope_ref: "synthetic rotation case — no live target; second rotation to test agentic generalization + the new SSRF card"
+
+seed_provenance:
+  source: "agentic/tool-use archetypes (OWASP-LLM06/01 shapes) — inspiration only"
+  vendored: "nothing — no flags, challenge names, solutions, or challenge text entered this repo"
+  note: "shapes abstracted into recon→activation→oracle rows under the same Plane-1 governance as a live engagement"
+
+confirmed_findings:
+  - label: ROT2-capability-selector
+    pattern: pattern.client-supplied-selector-authz
+    one_line: "a client-supplied tool selector dispatched a capability outside the session's granted set (a principal-derived sibling denied the same)."
+  - label: ROT2-ssrf
+    pattern: pattern.ssrf-server-side-fetch
+    one_line: "an agent fetch tool retrieved a client-supplied external canary URL the operator owns, proving the destination is client-steerable (internal probes left to scoped review)."
+
+refuted_or_held:
+  - label: ROT2-capability-held
+    why: "the allowed tool set is resolved from the principal's policy; the client tool hint was ignored."
+  - label: ROT2-ssrf-held
+    why: "the fetch tool validated the destination against a strict allowlist with redirects disabled; the off-allowlist canary was never fetched."
+  - label: ROT2-render-held
+    why: "auto-escaping renderer turned the tool output into inert text; the execution canary never fired."
+
+coverage_gaps:
+  - label: ROT2-indirect-injection-gap
+    shape: "retrieved third-party document content concatenated into the agent's instruction context (indirect prompt injection)"
+    why: "no dedicated pattern card models untrusted content reaching the instruction channel; the router should flag the gap, not force-fit transitive-sanitizer or a selector card. Candidate for a future indirect-prompt-injection pattern card (id TBD)."
+
+sanitization:
+  scrubbed: true
+  attestation: "fully synthetic; no live ids/tokens/secrets; agentic archetypes used as inspiration only, nothing vendored."

@@ -1,0 +1,12 @@
+{
+  "case": "rotation-case-02-agentic-tooluse",
+  "rows": [
+    { "id": "g1", "cards": ["pattern.client-supplied-selector-authz", "pattern.ui-only-policy-enforcement"], "strength": "strong", "held": false, "default_verdict": null, "coverage_gap": false },
+    { "id": "g2", "cards": ["pattern.client-supplied-selector-authz", "pattern.ui-only-policy-enforcement"], "strength": "negative", "held": true, "default_verdict": null, "coverage_gap": false },
+    { "id": "g3", "cards": ["pattern.ssrf-server-side-fetch"], "strength": "strong", "held": false, "default_verdict": null, "coverage_gap": false },
+    { "id": "g4", "cards": ["pattern.ssrf-server-side-fetch"], "strength": "negative", "held": true, "default_verdict": null, "coverage_gap": false },
+    { "id": "g5", "cards": [], "strength": "weak", "held": false, "default_verdict": null, "coverage_gap": true },
+    { "id": "g6", "cards": ["pattern.transitive-sanitizer-reliance"], "strength": "negative", "held": true, "default_verdict": "refuted", "coverage_gap": false }
+  ],
+  "loaded_routes": ["pattern.client-supplied-selector-authz", "pattern.ui-only-policy-enforcement", "pattern.ssrf-server-side-fetch", "pattern.transitive-sanitizer-reliance", "vulns/llm06-excessive-agency", "vulns/broken-object-level-authz"]
+}

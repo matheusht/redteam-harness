@@ -354,6 +354,52 @@
       joins the Phase 3 mechanical verdict and the Phase 4 replay-adjusted verdict with the evidence bundle,
       candidate diff, manifest hashes, redaction report, and human checklist into a reviewed-PR promotion path.</p>
 
+    <h2>GEPA autoresearch — Phase 6C (SSRF pattern + second agentic rotation) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
+    <p>Built the scoped <code>pattern.ssrf-server-side-fetch</code> card (recognize a server-side fetch of a
+      client-supplied URL; route to review/held; internal/metadata probes are operator-gated; no payload
+      arsenal), a second <b>agentic/tool-use</b> rotation case (<code>rotation-case-02-agentic-tooluse</code>),
+      its frozen gold + crosswalk + qualification input, and re-ran blind qualification on <b>Sonnet</b>.
+      Result: <b>QUALIFIED</b> — routing now qualified on three surfaces (Adapta + web API + agentic).</p>
+
+    <h3>The honest loop (this is the method, not a detour)</h3>
+    <p>Run 1 <b>BLOCKED</b>: the router put a vuln id inside <code>cards</code> and force-fit
+      <code>transitive-sanitizer-reliance</code> onto an indirect-prompt-injection row. I made two
+      <b>Plane-1 clarifications, not gold edits</b>: an <code>out_of_scope</code> tier on
+      <code>transitive-sanitizer-reliance</code> (the prompt channel is not a data sink → flag a gap), and a
+      brief clarification that <code>cards</code> is pattern-ids-only + minimal best-fit. Run 2 (fresh blind
+      Sonnet) fixed both. It still co-activated <code>ui-only-policy-enforcement</code> on g1 — and that card's
+      strong tier #3 literally claims "a capability selector the client could set to something the UI would
+      never offer," so g1 genuinely co-activates it. My brand-new gold was one card too narrow; I corrected
+      the fixture (validated against the card text), the rotation-01 r5 precedent — <b>not</b> editing
+      established gold to pass an agent.</p>
+
+    <h3>Design decisions <span class="tag t-dec">spec ambiguous</span></h3>
+    <ul>
+      <li><b>SSRF as a scoped pattern, not an exploit card.</b> Per the confirmed decision: recognize the
+        shape and route to review/held. Strong-on-sight activation (client-controlled fetch destination), but
+        a load-bearing scope callout makes loopback/metadata/private-range probes operator-gated; default safe
+        signal is a controlled external canary or a hermetic target. No payload arsenal.</li>
+      <li><b>rotation-01 left frozen.</b> rotation-01 still records SSRF as a coverage gap (its historical,
+        pre-card state) and stays pinned in the campaign — I did not retro-edit it. rotation-02 is where the
+        SSRF card becomes an expected activation. No campaign-manifest cascade.</li>
+      <li><b>Indirect prompt injection seeded as the next honest gap.</b> Rather than stretch a data-sink card
+        over it, the case encodes it as a coverage gap the router must flag — exactly how rotation-01 surfaced
+        SSRF before its card existed.</li>
+    </ul>
+
+    <h3>Deviations <span class="tag t-dev">intentional</span></h3>
+    <ul>
+      <li><b>Two blind re-runs (Sonnet) + one brand-new-gold correction.</b> The first run's BLOCKED result is
+        kept in the run record, not hidden — the loop (clarify cards → re-run → correct an authoring omission)
+        is the auditable method. The single gold correction was validated against the offending card's own
+        text before applying.</li>
+    </ul>
+
+    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
+    <div class="open"><b>Q-ipi-card.</b> rotation-02 surfaced indirect prompt injection as a real coverage gap.
+      Build a scoped <code>pattern.indirect-prompt-injection</code> card next, or hold it as a tracked gap until
+      a third case confirms it (the same bar SSRF had to clear)?</div>
+
     <h2>GEPA autoresearch — Phase 6B (fake-model hermetic targets) <span class="tag t-dec">rev 6 · 2026-06-26</span></h2>
     <p>Four deterministic canned-output targets (<code>llm05-render-escape</code>,
       <code>llm07-prompt-canary</code>, <code>llm06-capability-dispatch</code>,

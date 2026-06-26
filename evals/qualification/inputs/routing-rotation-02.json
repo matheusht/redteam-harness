@@ -1,0 +1,12 @@
+{
+  "case": "rotation-case-02-agentic-tooluse",
+  "instructions": "You are the routing orchestrator. Same contract as the other cases. NOTE: if an observation describes a vulnerability shape that NO pattern card models, do not force-fit a card — set coverage_gap:true and leave cards empty. Use the row ids verbatim.",
+  "rows": [
+    { "id": "g1", "observation": "an agent tool accepts a client-supplied 'capability' argument that selects which tool the agent dispatches, and using it the agent runs a tool outside the session's granted set", "where": "agent_tool_dispatch" },
+    { "id": "g2", "observation": "the agent resolves its allowed tool set from the authenticated principal's policy and ignores any client-supplied tool hint", "where": "agent_tool_dispatch" },
+    { "id": "g3", "observation": "an agent tool fetches a URL passed in its 'url' argument (a fetch-this-link / document-import tool) with no destination allowlist", "where": "agent_fetch_tool" },
+    { "id": "g4", "observation": "the same fetch tool validates the destination against a strict external allowlist and disables redirects", "where": "agent_fetch_tool" },
+    { "id": "g5", "observation": "retrieved third-party document content is concatenated into the agent's instruction context without isolation, so instructions embedded in the document get followed", "where": "agent_rag_context" },
+    { "id": "g6", "observation": "the agent's tool output is rendered back to the operator through an auto-escaping renderer", "where": "agent_output_render" }
+  ]
+}

@@ -100,9 +100,16 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
 - [ ] **Replay and promotion bundle**: primary run + two fresh-session replays, protected-case
       regression check, false-discovery scorer, cost comparison, redaction report, and PR-only human
       review before any promotion.
-- [ ] **Benchmark expansion before real ratchet**: add fake-model hermetic targets for LLM05 / LLM06 /
-      LLM07 / model-router and decide whether SSRF becomes `pattern.ssrf` or remains a tracked coverage
-      gap until a second case confirms it.
+- [x] **Benchmark expansion before real ratchet (Phase 6)**: fake-model hermetic targets for LLM05 /
+      LLM07 / LLM06 / model-router landed (`evals/hermetic/targets/`, `tools/run-hermetic-fakemodel.py`),
+      wired into the shadow runner's frozen evaluator. SSRF decided: `pattern.ssrf-server-side-fetch`
+      added (scoped pattern, review/held posture). Second rotation `rotation-case-02-agentic-tooluse`
+      QUALIFIED — routing now qualified on three surfaces.
+- [ ] **Next coverage gap (surfaced by rotation-02, honest):** indirect prompt injection (untrusted
+      retrieved content reaching the model's instruction channel) has no pattern card. Candidate next
+      slice: a scoped `pattern.indirect-prompt-injection` card. Promotion integrity hardened (Phase 6A):
+      promotion bundles pin frozen-input hashes + manifest hashes and block on drift; PR CI re-runs
+      conformance on the applied diff.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,

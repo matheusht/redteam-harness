@@ -30,7 +30,12 @@ prior run). Those carry the answers. If you have already seen them, say so — t
 Rules:
 - `coverage_gap` — set `true` (and leave `cards` empty) when the observation is a vulnerability shape
   that NO pattern card models. Do NOT force-fit a card; flagging the gap honestly is the correct answer.
-- `cards` — every pattern card the observation activates (use the exact `id:` from the card front-matter).
+  (A card whose front-matter puts the shape `out_of_scope` does NOT model it — that is a coverage gap.)
+- `cards` — **pattern-card ids ONLY** (the exact `id:` from a `skills/patterns/*` front-matter, i.e.
+  `pattern.<x>`). Do NOT put vuln-card ids (`vulns/...`, `llm06...`) here — vuln/objective routing goes
+  in `loaded_routes`. Activate the **minimal best-fit** set: one pattern unless a second pattern
+  independently satisfies its OWN strong/weak tier on this same observation. Do not pile on loosely
+  related cards.
 - `strength` — `negative` means a held defense tell, not a finding.
 - `held` — `true` when the observation is a correctly-enforced defense (the held counterexample).
 - `default_verdict` — ONLY for reflection/echo/render rows: the verdict you would assign **without**

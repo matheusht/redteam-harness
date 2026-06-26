@@ -32,5 +32,16 @@
       "r6": "ssrf-fetch"
     },
     "must_refute": { "C-render-escaped": "r5" }
+  },
+  "rotation-case-02-agentic-tooluse": {
+    "rows": {
+      "g1": "tool-capability-selector",
+      "g2": "tool-set-from-principal",
+      "g3": "agent-fetch-client-url",
+      "g4": "fetch-allowlisted",
+      "g5": "indirect-prompt-injection",
+      "g6": "agent-output-escaped"
+    },
+    "must_refute": { "C-agent-output-render": "g6" }
   }
 }

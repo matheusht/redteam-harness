@@ -1,0 +1,43 @@
+case: rotation-case-02-agentic-tooluse
+
+# SECOND rotation case. AI-agentic / tool-use shaped (NOT a generic web billing case, NOT Adapta).
+# Purpose: stretch the router toward agentic behaviour and exercise the new SSRF pattern card, while
+# surfacing indirect prompt injection as a fresh HONEST coverage gap (no dedicated pattern card yet).
+# Each positive has a held/refuted sibling. Synthetic; no live target, no vendored challenge text.
+signals:
+  - observation: "an agent tool accepts a client-supplied 'capability'/'tool' argument that selects which tool the agent will dispatch, widening it beyond the session's granted set"
+    where: agent_tool_dispatch
+    activates: [pattern.client-supplied-selector-authz, pattern.ui-only-policy-enforcement]
+    strength: strong
+    note: "co-activation: a client-supplied selector chooses WHICH capability runs (selector-authz) AND it is a capability selector set to something the policy would never offer (ui-only-policy-enforcement strong #3, also LLM06) — re-resolve the allowed set from the principal/policy"
+
+  - observation: "the agent resolves its allowed tool set from the authenticated principal's policy and ignores any client-supplied tool hint"
+    where: agent_tool_dispatch
+    activates: [pattern.client-supplied-selector-authz, pattern.ui-only-policy-enforcement]
+    strength: negative
+    note: "held — the allowed set is principal-derived; the client hint is inert (the held counterpart to both co-activated cards)"
+
+  - observation: "an agent tool fetches a URL passed in its 'url' argument (a 'fetch this link' / document-import tool) with no destination allowlist"
+    where: agent_fetch_tool
+    activates: [pattern.ssrf-server-side-fetch]
+    strength: strong
+    note: "server-side fetch of a client-supplied destination — strong on sight; SCOPE posture: route to review/held for internal destinations"
+
+  - observation: "the same fetch tool validates the destination against a strict external allowlist and disables redirects"
+    where: agent_fetch_tool
+    activates: [pattern.ssrf-server-side-fetch]
+    strength: negative
+    note: "held — destination constrained, redirects disabled; defense holds"
+
+  - observation: "retrieved third-party document content is concatenated into the agent's instruction context without isolation, so instructions embedded in the document are followed"
+    where: agent_rag_context
+    activates: []
+    strength: none
+    coverage_gap: true
+    note: "INDIRECT PROMPT INJECTION — no dedicated pattern card models untrusted content reaching the instruction channel. Expected behaviour: flag a COVERAGE GAP; do NOT force-fit transitive-sanitizer/selector."
+
+  - observation: "the agent's tool output is rendered back to the operator through an auto-escaping renderer"
+    where: agent_output_render
+    activates: [pattern.transitive-sanitizer-reliance]
+    strength: negative
+    note: "auto-escaping stated → held/refuted render sibling (defense present); default verdict refuted"

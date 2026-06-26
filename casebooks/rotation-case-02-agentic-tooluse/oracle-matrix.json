@@ -1,0 +1,88 @@
+{
+  "case": "rotation-case-02-agentic-tooluse",
+  "rows": [
+    {
+      "candidate": "ROT2-capability-selector",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "a client-supplied tool selector caused the agent to dispatch a capability outside the session's granted set",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the agent trusted a client-named capability instead of resolving the allowed set from the principal's policy, so a caller invoked a tool they were not granted.",
+      "controls": {
+        "negative": "with no tool hint, the agent dispatched only granted tools",
+        "positive": "the principal-derived sibling refused the same ungranted capability — proves the guard belongs here",
+        "canary": "a benign granted-only marker tool; the ungranted dispatch was a no-op test capability",
+        "replay": "reproduced fresh session"
+      }
+    },
+    {
+      "candidate": "ROT2-capability-held",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "the agent resolves its allowed tool set from the principal's policy and ignores the client tool hint",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "capabilities are principal-derived, so the client-supplied selector is inert — the correct counterpart to ROT2-capability-selector.",
+      "controls": {
+        "negative": "the ungranted tool hint produced a refusal, not a dispatch",
+        "positive": "the granted tool still dispatched normally (the agent is live)",
+        "canary": "ungranted test capability never executed",
+        "replay": "stable fresh session"
+      }
+    },
+    {
+      "candidate": "ROT2-ssrf",
+      "pattern": "pattern.ssrf-server-side-fetch",
+      "signal": "the agent fetch tool retrieved a client-supplied external canary URL the operator controls",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "the destination is client-steerable (a benign operator-owned canary was fetched), establishing the SSRF shape; internal-destination reachability is left to scoped, operator-confirmed review per the card's scope posture.",
+      "controls": {
+        "negative": "the allowlisted sibling tool refused the off-allowlist canary",
+        "positive": "the operator-owned canary endpoint logged the server-side hit (benign, external)",
+        "canary": "controlled external canary URL — no internal/metadata destination probed",
+        "replay": "reproduced fresh session"
+      }
+    },
+    {
+      "candidate": "ROT2-ssrf-held",
+      "pattern": "pattern.ssrf-server-side-fetch",
+      "signal": "the fetch tool validates the destination against a strict allowlist and disables redirects",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "the destination is constrained and redirects are disabled, so the client cannot steer the fetch off the allowlist.",
+      "controls": {
+        "negative": "the off-allowlist canary URL was rejected before any fetch",
+        "positive": "an allowlisted URL fetched normally (the tool is live)",
+        "canary": "off-allowlist canary never received a hit",
+        "replay": "consistently constrained fresh session"
+      }
+    },
+    {
+      "candidate": "ROT2-render-held",
+      "pattern": "pattern.transitive-sanitizer-reliance",
+      "signal": "the agent tool output is rendered through an auto-escaping renderer",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "the renderer escaped the markup to inert text; the execution canary never fired — reflection is not execution.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "renderer-liveness control fired (renderer is live) — so the escaping is deliberate",
+        "canary": "inert local window-flag marker — stayed 0",
+        "replay": "consistently inert fresh session"
+      }
+    },
+    {
+      "candidate": "ROT2-indirect-injection-gap",
+      "signal": "retrieved third-party document content is concatenated into the agent's instruction context, so embedded instructions are followed",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "no current pattern card models indirect prompt injection (untrusted content reaching the instruction channel); the honest outcome is to FLAG A COVERAGE GAP and route to human review, not to force-fit transitive-sanitizer or a selector card.",
+      "controls": {
+        "negative": "n/a — recorded as an uncovered shape, not adjudicated to a verdict",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    }
+  ]
+}

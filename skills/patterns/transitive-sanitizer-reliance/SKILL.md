@@ -24,7 +24,15 @@ activation:
   negative:
     - "the sink renders inside a sandbox / strips scripts / framework auto-escapes → reflected but inert"
     - "CSP or framework escaping blocks execution of the injected marker"
+  out_of_scope:
+    - "untrusted content reaching the model's INSTRUCTION / PROMPT channel (indirect prompt injection, RAG context poisoning, tool-result-as-instruction) is NOT this card — this card is about DATA sinks (HTML / SQL / template / shell / forwarder), not the prompt channel. Flag a COVERAGE GAP; do not force-fit this card onto it."
 ---
+
+> **Scope boundary (load-bearing).** This card is about a DATA sink (renderer / SQL / template / shell /
+> forwarder) trusting an upstream sanitizer. Untrusted content reaching the model's **instruction /
+> prompt channel** — indirect prompt injection, RAG context poisoning, a tool result interpreted as an
+> instruction — is a DIFFERENT shape with no pattern card yet. Flag a **coverage gap** for it; do not
+> stretch this card to cover the prompt channel.
 
 > **Activation-strength rule (load-bearing).** A render/rich-output surface being *present* is **weak**:
 > most such pipelines sanitize, so the prior is "inert until proven otherwise." Escalate to **strong**
