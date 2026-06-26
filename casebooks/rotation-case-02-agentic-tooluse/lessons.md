@@ -20,7 +20,11 @@ as an honest coverage gap, the same way rotation-01 surfaced SSRF before its car
 Every positive is paired: principal-derived tool set (held), allowlisted fetch with redirects disabled
 (held), auto-escaping output renderer (refuted). The case must not teach "every agent tool is a bug."
 
-## Coverage gap recorded
-`ROT2-indirect-injection-gap` — candidate for a future indirect-prompt-injection pattern card (id TBD).
-This is the rotation doing its job: stretching the router until it finds the next real gap, without
-touching frozen gold to manufacture a pass.
+## Coverage gap recorded — NOW CLOSED
+`ROT2-indirect-injection-gap` surfaced the need for an indirect-prompt-injection pattern card. That card
+now exists: `pattern.indirect-prompt-injection` (data-sink vs prompt-channel boundary made explicit). A
+blind Sonnet router routes this exact shape to it (strong, no force-fit), so the gap is closed. This
+case's frozen gold is left as the historical pre-card record (the same way rotation-01 still records the
+SSRF gap); a future rotation-03 is the natural surface to exercise the new card under a gold that expects
+it. The rotation did its job: stretched the router until it found a real gap, which a card then closed —
+without touching frozen gold to manufacture a pass.
