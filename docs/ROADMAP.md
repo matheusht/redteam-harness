@@ -84,18 +84,31 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
 - [ ] Harvest prior engagement learnings into technique "winning variants" (abstract, scrubbed).
 - [ ] MITRE ATLAS cross-walk on each card.
 
-## Phase 3 — autoresearch (BLOCKED until the Phase-2.5 gates pass)
-- [ ] **Claudini keep-if-better ratchet**: propose technique variant → run on frozen slice → keep
-      only if it beats the incumbent on **gated `clean_confirmed_coverage`** (distinct benchmark cases
-      passing the full adjudication oracle within a fixed budget — NOT raw confirmed-finding rate, which
-      rewards evaluator-gaming; see `autoresearch-evaluation-rfc.html` §03).
-- [ ] **Anti-cheat gate** (rated more important): immutable evaluator per campaign · isolated
-      experiments · hidden/rotating holdouts · replay-before-accept · revert-on-regression · no
-      shared memory that turns evaluator quirks into strategy folklore.
+## Phase 3A — GEPA shadow autoresearch (planned; no automatic promotion)
+- [ ] **Campaign/candidate contracts**: add campaign manifest, candidate manifest, promotion bundle,
+      and hash checks for mutable allowlist, evaluator/scorer/gold/casebook hashes, model settings,
+      budgets, lineage, and protected cases. Candidate artifacts are JSON manifest + Markdown evidence
+      bundle + diff.
+- [ ] **Standalone GEPA adapter first**: use GEPA directly with a narrow custom adapter; DSPy remains a
+      later bounded spike for stable typed LM modules if it proves useful.
+- [ ] **Multi-track, single-mutation campaign**: first shadow campaign may cover `task-reframing`,
+      `decomposition`, and one new technique-card candidate, but each candidate mutates exactly one
+      declared component.
+- [ ] **Keep-if-better ratchet, shadow only**: propose technique variant → run on frozen slice → keep
+      only if it beats the incumbent on **gated `clean_confirmed_coverage`** or equal coverage with at
+      least 10% lower cost. Output is an evidence bundle, not a Plane-1 edit.
+- [ ] **Replay and promotion bundle**: primary run + two fresh-session replays, protected-case
+      regression check, false-discovery scorer, cost comparison, redaction report, and PR-only human
+      review before any promotion.
+- [ ] **Benchmark expansion before real ratchet**: add fake-model hermetic targets for LLM05 / LLM06 /
+      LLM07 / model-router and decide whether SSRF becomes `pattern.ssrf` or remains a tracked coverage
+      gap until a second case confirms it.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,
   casebook ground truth, budget, or sealed holdout data.
+- **Promotion path:** GEPA candidate → isolated branch → scorers/replay → promotion bundle → human
+  review → PR merge. No direct-to-main and no manual copy into `skills/techniques/`.
 
 ### Launch preconditions (all must hold before the first ratchet run)
 1. False-discovery corpus: **zero invalid accepts** (`fixtures/false-discovery/`).
@@ -105,6 +118,18 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
 4. Routing scorer is mechanical and frozen-gold-backed (`tools/score-routing.py`).
 5. A hermetic benchmark exists (`evals/hermetic/`), no-model BOLA target landed, fake-model harness for
    the model-dependent cards in place.
+
+## Phase 3B+ — review-required capability expansion
+- [ ] **Live GEPA advisory mode**: GEPA reads scrubbed live traces and suggests next probes; human
+      approval required before execution. Bounded/autonomous live modes require a separate review.
+- [ ] **Evaluator co-evolution**: GEPA may eventually propose oracle/scorer/gold/casebook changes only
+      behind a sealed meta-evaluator, protected historical cases, zero invalid accepts, and explicit PR
+      review.
+- [ ] **Autonomous PoC ladder**: Level 0 evidence explanation → Level 1 benign canary proof → Level 2
+      local hermetic PoC → Level 3 scoped live PoC with human confirmation → Level 4 autonomous exploit
+      chaining (separate review).
+- [ ] **DSPy spike**: test one isolated module (routing/evaluator output normalization) only after the
+      standalone GEPA adapter is useful; no full DSPy rewrite without measurable benefit.
 
 ## Phase 4 — scale (only when a concrete wall appears)
 - [ ] Pack mode / multi-account concurrency (config knob 1→N), gated on `scope.md`.

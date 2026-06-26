@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Architecture Brainstorm — GEPA, DSPy, and Agentic Red-Teaming Harness</title>
+  <style>
+    :root {
+      --paper: #f6f1e7;
+      --paper-deep: #eee6d7;
+      --ink: #211f1a;
+      --muted: #6e685d;
+      --line: #cfc5b3;
+      --line-strong: #918774;
+      --red: #9d2f26;
+      --red-soft: #ead4cf;
+      --green: #2d624b;
+      --green-soft: #dce8df;
+      --amber: #8a5a14;
+      --amber-soft: #eee1c5;
+      --code: #2b2924;
+      --code-ink: #f4ede0;
+      --white: #fffdf8;
+      --measure: 78rem;
+      --mono: "SFMono-Regular", "Cascadia Code", "Liberation Mono", "DejaVu Sans Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(67, 57, 42, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 100% 28px;
+      font-family: var(--mono);
+      font-size: 15px;
+      line-height: 1.68;
+      text-rendering: optimizeLegibility;
+    }
+
+    a {
+      color: var(--red);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:hover { color: #6f1d18; }
+
+    code, pre, kbd { font-family: var(--mono); }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line-strong);
+      background: rgba(246, 241, 231, 0.96);
+      backdrop-filter: blur(8px);
+    }
+
+    .topbar-inner {
+      width: min(var(--measure), calc(100% - 40px));
+      min-height: 48px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .document-id {
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .topbar nav {
+      display: flex;
+      gap: 18px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .topbar nav::-webkit-scrollbar { display: none; }
+
+    .topbar nav a {
+      color: var(--muted);
+      text-decoration: none;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .topbar nav a:hover { color: var(--ink); }
+
+    main {
+      width: min(var(--measure), calc(100% - 40px));
+      margin: 0 auto;
+      padding: 70px 0 96px;
+    }
+
+    .masthead {
+      padding-bottom: 52px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .rfc-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid var(--line-strong);
+      background: var(--line-strong);
+      margin-bottom: 46px;
+    }
+
+    .rfc-meta div {
+      min-height: 72px;
+      padding: 13px 14px;
+      background: var(--paper);
+    }
+
+    .rfc-meta dt {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .rfc-meta dd {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-weight: 750;
+      line-height: 1.18;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-width: 15ch;
+      font-size: clamp(40px, 6.5vw, 76px);
+    }
+
+    h2 {
+      margin-top: 78px;
+      padding-top: 18px;
+      border-top: 2px solid var(--ink);
+      font-size: clamp(27px, 4vw, 43px);
+    }
+
+    h3 {
+      margin-top: 42px;
+      font-size: 21px;
+      letter-spacing: -0.035em;
+    }
+
+    h4 {
+      margin-top: 28px;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    p { max-width: 76ch; }
+
+    .dek {
+      max-width: 68ch;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.55;
+    }
+
+    .verdict {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 1fr);
+      gap: 30px;
+      margin: 42px 0 0;
+      padding-top: 25px;
+      border-top: 1px solid var(--line-strong);
+    }
+
+    .verdict strong {
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    .verdict p {
+      max-width: 66ch;
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .section-number {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--red);
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+
+    .callout {
+      max-width: 76ch;
+      margin: 28px 0;
+      padding: 18px 20px;
+      border-left: 4px solid var(--red);
+      background: var(--red-soft);
+    }
+
+    .callout.green {
+      border-left-color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .callout.amber {
+      border-left-color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .callout p { margin: 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin: 30px 0;
+      border: 1px solid var(--line-strong);
+      background: var(--line-strong);
+    }
+
+    .grid article {
+      min-height: 190px;
+      padding: 19px;
+      background: var(--paper);
+    }
+
+    .grid h3,
+    .grid h4 {
+      margin-top: 0;
+    }
+
+    .grid p {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1px;
+      margin: 30px 0;
+      border: 1px solid var(--line-strong);
+      background: var(--line-strong);
+    }
+
+    .two-col > article {
+      padding: 20px;
+      background: var(--paper);
+    }
+
+    .two-col h3 {
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      margin: 28px 0;
+      border-collapse: collapse;
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+    }
+
+    th, td {
+      vertical-align: top;
+      text-align: left;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+    }
+
+    th {
+      color: var(--ink);
+      background: var(--paper-deep);
+      font-size: 13px;
+    }
+
+    td {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    td strong { color: var(--ink); }
+
+    ul, ol {
+      max-width: 76ch;
+      padding-left: 1.35rem;
+    }
+
+    li + li { margin-top: 7px; }
+
+    pre {
+      overflow-x: auto;
+      margin: 28px 0;
+      padding: 18px;
+      color: var(--code-ink);
+      background: var(--code);
+      border: 1px solid #14120f;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .diagram {
+      margin: 34px 0;
+      padding: 18px;
+      overflow-x: auto;
+      border: 1px solid var(--line-strong);
+      background: var(--white);
+    }
+
+    .diagram svg {
+      display: block;
+      min-width: 900px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .status-now { color: var(--green); font-weight: 700; }
+    .status-next { color: var(--amber); font-weight: 700; }
+    .status-review { color: var(--red); font-weight: 700; }
+
+    .source-list {
+      columns: 2;
+      column-gap: 36px;
+    }
+
+    .source-list li {
+      break-inside: avoid;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      margin-top: 86px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line-strong);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .rfc-meta,
+      .grid,
+      .two-col,
+      .verdict {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 10px 0;
+      }
+
+      main {
+        width: min(100% - 28px, var(--measure));
+        padding-top: 40px;
+      }
+
+      .source-list { columns: 1; }
+    }
+
+    @media print {
+      .topbar { position: static; }
+      body { background: #fff; }
+      main { width: auto; padding: 0; }
+      a { color: var(--ink); }
+      .diagram, table { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="document-id" href="#top">GEPA / DSPy architecture memo</a>
+      <nav aria-label="Sections">
+        <a href="#recommendation">Recommendation</a>
+        <a href="#sources">Sources</a>
+        <a href="#gepa">GEPA</a>
+        <a href="#dspy">DSPy</a>
+        <a href="#placement">Placement</a>
+        <a href="#changes">Changes</a>
+        <a href="#sequence">Sequence</a>
+        <a href="#decisions">Decisions</a>
+        <a href="#plan">Plan</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="masthead">
+      <dl class="rfc-meta">
+        <div>
+          <dt>Artifact</dt>
+          <dd>Architecture brainstorm</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>Review memo</dd>
+        </div>
+        <div>
+          <dt>Primary call</dt>
+          <dd>GEPA first</dd>
+        </div>
+        <div>
+          <dt>Date</dt>
+          <dd>2026-06-26</dd>
+        </div>
+      </dl>
+
+      <h1>Architecture Brainstorm: GEPA, DSPy, and Agentic Red-Teaming Harness</h1>
+      <p class="dek">
+        A practical review of where reflective optimization belongs in the current harness,
+        when DSPy becomes useful, and which agentic security-system ideas should remain gated.
+      </p>
+
+      <div class="verdict" id="recommendation">
+        <strong>Executive recommendation</strong>
+        <p>
+          Add GEPA first as an offline, human-gated optimizer for technique-card variants.
+          Keep DSPy out of the core path for now. Treat Cloudflare- and Depthfirst-style agentic
+          systems as directionally useful, but sequence them behind evaluator maturity,
+          replay, hermetic benchmarks, and scope controls.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-number">01</span>Executive Recommendation</h2>
+
+      <div class="grid">
+        <article>
+          <h3>Recommended path</h3>
+          <p>
+            Implement GEPA as the first real autoresearch mechanism, but only as a shadow campaign
+            that proposes technique-card variants and emits an evidence bundle.
+          </p>
+        </article>
+        <article>
+          <h3>Why</h3>
+          <p>
+            GEPA optimizes textual components using execution traces and evaluator feedback. That
+            maps directly to this harness's casebooks, scorers, cost ledgers, and false-discovery gates.
+          </p>
+        </article>
+        <article>
+          <h3>Not yet</h3>
+          <p>
+            Do not let an optimizer mutate oracles, casebooks, routing gold, scorers, budgets, sealed
+            data, or live target behavior. DSPy is a later adapter spike, not a prerequisite.
+          </p>
+        </article>
+      </div>
+
+      <div class="callout green">
+        <p>
+          Practical decision: GEPA belongs outside Plane 1. It proposes; the evaluator blocks or
+          allows; a human promotes. That keeps the optimizer from grading itself.
+        </p>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2><span class="section-number">02</span>Source Review Summary</h2>
+
+      <p>
+        All listed sources were directly reviewed at the link level. The notes below avoid importing
+        unverified claims into the design; they focus on architecture patterns that transfer cleanly
+        into the harness.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Resource</th>
+            <th>What it contributes</th>
+            <th>Pattern worth borrowing</th>
+            <th>What does not transfer directly</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://github.com/gepa-ai/gepa">GEPA</a></td>
+            <td>Reflective optimization for systems with textual parameters, using execution traces and evaluator feedback.</td>
+            <td>Candidate lineage, trace-aware mutation, Pareto selection, and textual feedback as optimization signal.</td>
+            <td>Its broad “optimize anything” framing is too wide for the first harness integration.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/stanfordnlp/dspy">DSPy GitHub</a> / <a href="https://dspy.ai/">DSPy docs</a></td>
+            <td>Typed LM programs, signatures, modules, and optimizers including GEPA integration.</td>
+            <td>Structured LM interfaces for router/evaluator/planner modules once those stabilize.</td>
+            <td>A full DSPy refactor would expand dependencies and architecture before clear payoff.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/microsoft/AI-Red-Teaming-Playground-Labs">Microsoft AI Red Teaming Playground Labs</a></td>
+            <td>Dockerized educational AI red-team challenges with scoring and PyRIT automation examples.</td>
+            <td>Vulnerable lab targets, challenge manifests, and separated scoring infrastructure.</td>
+            <td>Harmful-content labs, CTF scoring, and leaderboard mechanics should not enter the core harness.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/EmanHerawy/vibe-learning/tree/main/AI-sec/resources">Vulnerable AI app resources</a></td>
+            <td>Catalog-style links to vulnerable AI apps and LLM-agent security training environments.</td>
+            <td>Reviewed source catalog for future hermetic or semi-hermetic target selection.</td>
+            <td>Raw repos, flags, solutions, and target-specific details should not be vendored into Plane 1.</td>
+          </tr>
+          <tr>
+            <td><a href="https://depthfirst.com/research/21-zero-days-in-ffmpeg">Depthfirst security agent article</a></td>
+            <td>Security-agent framing: threat model first, identify attacker-controlled inputs, check reachability, reproduce concretely.</td>
+            <td>Hypothesis-to-repro discipline and guardrails against theoretical findings.</td>
+            <td>Memory-safety exploit research and automatic PoC generation are review-required expansion.</td>
+          </tr>
+          <tr>
+            <td><a href="https://blog.cloudflare.com/cyber-frontier-models/">Cloudflare frontier models</a> / <a href="https://blog.cloudflare.com/build-your-own-vulnerability-harness/">Cloudflare harness architecture</a></td>
+            <td>Public architecture ideas: model-agnostic harness, discovery/validation split, gapfill, dedup, persistence, independent validation.</td>
+            <td>Recon → hunt → validate → gapfill → dedup → report, with persistence before parallelism.</td>
+            <td>Fleet-scale multi-repo tracing and exploit-chain automation are future scope.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="gepa">
+      <h2><span class="section-number">03</span>GEPA Fit</h2>
+
+      <div class="two-col">
+        <article>
+          <h3>What GEPA should optimize</h3>
+          <ul>
+            <li>Technique-card variants.</li>
+            <li>Hunter brief phrasing.</li>
+            <li>Benign ladder sequencing hints.</li>
+            <li>Bounded continuation and reframing variants.</li>
+          </ul>
+        </article>
+        <article>
+          <h3>What GEPA must not optimize first</h3>
+          <ul>
+            <li>Oracles, scorers, gold labels, budgets, casebooks, or sealed data.</li>
+            <li>Vulnerability objectives or <code>safe_signal</code> definitions.</li>
+            <li>Live engagement traffic or target-specific strategy.</li>
+            <li>Automatic Plane-1 promotion.</li>
+          </ul>
+        </article>
+      </div>
+
+      <h3>Inputs and outputs</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Side</th>
+            <th>Artifacts</th>
+            <th>Architectural note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Input</td>
+            <td>Candidate technique, campaign manifest, frozen evaluator set, traces, scorer output, cost ledger, replay outcomes.</td>
+            <td>Every input that affects acceptance must be hashed in the campaign manifest.</td>
+          </tr>
+          <tr>
+            <td>Output</td>
+            <td>Candidate diff, lineage, failure categories, keep/discard evidence, promotion bundle.</td>
+            <td>The output is evidence, not a direct edit to <code>skills/</code>.</td>
+          </tr>
+          <tr>
+            <td>Gate</td>
+            <td>Conformance, false-discovery, routing/hermetic eval, replay stability, protected-case regression check.</td>
+            <td>False-discovery increase is a hard veto, not a score tradeoff.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Minimal first implementation</h3>
+      <ol>
+        <li>Create a GEPA shadow campaign runner.</li>
+        <li>Let it mutate one declared technique variant.</li>
+        <li>Evaluate against frozen fixtures and hermetic targets.</li>
+        <li>Emit an evidence bundle and proposed diff.</li>
+        <li>Require human review before any Plane-1 promotion.</li>
+      </ol>
+    </section>
+
+    <section id="dspy">
+      <h2><span class="section-number">04</span>DSPy Fit</h2>
+
+      <p>
+        DSPy is useful when the harness has stable LM modules with typed inputs and outputs. Today,
+        the working core is deliberately simple: markdown cards, JSON schemas, stdlib scorers, and
+        deterministic gates. That makes DSPy interesting, but not required for GEPA.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Benefits</th>
+            <th>Costs</th>
+            <th>Recommendation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GEPA-only custom adapter</strong></td>
+            <td>Smallest integration; preserves current card/evaluator architecture.</td>
+            <td>Requires custom trace formatting and adapter code.</td>
+            <td><span class="status-now">Build now</span></td>
+          </tr>
+          <tr>
+            <td><strong>GEPA + DSPy spike</strong></td>
+            <td>Typed predictor traces and cleaner LM module boundaries.</td>
+            <td>Introduces dependency and abstraction layer.</td>
+            <td><span class="status-next">Spike later</span></td>
+          </tr>
+          <tr>
+            <td><strong>Full DSPy rewrite</strong></td>
+            <td>Coherent typed LM-program architecture.</td>
+            <td>High migration cost; rewrites working harness pieces prematurely.</td>
+            <td><span class="status-review">Do not do now</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout amber">
+        <p>
+          DSPy becomes attractive after the harness has multiple stable LM programs. It is not needed
+          for the first GEPA shadow campaign.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-number">05</span>Architecture Diagram</h2>
+
+      <div class="diagram" aria-label="Architecture placement diagram">
+        <svg viewBox="0 0 980 520" role="img">
+          <title>GEPA and DSPy placement in the harness</title>
+          <defs>
+            <marker id="arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+              <path d="M0,0 L9,4.5 L0,9 z" fill="#211f1a"></path>
+            </marker>
+          </defs>
+
+          <rect x="28" y="34" width="252" height="124" fill="#eee6d7" stroke="#918774"></rect>
+          <text x="48" y="68" font-family="monospace" font-size="18" font-weight="700" fill="#211f1a">Plane 1</text>
+          <text x="48" y="95" font-family="monospace" font-size="13" fill="#6e685d">methodology</text>
+          <text x="48" y="123" font-family="monospace" font-size="12" fill="#211f1a">vuln cards · technique cards</text>
+          <text x="48" y="144" font-family="monospace" font-size="12" fill="#211f1a">pattern cards · oracles</text>
+
+          <rect x="362" y="34" width="252" height="124" fill="#eee6d7" stroke="#918774"></rect>
+          <text x="382" y="68" font-family="monospace" font-size="18" font-weight="700" fill="#211f1a">Plane 2</text>
+          <text x="382" y="95" font-family="monospace" font-size="13" fill="#6e685d">orchestration / eval</text>
+          <text x="382" y="123" font-family="monospace" font-size="12" fill="#211f1a">routing · loop · scorers</text>
+          <text x="382" y="144" font-family="monospace" font-size="12" fill="#211f1a">qualification · hermetic targets</text>
+
+          <rect x="696" y="34" width="252" height="124" fill="#eee6d7" stroke="#918774"></rect>
+          <text x="716" y="68" font-family="monospace" font-size="18" font-weight="700" fill="#211f1a">Plane 3</text>
+          <text x="716" y="95" font-family="monospace" font-size="13" fill="#6e685d">engagement memory</text>
+          <text x="716" y="123" font-family="monospace" font-size="12" fill="#211f1a">scope · findings · cleanup</text>
+          <text x="716" y="144" font-family="monospace" font-size="12" fill="#211f1a">raw evidence stays here</text>
+
+          <path d="M280 96 H362" stroke="#211f1a" stroke-width="1.4" marker-end="url(#arrow)"></path>
+          <path d="M614 96 H696" stroke="#211f1a" stroke-width="1.4" marker-end="url(#arrow)"></path>
+
+          <rect x="90" y="252" width="342" height="148" fill="#dce8df" stroke="#2d624b"></rect>
+          <text x="112" y="288" font-family="monospace" font-size="18" font-weight="700" fill="#211f1a">GEPA shadow optimizer</text>
+          <text x="112" y="317" font-family="monospace" font-size="12" fill="#211f1a">reads traces + evaluator feedback</text>
+          <text x="112" y="339" font-family="monospace" font-size="12" fill="#211f1a">mutates one technique variant</text>
+          <text x="112" y="361" font-family="monospace" font-size="12" fill="#211f1a">emits evidence bundle only</text>
+          <text x="112" y="383" font-family="monospace" font-size="12" fill="#2d624b">manual promotion gate</text>
+
+          <rect x="548" y="252" width="342" height="148" fill="#eee1c5" stroke="#8a5a14"></rect>
+          <text x="570" y="288" font-family="monospace" font-size="18" font-weight="700" fill="#211f1a">DSPy optional adapter</text>
+          <text x="570" y="317" font-family="monospace" font-size="12" fill="#211f1a">typed LM modules later</text>
+          <text x="570" y="339" font-family="monospace" font-size="12" fill="#211f1a">router / evaluator / planner spike</text>
+          <text x="570" y="361" font-family="monospace" font-size="12" fill="#211f1a">not required for GEPA v1</text>
+          <text x="570" y="383" font-family="monospace" font-size="12" fill="#8a5a14">dependency review first</text>
+
+          <path d="M454 158 C418 200, 355 220, 305 252" stroke="#211f1a" stroke-width="1.4" fill="none" marker-end="url(#arrow)"></path>
+          <path d="M260 252 C255 212, 205 196, 158 158" stroke="#211f1a" stroke-width="1.4" fill="none" marker-end="url(#arrow)"></path>
+          <path d="M614 158 C662 200, 696 216, 720 252" stroke="#211f1a" stroke-width="1.4" fill="none" marker-end="url(#arrow)"></path>
+
+          <line x1="40" y1="458" x2="940" y2="458" stroke="#918774"></line>
+          <text x="48" y="488" font-family="monospace" font-size="13" fill="#6e685d">Rule: optimizers propose; evaluators gate; humans promote. Raw engagement memory never becomes optimizer folklore.</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="placement">
+      <h2><span class="section-number">06</span>Harness Architecture Placement</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>Fits In</th>
+            <th>Purpose</th>
+            <th>Build Now?</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>GEPA</td>
+            <td>Phase 3A shadow optimizer outside Plane 1</td>
+            <td>Evolve technique-card variants against frozen evaluator</td>
+            <td><span class="status-now">Yes, after one more rotated case</span></td>
+            <td>Mutates candidates only; no automatic promotion.</td>
+          </tr>
+          <tr>
+            <td>DSPy</td>
+            <td>Optional adapter/programming layer</td>
+            <td>Typed LM modules and optimizer integration</td>
+            <td><span class="status-next">Spike later</span></td>
+            <td>Useful if router/evaluator/planner stabilize as LM programs.</td>
+          </tr>
+          <tr>
+            <td>Evaluator / judge</td>
+            <td>Plane 2 / <code>evals/</code> / tools</td>
+            <td>Validate claims and catch false positives</td>
+            <td><span class="status-now">Yes</span></td>
+            <td>Immutable during GEPA campaigns.</td>
+          </tr>
+          <tr>
+            <td>Attack strategy loop</td>
+            <td><code>engine/loop.md</code> + technique cards</td>
+            <td>Run bounded ladder and produce attempts</td>
+            <td><span class="status-now">Refine</span></td>
+            <td>GEPA can tune technique variants, not core loop rules yet.</td>
+          </tr>
+          <tr>
+            <td>Vulnerable app lab</td>
+            <td><code>evals/hermetic/targets/</code></td>
+            <td>Frozen deterministic benchmark targets</td>
+            <td><span class="status-now">Yes</span></td>
+            <td>Prefer no-model or canned-model targets.</td>
+          </tr>
+          <tr>
+            <td>Task registry</td>
+            <td>Future run database or campaign manifest</td>
+            <td>Track queued tasks, lineage, budgets, and retries</td>
+            <td><span class="status-next">Next</span></td>
+            <td>Needed before parallelism or long campaigns.</td>
+          </tr>
+          <tr>
+            <td>Telemetry</td>
+            <td>Run traces, cost ledger, scorer outputs</td>
+            <td>Feed GEPA and evaluator with evidence</td>
+            <td><span class="status-now">Yes</span></td>
+            <td>Record calls, tokens, elapsed time, replay stability.</td>
+          </tr>
+          <tr>
+            <td>Memory</td>
+            <td>Casebooks + scrubbed winners</td>
+            <td>Reusable abstract lessons</td>
+            <td><span class="status-now">Expand</span></td>
+            <td>No raw engagement memory.</td>
+          </tr>
+          <tr>
+            <td>Reporting</td>
+            <td>Deterministic report generator</td>
+            <td>Render findings from structured evidence</td>
+            <td><span class="status-next">Next</span></td>
+            <td>Report should be script-derived, not free-form invention.</td>
+          </tr>
+          <tr>
+            <td>Replay system</td>
+            <td>Evaluation runner + fresh-session replay</td>
+            <td>Stabilize candidate claims</td>
+            <td><span class="status-now">Yes</span></td>
+            <td>Required before accepting GEPA improvements.</td>
+          </tr>
+          <tr>
+            <td>Adapter layer</td>
+            <td>GEPA adapter</td>
+            <td>Connect traces to GEPA evaluate/reflect contract</td>
+            <td><span class="status-now">Yes</span></td>
+            <td>Keep it narrow.</td>
+          </tr>
+          <tr>
+            <td>Agent planner</td>
+            <td>Future Plane 2 module</td>
+            <td>Queue gapfill tasks based on coverage</td>
+            <td><span class="status-next">Future</span></td>
+            <td>Needs task registry and persistence first.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="changes">
+      <h2><span class="section-number">07</span>Proposed Architecture Changes</h2>
+
+      <h3>Must-have now</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th>Why it matters</th>
+            <th>Implementation surface</th>
+            <th>Risk</th>
+            <th>Acceptance criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>GEPA shadow campaign adapter</td>
+            <td>Evaluate one technique variant against frozen fixtures and return score plus feedback.</td>
+            <td>Smallest useful GEPA integration.</td>
+            <td><code>evals/gepa-shadow/</code>, <code>tools/run-gepa-shadow.py</code></td>
+            <td>Scope creep into evaluator mutation.</td>
+            <td>Only one declared technique changes; bundle only, no Plane-1 edit.</td>
+          </tr>
+          <tr>
+            <td>Candidate and campaign manifests</td>
+            <td>Record mutable component, parent hash, evaluator hashes, budgets, model settings, lineage.</td>
+            <td>Makes runs replayable and tamper-detectable.</td>
+            <td>New manifest schemas and conformance checks.</td>
+            <td>Over-schema early.</td>
+            <td>Budget/evaluator/gold/candidate hash mismatch blocks.</td>
+          </tr>
+          <tr>
+            <td>Rotated casebook</td>
+            <td>Add a fresh sanitized case not derived from the original live run.</td>
+            <td>Prevents Adapta-shaped optimization.</td>
+            <td><code>casebooks/rotation-case-01-web-api/</code></td>
+            <td>Public-source contamination.</td>
+            <td>Includes positives and held/refuted rows; no raw flags, names, or secrets.</td>
+          </tr>
+          <tr>
+            <td>GEPA hard-gate wrapper</td>
+            <td>Run conformance, false-discovery, routing/hermetic eval, replay, and protected-case checks.</td>
+            <td>Prevents optimizer from bypassing rigor.</td>
+            <td>Campaign runner reusing existing tools.</td>
+            <td>Scalar-score gaming.</td>
+            <td>FDR increase blocks; equal coverage requires at least 10% cost reduction.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Should-have next</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th>Why it matters</th>
+            <th>Implementation surface</th>
+            <th>Risk</th>
+            <th>Acceptance criteria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Canned/fake-model hermetic targets</td>
+            <td>Deterministic targets for LLM05, LLM06, LLM07, and router differential.</td>
+            <td>Real LLMs drift; hermetic benchmarks need stable answers.</td>
+            <td><code>evals/hermetic/targets/</code></td>
+            <td>Overfitting to toy transcripts.</td>
+            <td>Each target has confirmed and held/refuted cases.</td>
+          </tr>
+          <tr>
+            <td>Task registry</td>
+            <td>Append-only record of campaigns, tasks, attempts, artifacts, and retries.</td>
+            <td>Persistence before parallelism.</td>
+            <td>SQLite or JSONL run log.</td>
+            <td>Premature platforming.</td>
+            <td>Failed run can resume without losing completed evaluations.</td>
+          </tr>
+          <tr>
+            <td>Deterministic reporting</td>
+            <td>Generate reports from structured findings and evidence refs.</td>
+            <td>Prevents invented severity, impact, or proof.</td>
+            <td><code>tools/render-report.py</code></td>
+            <td>Plain initial reports.</td>
+            <td>Every report claim links back to finding fields or evidence refs.</td>
+          </tr>
+          <tr>
+            <td>Vulnerable app lab catalog</td>
+            <td>Reviewed list of possible AI/web vulnerable apps for future targets.</td>
+            <td>Benchmark diversity without Plane-1 pollution.</td>
+            <td><code>evals/lab-catalog.md</code></td>
+            <td>Unsafe objectives or raw challenge import.</td>
+            <td>Each candidate has license, safety, contamination, and mapping notes.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Future expansion</h3>
+      <div class="grid">
+        <article>
+          <h3>DSPy module spike</h3>
+          <p>
+            Test one isolated typed LM module for routing-output or evaluator-output normalization.
+            It must outperform or simplify the existing prompt+JSON path before becoming core.
+          </p>
+        </article>
+        <article>
+          <h3>Gapfill planner</h3>
+          <p>
+            Generate bounded tasks for under-tested coverage cells. Needs task registry and budget
+            controls before it is safe.
+          </p>
+        </article>
+        <article>
+          <h3>Dedup clustering</h3>
+          <p>
+            Cluster by dedup key and root cause before reporting or scoring. Prevents duplicate
+            coverage inflation.
+          </p>
+        </article>
+      </div>
+
+      <h3>Out of scope / requires review</h3>
+      <ul>
+        <li>GEPA optimizing oracles, scorers, gold labels, casebooks, budgets, or sealed data.</li>
+        <li>GEPA running directly against live engagements.</li>
+        <li>Autonomous exploit-chain construction beyond benign canaries and approved hermetic labs.</li>
+        <li>Fleet-scale multi-repo tracing before persistence, dedup, and validation are stable.</li>
+      </ul>
+    </section>
+
+    <section id="sequence">
+      <h2><span class="section-number">08</span>Suggested Implementation Sequence</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Work</th>
+            <th>Exit criterion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Phase 1: smallest useful GEPA integration</td>
+            <td>Add campaign/candidate manifests, GEPA custom adapter, one mutable technique variant, frozen eval run, and evidence bundle output.</td>
+            <td>Candidate can be generated, evaluated, blocked or kept, and replayed without touching Plane 1.</td>
+          </tr>
+          <tr>
+            <td>Phase 2: evaluation and benchmark loop</td>
+            <td>Add rotated casebook, fake-model hermetic targets, replay stability, validation split, and expanded false-discovery/adversarial corpora.</td>
+            <td>Candidate cannot pass by increasing false positives, changing budget, or regressing protected cases.</td>
+          </tr>
+          <tr>
+            <td>Phase 3: agentic harness expansion</td>
+            <td>Add task registry, gapfill planner, deterministic reporting, dedup clustering, and optional DSPy module spike.</td>
+            <td>Longer campaigns become resumable, bounded, and auditable.</td>
+          </tr>
+          <tr>
+            <td>Phase 4: robust security-agent style system</td>
+            <td>Add independent validation model, multi-agent recon/hunt/validate stages, persistent coverage matrix, and broader hermetic labs.</td>
+            <td>Harness resembles a constrained security-agent system while preserving scope and evidence gates.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="decisions">
+      <h2><span class="section-number">09</span>Accepted Decisions</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Decision</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>First GEPA campaign target</td>
+            <td>Run a multi-track campaign over <code>task-reframing</code>, <code>decomposition</code>, and one new technique-card candidate.</td>
+            <td>Campaign breadth is useful, but each candidate still mutates one declared component for attribution.</td>
+          </tr>
+          <tr>
+            <td>Need another rotated case first?</td>
+            <td>No for shadow runs; yes before promotion.</td>
+            <td>The integration can start on current fixtures, but Plane-1 promotion needs broader evidence.</td>
+          </tr>
+          <tr>
+            <td>Candidate format</td>
+            <td>Use JSON manifest + JSON scores + Markdown evidence bundle + diff.</td>
+            <td>Machines gate JSON; humans and models review Markdown; patch provenance lives in the diff.</td>
+          </tr>
+          <tr>
+            <td>Standalone GEPA or DSPy first?</td>
+            <td>Standalone GEPA adapter first. DSPy is a later bounded spike.</td>
+            <td>The current harness is markdown cards, JSON contracts, and deterministic scorers; DSPy should earn its place.</td>
+          </tr>
+          <tr>
+            <td>Next rotated-case sources</td>
+            <td>Use sanitized archetypes first; Dockerized targets later for hermetic benchmark expansion.</td>
+            <td>Casebooks are cheaper, easier to scrub, and better for laptop-friendly qualification.</td>
+          </tr>
+          <tr>
+            <td>Promotion</td>
+            <td>PR-only promotion after scorers, replay, bundle, and human review.</td>
+            <td>Manual copy loses provenance; direct-to-main bypasses the evidence chain.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="plan">
+      <h2><span class="section-number">10</span>Implementation Plan</h2>
+
+      <p>
+        The detailed implementation plan lives in
+        <a href="gepa-autoresearch-implementation-plan.md">docs/gepa-autoresearch-implementation-plan.md</a>.
+        The sequence below is the architectural spine.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Build</th>
+            <th>Exit criterion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0 — alignment</td>
+            <td>Roadmap, decision record, and artifact updated with accepted GEPA/DSPy decisions.</td>
+            <td>GEPA first, DSPy later, PR-only promotion, and review-required expansions are explicit.</td>
+          </tr>
+          <tr>
+            <td>1 — contracts</td>
+            <td>Campaign manifest, candidate manifest, promotion bundle, and hash checks.</td>
+            <td>Undeclared mutations or evaluator/budget/gold drift block.</td>
+          </tr>
+          <tr>
+            <td>2 — GEPA shadow runner</td>
+            <td>Standalone GEPA adapter, multi-track campaign, no-op baseline, candidate artifacts.</td>
+            <td>GEPA can propose and evaluate candidates without touching Plane 1.</td>
+          </tr>
+          <tr>
+            <td>3 — scoring policy</td>
+            <td>Candidate scorer with <code>allow</code>, <code>block</code>, and <code>probe</code>.</td>
+            <td>FDR regression blocks; duplicate coverage does not count; cost rule is enforced.</td>
+          </tr>
+          <tr>
+            <td>4 — replay</td>
+            <td>Primary run plus two fresh-session replays.</td>
+            <td>Unstable wins become <code>probe</code>, not <code>allow</code>.</td>
+          </tr>
+          <tr>
+            <td>5 — promotion bundle</td>
+            <td>Bundle renderer and PR checklist.</td>
+            <td>Successful candidates promote only through reviewed PRs.</td>
+          </tr>
+          <tr>
+            <td>6 — benchmark expansion</td>
+            <td>Fake-model hermetic targets, second rotated case, SSRF decision.</td>
+            <td>Evaluator breadth improves before real ratchet pressure increases.</td>
+          </tr>
+          <tr>
+            <td>7 — DSPy spike</td>
+            <td>One isolated routing/evaluator normalization module if useful.</td>
+            <td>DSPy shows measurable value or stays out.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2><span class="section-number">11</span>Future Review Tracks</h2>
+
+      <div class="grid">
+        <article>
+          <h3>Live GEPA</h3>
+          <p>
+            Start as advisory mode over scrubbed traces. Bounded and autonomous live modes require
+            run registry, scope enforcement, rate limits, and explicit review.
+          </p>
+        </article>
+        <article>
+          <h3>Evaluator co-evolution</h3>
+          <p>
+            GEPA may eventually propose oracle/scorer/gold changes, but only behind a sealed
+            meta-evaluator and protected historical cases.
+          </p>
+        </article>
+        <article>
+          <h3>PoC ladder</h3>
+          <p>
+            Evidence explanation, benign canary proof, local hermetic PoC, scoped live PoC with
+            human confirmation, then autonomous chaining only after separate review.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class="section-number">12</span>Source Links</h2>
+
+      <ul class="source-list">
+        <li><a href="https://github.com/gepa-ai/gepa">GEPA GitHub</a></li>
+        <li><a href="https://github.com/stanfordnlp/dspy">DSPy GitHub</a></li>
+        <li><a href="https://dspy.ai/">DSPy documentation</a></li>
+        <li><a href="https://dspy.ai/api/optimizers/GEPA/overview/">DSPy GEPA optimizer overview</a></li>
+        <li><a href="https://github.com/microsoft/AI-Red-Teaming-Playground-Labs">Microsoft AI Red Teaming Playground Labs</a></li>
+        <li><a href="https://github.com/EmanHerawy/vibe-learning/tree/main/AI-sec/resources">Vulnerable AI/security resource directory</a></li>
+        <li><a href="https://arcanum-sec.github.io/ai-sec-resources/">AI Security Lab Hub</a></li>
+        <li><a href="https://depthfirst.com/research/21-zero-days-in-ffmpeg">Depthfirst security agent article</a></li>
+        <li><a href="https://blog.cloudflare.com/cyber-frontier-models/">Cloudflare cyber frontier models article</a></li>
+        <li><a href="https://blog.cloudflare.com/build-your-own-vulnerability-harness/">Cloudflare vulnerability harness article</a></li>
+      </ul>
+    </section>
+
+    <footer>
+      Dependency-free HTML review memo. This artifact changes documentation only; it does not alter
+      harness behavior, routing, scorers, or evaluator gates.
+    </footer>
+  </main>
+</body>
+</html>
