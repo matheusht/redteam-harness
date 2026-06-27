@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "lifecycle-result",
+  "description": "One canonical, machine-readable record for a single candidate's trip through the experiment lifecycle (preflight -> apply -> measure -> score -> replay -> record). GEPA, materialization, behavioral eval, replay, and promotion map INTO this shape; none invent competing truth fields. authoritative_stage + authoritative_verdict are the single truth a reader/automation should consult (Decision 0004 / Phase 10H0: the measured materialization and broker-mediated behavioral verdict are authoritative; the deterministic shadow scoreboard is advisory). status describes the RUN (a missing real-LM backend is skipped/failed, never a fake allow). Promotes nothing.",
+  "type": "object",
+  "required": ["campaign_id", "candidate_id", "status", "stages", "authoritative_stage", "authoritative_verdict", "promotable", "artifacts", "reasons"],
+  "properties": {
+    "campaign_id": { "type": "string" },
+    "candidate_id": { "type": "string" },
+    "status": { "enum": ["completed", "skipped", "failed"], "description": "the run's outcome; a missing/unavailable real-LM behavioral backend is skipped/failed and never authoritative_verdict==allow." },
+    "stages": {
+      "type": "object",
+      "description": "per-stage detail mapped from the existing tools; a null stage means it was not reached (e.g. behavioral is null when materialization/scope blocked first).",
+      "properties": {
+        "preflight": { "type": ["object", "null"] },
+        "materialization": { "type": ["object", "null"] },
+        "scope": { "type": ["object", "null"] },
+        "behavioral": { "type": ["object", "null"] },
+        "replay": { "type": ["object", "null"] },
+        "promotion": { "type": ["object", "null"] }
+      }
+    },
+    "authoritative_stage": { "enum": ["preflight", "materialization", "scope", "behavioral", "shadow", "unavailable"], "description": "which stage produced the authoritative verdict. Precedence: materialization-block > off-scope > behavioral > shadow; unavailable when a real-LM backend was required but missing." },
+    "authoritative_verdict": { "enum": ["allow", "block", "probe"], "description": "the single verdict to read. allow requires a behavioral allow (broker-owned, FDR 0, strict 3/3) AND a materialized allow; the shadow scoreboard alone never produces allow." },
+    "promotable": { "type": "boolean", "description": "true only with an authoritative allow + clean redaction + a real qualified backend; PR-only and human-merged regardless." },
+    "artifacts": {
+      "type": "object",
+      "description": "repo-relative links to the underlying evidence (the lifecycle-result references them, it does not duplicate their bytes).",
+      "properties": {
+        "candidate_manifest": { "type": ["string", "null"] },
+        "diff": { "type": ["string", "null"] },
+        "materialization": { "type": ["object", "null"] },
+        "bridge_result": { "type": ["string", "null"] },
+        "broker_events": { "type": ["string", "null"] },
+        "behavioral_run": { "type": ["string", "null"] },
+        "replay": { "type": ["string", "null"] },
+        "promotion_bundle": { "type": ["string", "null"] }
+      }
+    },
+    "reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}
