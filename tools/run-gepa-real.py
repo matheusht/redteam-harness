@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Phase 8 GEPA adapter + shadow campaign driver.
 
+Lifecycle role (Phase 14): INTERNAL ORCHESTRATOR / building block. The canonical PUBLIC command is
+`tools/run-experiment-lifecycle.py` — run THAT for a campaign; it composes this module's `generate(...)`
+and `behavioral_bridge(...)` and emits one `lifecycle-result.json` per candidate. This file's shadow
+scoreboard outputs are ADVISORY, never authoritative (the measured materialization + broker behavioral
+verdict are authoritative — Decision 0004 / Phase 10H0). Retained as the composing building block.
+
+
 This is the first *real optimizer adapter surface* for the harness. It does not promote anything and
 does not apply candidate diffs into Plane 1. It generates candidate artifacts under a campaign dir,
 then sends those candidates through the existing frozen chain:
@@ -638,7 +645,15 @@ def behavioral_bridge(campaign_path, backend="fake", model_cmd=None):
         static[cid] = rec
 
     behavioral_status, run_rel = "not_exercised", None
-    if eligible:
+    if eligible and backend == "none":
+        # materialize-only: no behavioral score requested. Eligible (materialize-allow, in-scope)
+        # candidates are `probe` (allowed but not behaviorally proven), never `allow`.
+        behavioral_status = "not_run"
+        for cid in eligible:
+            rec = static[cid]
+            rec["authoritative_stage"], rec["authoritative_verdict"] = "materialization", "probe"
+            rec["behavioral_status"] = "not_run"
+    elif eligible:
         sub_dir = os.path.join(camp_dir, "behavioral")
         os.makedirs(sub_dir, exist_ok=True)
         sub_path = os.path.join(sub_dir, "campaign-manifest.json")
@@ -679,6 +694,7 @@ def behavioral_bridge(campaign_path, backend="fake", model_cmd=None):
                 rec["links"]["behavioral_run"] = run_rel
 
     for cid, rec in static.items():
+        rec["behavioral_backend"] = backend   # so promotion can refuse to promote a fake/simulator allow
         write_json(os.path.join(camp_dir, "candidates", cid, "bridge-result.json"), rec)
     summary = {
         "campaign_id": campaign["campaign_id"], "behavioral_backend": backend,

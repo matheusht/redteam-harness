@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """GEPA shadow campaign runner (Phase 2+).
 
+Lifecycle role (Phase 14): HISTORICAL / ADVISORY — the deterministic shadow scoreboard. It does NOT apply
+diffs or read technique cards, so its verdicts are advisory only and NEVER authoritative (Phase 10H0/13:
+the measured materialization + broker behavioral verdict are authoritative). Run
+`tools/run-experiment-lifecycle.py` for a campaign.
+
+
 The deterministic spine of a shadow campaign: it gates every candidate through the contract fence
 (tools/check-campaign.py), runs the gate-passing ones through the FROZEN scorers
 (tools/run-qualification.py + tools/run-hermetic-bola.py), and emits a campaign report. It promotes

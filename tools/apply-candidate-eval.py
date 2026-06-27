@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Candidate-applied evaluation in isolation (GEPA Phase 9; authoritative boundary in Phase 10H0).
 
+Lifecycle role (Phase 14): INTERNAL building block — the `measure` stage (`materialize_candidate`, the
+authoritative measured boundary). Run `tools/run-experiment-lifecycle.py` for a campaign; it calls this.
+
+
 Phases 2-8 gated and scored candidate ARTIFACTS but never applied a candidate's diff. Phase 9 applied
 exactly one candidate diff in an ISOLATED git worktree and re-measured conformance. Phase 10H0 makes the
 APPLIED REPOSITORY STATE — not the patch text — the final authority (`materialize_candidate`): the

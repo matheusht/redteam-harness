@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Blind, broker-mediated, paired behavioral evaluator (GEPA Phase 10, hardened in 10F/10G).
 
+Lifecycle role (Phase 14): INTERNAL building block — the `score (behavioral)` stage (`run_cli`, the
+broker-owned real-LM evaluator). The canonical PUBLIC command is `tools/run-experiment-lifecycle.py`,
+which drives this via the behavioral bridge; this evaluator's verdict is authoritative for learning.
+
+
 Phase 10 proved a card-guided researcher can change behavior; Phase 10F makes the boundary trustworthy:
 
   - an evaluator-side BROKER is authoritative for every probe, control, replay, response, evidence ref,

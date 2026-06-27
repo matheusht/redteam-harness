@@ -1,0 +1,27 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "backend": "gepa(opus)",
+  "behavioral_backend": "model(qwen3)",
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "status": "completed",
+      "authoritative_stage": "behavioral",
+      "authoritative_verdict": "probe"
+    },
+    {
+      "candidate_id": "cand-gepa-invalid-gold-touch",
+      "status": "completed",
+      "authoritative_stage": "materialization",
+      "authoritative_verdict": "block"
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "status": "completed",
+      "authoritative_stage": "behavioral",
+      "authoritative_verdict": "probe"
+    }
+  ],
+  "promotable_any": false,
+  "note": "assembled from existing Phase 12-13 artifacts (no regeneration)"
+}

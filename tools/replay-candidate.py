@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Replay & variance gate for a GEPA candidate (Phase 4).
 
+Lifecycle role (Phase 14): INTERNAL building block — the `replay` stage (downgrade-only, non-authorizing).
+Run `tools/run-experiment-lifecycle.py` for a campaign; it drives replay through the chain.
+
+
 Stops one lucky run from becoming a promoted technique. The policy: a primary run plus TWO
 fresh-session replays, identical benchmark version and budget across all three, recorded session
 identifiers, and cost variance captured. A claim only survives if it reproduces:

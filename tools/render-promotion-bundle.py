@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Promotion bundle renderer + PR-only promotion path (GEPA Phase 5).
 
+Lifecycle role (Phase 14): INTERNAL building block — the `record` stage (assembles the human PR-review
+bundle, leading with the authoritative verdict). Run `tools/run-experiment-lifecycle.py` for a campaign;
+it renders bundles through the chain. A fake/simulator behavioral allow is never promotable here.
+
+
 Assembles the review surface for promoting a shadow candidate into Plane 1. It joins the Phase 3
 mechanical verdict and the Phase 4 replay-adjusted verdict with the candidate diff, both manifests,
 scorer + replay results, false-discovery result, a cost comparison, a redaction report, and a human
@@ -120,6 +125,10 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         authoritative_verdict, authoritative_stage = behavioral_verdict, "behavioral"
     else:
         authoritative_verdict, authoritative_stage = final, "shadow"
+    # A simulator (fake/none) behavioral run can legitimately produce an allow (e.g. a cost cut) but must
+    # NEVER authorize promotion; only a real-LM behavioral allow may.
+    simulator_behavioral = (behavioral or {}).get("behavioral_backend") in ("fake", "none")
+    real_behavioral_allow = not (authoritative_stage == "behavioral" and simulator_behavioral)
 
     fdr = scoreboard["false_discovery"]
     inc_cost = {"model_calls": 0, "target_calls": scoreboard["hermetic_bola"]["target_calls"]}
@@ -141,6 +150,8 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         {"item": "No immutable file touched (contract gate allowed the candidate)", "checked": contract_gate_allow},
         {"item": "Measured boundary authoritative: isolated `git apply --index` + measured tree + trusted "
                  "conformance == allow", "checked": materialized_allow},
+        {"item": "Authoritative allow (if any) came from a REAL (non-simulator) behavioral backend — a "
+                 "fake/none run cannot authorize promotion", "checked": real_behavioral_allow},
         {"item": "False-discovery invalid_accept_rate == 0", "checked": bool(fdr["passed"])},
         {"item": replay_item, "checked": replay_stable},
         {"item": "Diff hash matches candidate_hash", "checked": diff_hash_ok},
@@ -187,10 +198,9 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         "materialization": materialization,
         "pinned": pinned,
     }
-    # promotable only if the AUTHORITATIVE verdict is allow (a behavioral allow already implies 3/3 + no
-    # FDR), the materialized boundary allowed, and redaction is clean. A fake/transport-boundary run is
-    # never authoritative-allow, so it is never promotable here.
-    promotable = (authoritative_verdict == "allow") and redaction_clean and materialized_allow
+    # promotable only with an authoritative allow + materialized allow + clean redaction + (if the allow
+    # is behavioral) a REAL non-simulator backend.
+    promotable = (authoritative_verdict == "allow") and redaction_clean and materialized_allow and real_behavioral_allow
     return bundle, promotable, redaction
 
 
@@ -416,18 +426,28 @@ def self_test():
     # Phase 13 bridge: a materialization-allow candidate's authoritative verdict comes from the real-LM
     # behavioral evaluator. behavioral allow -> authoritative allow (stage behavioral), promotable;
     # behavioral probe -> authoritative probe, not promotable; off-scope -> authoritative block (stage scope).
-    beh_full = {"behavioral_verdict": "allow", "in_scope": True, "cost": {"model_calls": 20, "target_calls": 15},
-                "fdr_invalids": [], "coverage_delta": ["case-x"], "replay": {"incumbent_stable": True, "candidate_stable": True},
+    beh_full = {"behavioral_verdict": "allow", "in_scope": True, "behavioral_backend": "model",
+                "cost": {"model_calls": 20, "target_calls": 15}, "fdr_invalids": [], "coverage_delta": ["case-x"],
+                "replay": {"incumbent_stable": True, "candidate_stable": True},
                 "links": {"behavioral_run": "runs/r", "broker_events": "runs/r/events.jsonl"}}
     b_beh_allow, prom_beh, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
                                             diff_text, "# clean\n", paths, pinned, mat_allow, beh_full,
                                             behavioral_path="cand/bridge-result.json")
     be = b_beh_allow.get("behavioral_evidence") or {}
     if be.get("cost") != {"model_calls": 20, "target_calls": 15} or be.get("bridge_result") != "cand/bridge-result.json" \
-            or "Behavioral evidence (authoritative" not in render_md(b_beh_allow, True):
-        ok = False; print(f"[self-test] behavioral_evidence not surfaced in bundle/md: {be}")
+            or "Behavioral evidence (authoritative" not in render_md(b_beh_allow, True) or not prom_beh:
+        ok = False; print(f"[self-test] behavioral_evidence/real-allow not surfaced: {be} prom={prom_beh}")
     else:
-        print("[self-test] behavioral stage surfaces authoritative broker cost/FDR/coverage + links (not shadow): ok")
+        print("[self-test] real-model behavioral allow -> promotable + behavioral evidence surfaced: ok")
+
+    # a SIMULATOR (fake/none) behavioral allow must NOT be promotable (no fake authority)
+    _, prom_fake, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
+                                   diff_text, "# clean\n", paths, pinned, mat_allow,
+                                   dict(beh_full, behavioral_backend="fake"))
+    if prom_fake:
+        ok = False; print("[self-test] fake/simulator behavioral allow must NOT be promotable")
+    else:
+        print("[self-test] simulator (fake) behavioral allow -> authoritative allow but NOT promotable: ok")
     b_beh_probe, prom_beh_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
                                                   diff_text, "# clean\n", paths, pinned, mat_allow,
                                                   {"behavioral_verdict": "probe", "in_scope": True})

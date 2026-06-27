@@ -1,0 +1,62 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "candidate_id": "cand-baseline",
+  "status": "completed",
+  "stages": {
+    "preflight": {
+      "verdict": "allow",
+      "reasons": []
+    },
+    "materialization": {
+      "verdict": "allow",
+      "conformance_passed": true,
+      "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+      "candidate_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+      "actual_paths": []
+    },
+    "scope": {
+      "in_scope": true,
+      "violations": []
+    },
+    "behavioral": {
+      "verdict": "probe",
+      "cost": {
+        "model_calls": 20,
+        "target_calls": 15
+      },
+      "fdr_invalids": [],
+      "coverage_delta": [],
+      "replay": {
+        "incumbent_stable": true,
+        "candidate_stable": true
+      }
+    },
+    "replay": {
+      "stable": true
+    },
+    "promotion": {
+      "promotable": false
+    }
+  },
+  "authoritative_stage": "behavioral",
+  "authoritative_verdict": "probe",
+  "promotable": false,
+  "artifacts": {
+    "candidate_manifest": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/candidate-manifest.json",
+    "diff": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/candidate.diff",
+    "materialization": {
+      "verdict": "allow",
+      "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+      "candidate_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+      "actual_paths": [],
+      "conformance_passed": true,
+      "reasons": []
+    },
+    "bridge_result": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/bridge-result.json",
+    "broker_events": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/behavioral/runs/model-completed-20260627T192333Z/events.jsonl",
+    "behavioral_run": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/behavioral/runs/model-completed-20260627T192333Z",
+    "replay": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/replays/replay-summary.json",
+    "promotion_bundle": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/promotion/promotion-bundle.json"
+  },
+  "reasons": []
+}
