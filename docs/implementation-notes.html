@@ -590,6 +590,14 @@
         block), now each backed by a measured tree id. <code>autonomous_gap_closure_count</code> stays 0 —
         this phase adds trust, not autonomous learning.</li>
     </ul>
+    <p><b>Reading the conformance count.</b> <code>check-conformance.py</code> scans its workspace, so its
+      total depends on workspace state. On a <b>clean committed HEAD</b> (e.g. a fresh detached worktree)
+      it reports <b>125 checks, 0 failing</b>. In a <b>dirty working tree</b> that also contains the
+      pre-existing untracked casebook/pattern files (<code>casebooks/case-2026-06-b2b-agentic-chat-api/</code>,
+      <code>skills/patterns/unsafe-default-authz-helper/</code>) it scans those too and reports <b>137
+      checks, 0 failing</b>. Both pass; only the count differs. CI runs against the committed checkout, so
+      <b>125/0</b> is the authoritative figure. Superseded shadow campaigns are no longer CI-gated (see
+      their <code>SUPERSEDED.md</code>); frozen-input integrity is gated against the canonical v2 campaign.</p>
 
     <h2>GEPA autoresearch — Phase 10F/10G (behavioral integrity hardening + real-model adapter) <span class="tag t-dec">rev 11 · 2026-06-27</span></h2>
     <p>Turned the Phase-10 simulator proof into a trustworthy boundary, per
