@@ -37,10 +37,16 @@ jobs:
         run: python3 tools/render-promotion-bundle.py --self-test
       - name: DSPy spike — routing normalizer baseline (deterministic, self-test)
         run: python3 experiments/dspy-routing-normalizer/normalize.py --self-test
-      - name: Phase 8 adapter campaign frozen-input integrity
-        run: python3 tools/hash-campaign-inputs.py --check evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/campaign-manifest.json
-      - name: Phase 8 promotion bundle hash-pin integrity
-        run: python3 tools/render-promotion-bundle.py --verify evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-task-reframing-001/promotion/promotion-bundle.json
+      # Frozen-input integrity is gated against the CURRENT canonical campaign, not historical shadow
+      # ones. The gepa-shadow campaigns (Phase 8 / 2026-06-26) are archived: their frozen_inputs pin
+      # Phase-8-era tool and gold hashes that later evaluator hardening (10F/10G/10H0) and gold rotation
+      # legitimately drifted — the drift detector working as designed. See each campaign's SUPERSEDED.md.
+      # Re-pinning historical revisions to silence CI is forbidden (it would rewrite superseded history).
+      - name: Canonical behavioral campaign frozen-input integrity
+        run: python3 tools/hash-campaign-inputs.py --check evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/campaign-manifest.json
+      # The promotion bundle hash-pin / drift machinery is exercised by render-promotion-bundle --self-test
+      # (verify_drift: intact -> clean, tampered gold -> drift). There is no live promotion bundle to pin
+      # against until a real-model qualification produces one.
       - name: Mechanical routing scorer (self-test)
         run: python3 tools/score-routing.py --self-test
       - name: False-discovery scorer (self-test)

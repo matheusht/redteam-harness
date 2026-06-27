@@ -635,9 +635,11 @@ def main(argv):
     if args.self_test:
         return self_test()
     if args.backend == "model":
-        print("[model backend] requires an LM in the loop to re-route against the patched workspace; "
-              "not configured in this environment. Use --backend deterministic for the model-free path.")
-        return 0
+        print("[model backend] BLOCKED: re-routing against the patched workspace needs an LM in the loop, "
+              "not configured here. The real-model path is the blind behavioral evaluator "
+              "(run-behavioral-eval.py --backend model); use --backend deterministic for the model-free "
+              "conformance signal. Recorded as non-success; no result is fabricated.")
+        return 2     # NON-SUCCESS — never report a model run that did not happen as ok
     if not args.campaign:
         ap.print_help()
         return 2
