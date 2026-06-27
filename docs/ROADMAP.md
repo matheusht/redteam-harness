@@ -168,14 +168,25 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       applied to Plane 1; `autonomous_gap_closure_count` stays **0** (GEPA found no in-scope improvement).
       Next: constrain the proposer (scope-anchored objective + seed) and run it through the real-LM
       behavioral evaluator, under OS-level isolation.
-- [ ] **Lifecycle consolidation checkpoint — before the autonomous controller.** Establish one
-      canonical public experiment flow (`preflight → apply → measure → score → replay → record`), one
-      run-status/artifact contract, and mark existing lifecycle entrypoints internal or historical.
-      Compose tested functions incrementally; do not introduce a new framework or role-class hierarchy.
-- [ ] **Then: sealed evaluator → first real GEPA campaign → autonomous campaign controller.** The
-      controller may schedule, replay, reject, archive, and create evidence PRs inside the autonomy
-      envelope (Decision 0004, absorbing 0003). Live bounded operation and automatic promotion remain
-      separate review decisions.
+- [x] **Phase 12 — constrained GEPA v2 (DONE).** In-scope seed (existing technique card) + scope-anchored
+      objective + a scope_check guard. Proposer wired to Opus 4.8 (local `claude` CLI). GEPA produced an
+      in-scope, schema-valid, materialization-allow refinement of the task-reframing card (the Phase-11
+      off-scope drift card is now flagged off-scope by the guard, self-tested).
+- [x] **Phase 13 — GEPA → real-LM behavioral bridge (DONE).** `run-gepa-real.behavioral_bridge` routes
+      each candidate preflight → isolated materialization → (block ⇒ authoritative block, no behavioral) /
+      (allow ⇒ blind broker-mediated behavioral eval, broker-owned coverage/FDR/cost, strict 3/3).
+      Exercised on the Opus candidate with a **different** model (qwen3) as researcher → behavioral
+      `probe`. Missing backend = skipped/non-success, never a fake allow.
+- [x] **Phase 14 — lifecycle consolidation checkpoint (last active roadmap phase) (DONE).** One canonical
+      public entrypoint `tools/run-experiment-lifecycle.py` composing the tested functions, one
+      `lifecycle-result.json` contract (`schemas/lifecycle-result.schema.json`), and every old entrypoint
+      classified (see `docs/lifecycle-consolidation-inventory.md`). Semantic parity verified against the
+      Phase 12-13 campaign; a fake/simulator behavioral allow is now correctly non-promotable. No
+      framework, no role classes.
+- **Roadmap boundary:** Phase 14 is the last implementation phase in the current roadmap. Work after
+  Phase 14 is intentionally a review backlog, not implicit build permission. New post-14 phases require
+  a fresh decision/update that states which invariant is being enforced, what complexity is deleted or
+  hidden, and how the new capability remains outside evaluator truth.
 - **Learning north-star (Decision 0004):** `autonomous_gap_closure_count = 0`. Increment only
   when the system discovers and closes a previously uncovered behavior without a human authoring the
   case or candidate, while preserving FDR=0, protected cases, replay, and evaluator immutability.
@@ -196,6 +207,33 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
    the model-dependent cards in place.
 
 ## Phase 3B+ — review-required capability expansion
+- [ ] **Post-Phase-14 workflow/index layer (AIWG-inspired, harness-native).** Build, if still needed, a
+      small red-team-only workflow/index layer such as `engine/workflows/` and a context index that tells
+      agents what to read, which tools are authoritative, which artifacts are required, and which claims
+      are forbidden. This borrows AIWG's artifact/workflow idea, **not** a full framework, runtime, global
+      memory, or large agent zoo. It must reduce loaded context and be validated by conformance checks.
+- [ ] **Post-Phase-14 Tollbooth observer spike.** Evaluate a read-only network/model-traffic observer as
+      an optional broker-evidence sensor: compare observed LM/API/network calls with broker ledgers,
+      detect unexpected egress, and export traffic digests for evidence bundles. Request modification or
+      mocking stays off by default and requires separate hermetic-lab review. License/deployment impact
+      must be reviewed before vendoring or recommending it as default.
+- [ ] **Post-Phase-14 Carbonyl/browser adapter spike.** Evaluate Carbonyl/carbonyl-agent as an optional
+      text-browser adapter for hermetic web recon and public-source ingestion when ordinary HTTP/DOM
+      scraping is brittle. It must be scope-gated, avoid secret/cookie persistence, and remain an adapter,
+      not an oracle or live-autonomy permission.
+- [ ] **Post-Phase-14 memory layer review (Fortémi or equivalent).** Before adopting deeper agentic
+      memory, define a sanitized memory export/import contract. External memory may retrieve prior
+      scrubbed cases, notes, and public-source context; it must not confirm findings, authorize
+      candidates, mutate Plane 1, or store raw secrets. Fortémi-like retrieval is a future Plane-3/4
+      substrate, not evaluator truth.
+- [ ] **Sealed evaluator / holdout boundary.** Future candidate qualification should eventually query a
+      sealed evaluator once after candidate freeze and receive only signed aggregate decisions/failure
+      categories. This must be designed after the canonical lifecycle exists, not bolted onto the current
+      multi-entrypoint surface.
+- [ ] **Autonomous campaign controller.** The controller may eventually schedule, replay, reject,
+      archive, and create evidence PRs inside the Decision-0004 autonomy envelope. It comes only after
+      Phase 14 and sealed-evaluator design review. Live bounded operation and automatic promotion remain
+      separate review decisions.
 - [ ] **Live GEPA advisory mode**: GEPA reads scrubbed live traces and suggests next probes; human
       approval required before execution. Bounded/autonomous live modes require a separate review.
 - [ ] **Evaluator co-evolution**: GEPA may eventually propose oracle/scorer/gold/casebook changes only

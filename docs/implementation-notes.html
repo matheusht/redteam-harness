@@ -561,6 +561,37 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 14 (canonical lifecycle consolidation) <span class="tag t-dec">rev 16 · 2026-06-27</span></h2>
+    <p>The last active roadmap phase. The pieces were right but spread across several scripts and artifact
+      layers; Phase 14 names <b>one</b> public flow and <b>one</b> result contract by <b>composing</b> the
+      existing tested functions — no framework, no role classes, no new authority path.</p>
+    <ul>
+      <li><b>One public command.</b> <code>tools/run-experiment-lifecycle.py</code> runs
+        <code>preflight → apply → measure → score → replay → record</code> by composing
+        <code>run-gepa-real.generate</code> + <code>behavioral_bridge</code> + the promotion render, then
+        emits one <code>lifecycle-result.json</code> per candidate (schema
+        <code>schemas/lifecycle-result.schema.json</code>). It writes only under the campaign dir, never
+        <code>skills/</code>, and promotes nothing. <code>docs/lifecycle-consolidation-inventory.md</code>
+        classifies every old entrypoint (public / internal building block / historical-advisory /
+        test-only) and each tool's docstring now points at the lifecycle command.</li>
+      <li><b>One truth field.</b> <code>authoritative_stage</code> + <code>authoritative_verdict</code>
+        (precedence materialization &gt; scope &gt; behavioral &gt; shadow) are the single answer a reader
+        consults; the shadow scoreboard is advisory; a missing real-LM backend is
+        <code>status=skipped</code>, never a fake allow. Historical <code>bridge-result.json</code> /
+        promotion bundles map into the contract and stay readable.</li>
+      <li><b>The consolidation caught a real "fake authority" bug.</b> The CI-safe self-test
+        (deterministic generation + fake researcher) surfaced that a fake-backend efficiency variant earns
+        a legitimate broker-measured cost-cut <code>allow</code> — and the promotion bundle would have
+        marked it <b>promotable</b>. Fixed: a <code>fake</code>/<code>none</code> behavioral allow can be
+        authoritative but is now <b>never promotable</b> (only a real-LM behavioral allow may be); the
+        bridge records its backend and the bundle gates on it. Self-tested both directions.</li>
+      <li><b>Parity.</b> Re-assembling the Phase 12-13 campaign through the lifecycle reproduced every
+        authoritative verdict exactly (baseline→probe, gold-touch→block@materialization, Opus
+        candidate→probe@behavioral). <code>autonomous_gap_closure_count</code> stays <b>0</b>. Post-14
+        items (sealed evaluator, controller, AIWG-like workflow index, Tollbooth, Carbonyl, Fortémi, live
+        GEPA, evaluator coevolution) remain a <b>review backlog</b>, not build permission.</li>
+    </ul>
+
     <h2>GEPA autoresearch — Phase 12-13 (constrained GEPA + behavioral bridge) <span class="tag t-dec">rev 15 · 2026-06-27</span></h2>
     <p>Phase 11 showed an unconstrained proposer drifts off-scope and the gates catch it. Phase 12-13
       tightens the loop: make GEPA propose <b>in-scope</b> variants, and route any materialized-allow
