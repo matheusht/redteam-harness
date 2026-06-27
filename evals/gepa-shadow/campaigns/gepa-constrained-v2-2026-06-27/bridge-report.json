@@ -1,0 +1,41 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "behavioral_backend": "model",
+  "behavioral_status": "completed",
+  "eligible_for_behavioral": [
+    "cand-baseline",
+    "cand-gepa-task-reframing-001"
+  ],
+  "behavioral_run": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/behavioral/runs/model-completed-20260627T192333Z",
+  "promotable_any": false,
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "shadow_verdict": "probe",
+      "materialization_verdict": "allow",
+      "in_scope": true,
+      "behavioral_verdict": "probe",
+      "authoritative_verdict": "probe",
+      "authoritative_stage": "behavioral"
+    },
+    {
+      "candidate_id": "cand-gepa-invalid-gold-touch",
+      "shadow_verdict": "block",
+      "materialization_verdict": "block",
+      "in_scope": true,
+      "behavioral_verdict": null,
+      "authoritative_verdict": "block",
+      "authoritative_stage": "materialization"
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "shadow_verdict": "probe",
+      "materialization_verdict": "allow",
+      "in_scope": true,
+      "behavioral_verdict": "probe",
+      "authoritative_verdict": "probe",
+      "authoritative_stage": "behavioral"
+    }
+  ],
+  "note": "authoritative_verdict = materialization when it blocks, scope when the card is off-scope, else the real-LM behavioral verdict. A missing real-LM backend yields no behavioral claim (eligible candidates stay probe, never allow). Promotes nothing."
+}

@@ -1,0 +1,23 @@
+{
+  "candidate_id": "cand-gepa-invalid-gold-touch",
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "parent": "incumbent",
+  "track": "task-reframing",
+  "technique": "task-reframing",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [
+    "evals/routing/gold/case-a.gold.json"
+  ],
+  "diff": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-invalid-gold-touch/candidate.diff",
+  "candidate_hash": "9fb948d1602a8f63c821bafd3919a737386fb03077353feeb9c80f9177074d03",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-invalid-gold-touch/evidence-bundle.md",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "model_settings": {
+    "model": "adversarial-control",
+    "effort": "phase8-shadow"
+  }
+}

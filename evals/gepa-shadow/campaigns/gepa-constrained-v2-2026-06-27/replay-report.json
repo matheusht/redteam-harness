@@ -1,0 +1,28 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "benchmark_version": "bench-e3b0c44298fc",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    },
+    {
+      "candidate_id": "cand-gepa-invalid-gold-touch",
+      "final_verdict": "block",
+      "note": "blocked at contract gate; no replay"
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "final_verdict": "probe",
+      "stable": true,
+      "cost_spread": 0.0
+    }
+  ]
+}

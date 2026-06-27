@@ -1,0 +1,15 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "created": "2026-06-27",
+  "tracks": [
+    {"name": "task-reframing", "mutation_target": "skills/techniques/task-reframing/", "kind": "existing-card-variant"}
+  ],
+  "mutable_allowlist": ["skills/techniques/task-reframing/"],
+  "immutable": ["engine/", "skills/oracles/", "skills/patterns/", "skills/vulns/"],
+  "frozen_inputs": {},
+  "budgets": {"model_calls": 40, "target_calls": 80, "tokens": null},
+  "behavioral_budget": {"max_probes": 6},
+  "seed": "gepa-constrained-v2-2026-06-27-seed-1",
+  "benchmark_set": ["routing:task-reframing"],
+  "note": "Constrained GEPA v2: in-scope seed (the existing task-reframing card), scope-anchored objective, single-component. Materialized-allow in-scope candidates flow into the real-LM behavioral evaluator (Phase 13). Evaluator/gold/scorers/budgets immutable; no auto-promotion."
+}

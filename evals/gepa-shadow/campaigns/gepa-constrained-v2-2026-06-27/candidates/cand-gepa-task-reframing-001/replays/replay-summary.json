@@ -1,0 +1,22 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "phase3_verdict": "probe",
+  "verdict": "probe",
+  "stable": true,
+  "policy_ok": true,
+  "protected_stable": true,
+  "coverage_stable": true,
+  "cost_variance": {
+    "runs": [
+      21.0,
+      21.0,
+      21.0
+    ],
+    "min": 21.0,
+    "max": 21.0,
+    "spread": 0.0,
+    "mean": 21.0
+  },
+  "runs": 3,
+  "reasons": []
+}

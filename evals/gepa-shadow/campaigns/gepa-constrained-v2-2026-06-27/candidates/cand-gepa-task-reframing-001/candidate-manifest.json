@@ -1,0 +1,23 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "parent": "incumbent",
+  "track": "task-reframing",
+  "technique": "task-reframing",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [
+    "skills/techniques/task-reframing/SKILL.md"
+  ],
+  "diff": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-task-reframing-001/candidate.diff",
+  "candidate_hash": "6abbbaceb845b7f7312fd7bf7f66444a36bebdb05be1f6aca33fde01c337a74e",
+  "evidence_bundle": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-task-reframing-001/evidence-bundle.md",
+  "budget": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "model_settings": {
+    "model": "gepa.optimize_anything",
+    "effort": "phase8-shadow"
+  }
+}

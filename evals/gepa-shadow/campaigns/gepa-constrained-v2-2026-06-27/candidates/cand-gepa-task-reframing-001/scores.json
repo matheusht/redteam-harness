@@ -1,0 +1,26 @@
+{
+  "candidate_id": "cand-gepa-task-reframing-001",
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "gate": "allow",
+  "gate_reasons": [],
+  "keep_discard": {
+    "verdict": "probe",
+    "reasons": [
+      "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+    ]
+  },
+  "shadow_verdict": "probe",
+  "materialization_verdict": "allow",
+  "behavioral_verdict": "probe",
+  "authoritative_verdict": "probe",
+  "authoritative_stage": "behavioral",
+  "coverage_delta_vs_baseline": 0,
+  "replay": {
+    "candidate_id": "cand-gepa-task-reframing-001",
+    "final_verdict": "probe",
+    "stable": true,
+    "cost_spread": 0.0
+  },
+  "promoted": false,
+  "note": "scores.json indexes report/replay/promotion-bundle. authoritative_verdict is the measured materialization boundary when it blocks, else the replay-adjusted shadow verdict; shadow_verdict is the unapplied scoreboard view and is not authoritative alone."
+}

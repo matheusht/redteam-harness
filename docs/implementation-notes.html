@@ -561,6 +561,54 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 12-13 (constrained GEPA + behavioral bridge) <span class="tag t-dec">rev 15 · 2026-06-27</span></h2>
+    <p>Phase 11 showed an unconstrained proposer drifts off-scope and the gates catch it. Phase 12-13
+      tightens the loop: make GEPA propose <b>in-scope</b> variants, and route any materialized-allow
+      candidate through the <b>real-LM behavioral evaluator</b> before any learning claim.</p>
+    <ul>
+      <li><b>Phase 12 — constrained GEPA.</b> A scope-anchored objective (LLM-application red-team cards;
+        benign safe-signal disclosure proofs; oracle controls; explicitly NO exploit-dev / memory
+        corruption / malware / credential content), a real <b>in-scope seed</b> (the existing
+        <code>task-reframing</code> card, not an empty new-card seed), and a keyword <code>scope_check</code>
+        guard (the Phase-11 drift card — double-free / gadget / CVE — is flagged off-scope; a self-test
+        pins it). The proposer is <b>Opus 4.8 via the local <code>claude</code> CLI</b> (each reflection a
+        separate <code>claude -p</code> process, tools disallowed). Result: GEPA produced an
+        <b>in-scope, schema-valid, non-empty</b> refinement (single-component discipline; the card's
+        domain "matched control" explicitly mapped onto the broker's negative_control; replay-validated
+        controls) that <b>materializes allow</b>. Generated card text is normalized (trailing whitespace
+        stripped) and diffs are zero-context so the evidence stays <code>git diff --check</code> clean.</li>
+      <li><b>Phase 13 — the bridge.</b> <code>run-gepa-real.behavioral_bridge</code> routes each candidate
+        through preflight → isolated <code>git apply --index</code> → measured materialization; a
+        materialization block (or an off-scope card) is authoritative <code>block</code> with NO behavioral
+        claim; a materialized-allow in-scope candidate is judged by the blind broker-mediated evaluator
+        (reusing <code>run-behavioral-eval.run_cli</code> over a sub-campaign — broker events own
+        coverage/FDR/cost, FDR is a hard veto, strict 3/3 replay). A missing real-LM backend records a
+        skipped/non-success run and yields no claim.</li>
+      <li><b>The bridge was exercised on a real GEPA candidate.</b> The Opus-proposed in-scope card → real-LM
+        behavioral <b>probe</b> (cov 1=1, FDR 0, 3/3 stable; “no new distinct coverage, cost reduction
+        &lt;10%”) — behaviorally <b>neutral, not a fake win</b>. The no-op baseline → probe; the gold-touch
+        control → block at materialization. Each candidate writes a <code>bridge-result.json</code>
+        carrying shadow / materialization / behavioral / authoritative verdicts, the authoritative stage,
+        coverage_delta, FDR, cost, 3/3 replay, and links to the materialization tree ids, broker
+        <code>events.jsonl</code>, and diff. The promotion bundle leads with the authoritative verdict and
+        its stage (<code>materialization</code> &gt; <code>scope</code> &gt; <code>behavioral</code> &gt;
+        <code>shadow</code>).</li>
+      <li><b>Cross-model separation (no self-grading).</b> The proposer is Opus; the blind broker-mediated
+        researcher is a <b>different</b> model (ollama qwen3:8b) in separate processes, so the proposer
+        cannot grade its own candidate. An Opus researcher (<code>tools/claude-researcher-cli.py</code>,
+        which works standalone) is the higher-trust option but is currently <b>blocked under the behavioral
+        evaluator's jailed adapter</b>: the <code>claude</code> CLI needs a richer environment than the
+        jail's scrubbed env, and un-jailing it would change the frozen <code>researcher_adapter.py</code>
+        and drift the canonical v2 campaign (a separate evaluator-change revision). Recorded, not faked.</li>
+      <li><b>Honesty.</b> Two bugs were caught by inspecting the artifacts mid-run, not by guesswork: a
+        sub-campaign <code>campaign_id</code> mismatch blocked candidates at preflight (fixed: match the
+        candidates' id), and incomplete evidence bundles tripped the evidence contract (fixed: the GEPA
+        artifacts now carry campaign / mutation-target / eligibility provenance — the check was not
+        weakened). <code>autonomous_gap_closure_count</code> stays <b>0</b>: a behaviorally-neutral in-scope
+        candidate is not a discovered-and-closed gap. Nothing was applied to Plane 1; promotion stays
+        PR-only under a transport-boundary backend.</li>
+    </ul>
+
     <h2>GEPA autoresearch — Phase 11 (first real GEPA shadow campaign) <span class="tag t-dec">rev 14 · 2026-06-27</span></h2>
     <p>The first time the <b>real GEPA optimizer</b> drove the loop. <code>gepa</code> + <code>litellm</code>
       installed in an isolated venv; GEPA's reflective proposer pointed at the local ollama

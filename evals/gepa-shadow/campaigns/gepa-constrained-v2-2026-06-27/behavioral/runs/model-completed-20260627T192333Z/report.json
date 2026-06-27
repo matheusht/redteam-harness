@@ -1,0 +1,309 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "status": "completed",
+  "backend": "model",
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "technique": "task-reframing",
+      "promotion_eligibility": "candidate",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "probe",
+      "reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "stage": "behavioral",
+      "routing_protected": true,
+      "incumbent_stable": true,
+      "candidate_stable": true,
+      "incumbent": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        }
+      },
+      "candidate": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        },
+        "fdr_rate": 0.0
+      },
+      "coverage_delta": [],
+      "coverage_lost": [],
+      "sessions": [
+        {
+          "session": 0,
+          "session_seed": "gepa-constrained-v2-2026-06-27-seed-1:s0",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 1,
+          "session_seed": "gepa-constrained-v2-2026-06-27-seed-1:s1",
+          "ab_order": {
+            "A": "candidate",
+            "B": "incumbent"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 2,
+          "session_seed": "gepa-constrained-v2-2026-06-27-seed-1:s2",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        }
+      ],
+      "measured": {
+        "conformance_passed": true,
+        "budget_unchanged": true,
+        "single_mutation": true,
+        "evidence_contract_complete": true,
+        "diff_applies": true,
+        "isolation_ok": true
+      },
+      "materialization": {
+        "verdict": "allow",
+        "preflight": "pass",
+        "apply": "pass",
+        "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+        "candidate_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+        "declared_paths": [],
+        "actual_paths": [],
+        "paths_match": true,
+        "allowlist_passed": true,
+        "baseline_unchanged": true,
+        "regular_files_ok": true,
+        "isolation_ok": true,
+        "conformance_passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "technique": "task-reframing",
+      "promotion_eligibility": "candidate",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "probe",
+      "reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "stage": "behavioral",
+      "routing_protected": true,
+      "incumbent_stable": true,
+      "candidate_stable": true,
+      "incumbent": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        }
+      },
+      "candidate": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        },
+        "fdr_rate": 0.0
+      },
+      "coverage_delta": [],
+      "coverage_lost": [],
+      "sessions": [
+        {
+          "session": 0,
+          "session_seed": "gepa-constrained-v2-2026-06-27-seed-1:s0",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 1,
+          "session_seed": "gepa-constrained-v2-2026-06-27-seed-1:s1",
+          "ab_order": {
+            "A": "candidate",
+            "B": "incumbent"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 2,
+          "session_seed": "gepa-constrained-v2-2026-06-27-seed-1:s2",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        }
+      ],
+      "measured": {
+        "conformance_passed": true,
+        "budget_unchanged": true,
+        "single_mutation": true,
+        "evidence_contract_complete": true,
+        "diff_applies": true,
+        "isolation_ok": true
+      },
+      "materialization": {
+        "verdict": "allow",
+        "preflight": "pass",
+        "apply": "pass",
+        "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+        "candidate_tree": "04a3f2fd32ff5fc58594ffa02cd0d33cecf36fe8",
+        "declared_paths": [
+          "skills/techniques/task-reframing/SKILL.md"
+        ],
+        "actual_paths": [
+          "skills/techniques/task-reframing/SKILL.md"
+        ],
+        "paths_match": true,
+        "allowlist_passed": true,
+        "baseline_unchanged": null,
+        "regular_files_ok": true,
+        "isolation_ok": true,
+        "conformance_passed": true,
+        "reasons": []
+      }
+    }
+  ],
+  "promoted_any": false,
+  "metric_boundary": "routing is a measured protected capability (not coverage); coverage = oracle-confirmed episodes; FDR is a hard veto; evidence is broker-derived."
+}

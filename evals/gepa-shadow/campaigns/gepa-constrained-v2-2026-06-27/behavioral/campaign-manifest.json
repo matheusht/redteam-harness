@@ -1,0 +1,42 @@
+{
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "created": "2026-06-27",
+  "seed": "gepa-constrained-v2-2026-06-27-seed-1",
+  "behavioral_budget": {
+    "max_probes": 6
+  },
+  "budgets": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "tracks": [
+    {
+      "name": "task-reframing",
+      "mutation_target": "skills/techniques/task-reframing/",
+      "kind": "existing-card-variant"
+    }
+  ],
+  "mutable_allowlist": [
+    "skills/techniques/task-reframing/"
+  ],
+  "immutable": [
+    "engine/",
+    "skills/oracles/",
+    "skills/patterns/",
+    "skills/vulns/"
+  ],
+  "frozen_inputs": {},
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "eligibility": "candidate",
+      "manifest": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/candidate-manifest.json"
+    },
+    {
+      "candidate_id": "cand-gepa-task-reframing-001",
+      "eligibility": "candidate",
+      "manifest": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-task-reframing-001/candidate-manifest.json"
+    }
+  ]
+}

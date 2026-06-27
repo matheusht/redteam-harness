@@ -1,0 +1,29 @@
+{
+  "candidate_id": "cand-gepa-invalid-gold-touch",
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "gate": "block",
+  "gate_reasons": [
+    "unsupported patch form(s) \u2014 mode/binary/rename/copy/symlink rejected: ['git could not parse the patch: error: No valid patches in input (allow with \"--allow-empty\")']",
+    "touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+    "touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
+  ],
+  "keep_discard": {
+    "verdict": "block",
+    "reasons": [
+      "blocked at contract gate"
+    ]
+  },
+  "shadow_verdict": "block",
+  "materialization_verdict": "block",
+  "behavioral_verdict": null,
+  "authoritative_verdict": "block",
+  "authoritative_stage": "materialization",
+  "coverage_delta_vs_baseline": null,
+  "replay": {
+    "candidate_id": "cand-gepa-invalid-gold-touch",
+    "final_verdict": "block",
+    "note": "blocked at contract gate; no replay"
+  },
+  "promoted": false,
+  "note": "scores.json indexes report/replay/promotion-bundle. authoritative_verdict is the measured materialization boundary when it blocks, else the replay-adjusted shadow verdict; shadow_verdict is the unapplied scoreboard view and is not authoritative alone."
+}

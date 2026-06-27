@@ -1,0 +1,46 @@
+{
+  "run_id": "model-completed-20260627T192333Z",
+  "status": "completed",
+  "backend": "model",
+  "model_id": "model:python3",
+  "model_cmd": {
+    "program": "python3",
+    "sha256": "dd9d3765abc21042f0af1cdf1c5a3b3fceca91b5bb7b443304defcbed1fb71ad"
+  },
+  "campaign_id": "gepa-constrained-v2-2026-06-27",
+  "campaign_manifest_sha256": "285911861fb58d5355127f4a7a94986ad3265a81fcf1e4607c43a6156171ac1c",
+  "seed": "gepa-constrained-v2-2026-06-27-seed-1",
+  "behavioral_budget": {
+    "max_probes": 6
+  },
+  "gate_budgets": {
+    "model_calls": 40,
+    "target_calls": 80,
+    "tokens": null
+  },
+  "episode_hashes": {
+    "task-reframing": "9234f134c8596146e773880bf63a567f7cad3d145832d93030ff6c20269be324"
+  },
+  "candidate_hashes": {
+    "cand-baseline": {
+      "candidate_manifest": "ec68fcde5add0344b8cec8e206af58edb6986a64b3f788c8468b28621120e97d",
+      "diff": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "incumbent_card": "985b69b87276e2a62b46bf44962541123bcba2a36dad9ff74dccc218cc5bd121"
+    },
+    "cand-gepa-task-reframing-001": {
+      "candidate_manifest": "73e83b2f5babdcf626864b7310cc23774ac5de7f03edf85e0a2117b17d558038",
+      "diff": "6abbbaceb845b7f7312fd7bf7f66444a36bebdb05be1f6aca33fde01c337a74e",
+      "incumbent_card": "985b69b87276e2a62b46bf44962541123bcba2a36dad9ff74dccc218cc5bd121"
+    }
+  },
+  "tool_hashes": {
+    "run-behavioral-eval.py": "0b845d694678b522a4c87315e67dcb3376d20487a230dd2f6557fe8a4bf4588f",
+    "score-candidate.py": "954a842f350335451130804bd336481a195ff1ccec28009caa46e8de2140b65a",
+    "check-campaign.py": "b0d0cef778358917322dd4248979e481f7bd241c9c3d23a4950cb497bce6005c",
+    "apply-candidate-eval.py": "e15c67f5927ea1dc9f77fd8123b934b63342c0bef19a05845aee61c8a442fe94",
+    "researcher_adapter.py": "c683aa9f77f185ee8d8a2bad676e0b05be33456822e90aafde7ac92cd1015379",
+    "fake-researcher-cli.py": "8d3c54c2411be815f50fc6cc0e02276fa056c51f06ed02886df02583489e599a"
+  },
+  "generated_at_unix": 1782588213,
+  "note": "Hashes pin exactly what this run was scored against; a skipped/failed run never overwrites a completed one (immutable run dirs)."
+}

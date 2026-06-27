@@ -1,0 +1,34 @@
+{
+  "candidate_id": "cand-gepa-invalid-gold-touch",
+  "technique": "task-reframing",
+  "shadow_verdict": "block",
+  "materialization_verdict": "block",
+  "in_scope": true,
+  "scope_violations": [],
+  "behavioral_verdict": null,
+  "coverage_delta": null,
+  "fdr_invalids": null,
+  "cost": null,
+  "replay": null,
+  "promotable": false,
+  "links": {
+    "materialization": {
+      "verdict": "block",
+      "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+      "candidate_tree": null,
+      "actual_paths": [],
+      "conformance_passed": false,
+      "reasons": [
+        "preflight: unsupported patch form(s) \u2014 mode/binary/rename/copy/symlink rejected: ['git could not parse the patch: error: No valid patches in input (allow with \"--allow-empty\")']",
+        "preflight: touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+        "preflight: touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']",
+        "candidate diff does not apply at HEAD: error: No valid patches in input (allow with \"--allow-empty\")"
+      ]
+    },
+    "diff": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-invalid-gold-touch/candidate.diff",
+    "broker_events": null,
+    "behavioral_run": null
+  },
+  "authoritative_stage": "materialization",
+  "authoritative_verdict": "block"
+}
