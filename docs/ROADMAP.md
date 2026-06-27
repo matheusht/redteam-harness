@@ -142,16 +142,24 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       non-success; deterministic fake CLI tests the wire protocol in CI. **Real-model qualification run is
       BLOCKED** (no isolated LM backend); simulator success is never substituted. Autonomy envelope recorded
       in Decision 0003.
-- [ ] **Next — consolidation proof: authoritative apply-then-measure boundary.** Keep
-      `check-campaign` as a fast manifest/hash preflight, but make isolated worktree application plus the
-      actual changed tree the authority for `declared == actual`, mutable-allowlist membership, and
-      byte-empty baselines. No final candidate `allow` before materialization. This is the first concrete
-      application of Decision 0004's “measure effects, do not parse claims” rule; delete patch-format
-      special cases only after parity/adversarial tests prove the measured contract is faithful.
-- [ ] **Real-LM behavioral qualification.** Configure a sufficiently isolated LM backend
-      (`--backend model --model-cmd ...`) and capture one blind, paired, 3/3 qualification (incumbent →
-      no-op → degraded → task-reframing → decomposition). Only after it passes may real GEPA generate
-      novel candidates; simulator results remain plumbing evidence, not autonomous learning.
+- [x] **Consolidation proof: authoritative apply-then-measure boundary (Phase 10H0).** `check-campaign`
+      is a fast preflight; isolated worktree application plus the actual changed tree are now authoritative
+      for `declared == actual`, mutable-allowlist membership, and byte-empty baselines. No final candidate
+      `allow` before materialization. First concrete application of Decision 0004's “measure effects, do
+      not parse claims” rule.
+- [x] **Real-LM behavioral qualification (Phase 10I) — COMPLETED.** A local, capability-limited backend
+      (ollama `qwen3:8b` via the provider-neutral `tools/ollama-researcher-cli.py` bridge — loopback only,
+      no credentials, no repo access) drove a blind, paired, 3/3 qualification over the canonical v2
+      campaign. Result: incumbent disciplined (coverage 1, FDR 0 on both techniques); no-op → probe (no
+      fake win); degraded card → FDR 4 → **block**; invalid-immutable → block at the measured gate; all
+      3/3 replay-stable; broker-owned evidence; the model's “confirmed” claims granted **no** coverage
+      without matching broker events. The immutable run pins a redacted backend command. This is a real
+      signal, not a simulator result.
+- [ ] **First real GEPA campaign — BLOCKED on the `gepa` package.** The candidate →
+      materialization → real-LM behavioral → replay pipeline is proven (the qualification evaluated
+      technique-card variants through it). The GEPA *optimizer* (LM-driven reflective candidate
+      generation) is not yet available here (`import gepa` fails); novel-candidate search waits on that
+      backend. No simulator/deterministic proposer is presented as GEPA.
 - [ ] **Lifecycle consolidation checkpoint — before the autonomous controller.** Establish one
       canonical public experiment flow (`preflight → apply → measure → score → replay → record`), one
       run-status/artifact contract, and mark existing lifecycle entrypoints internal or historical.

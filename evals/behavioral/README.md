@@ -89,10 +89,27 @@ no-op `cand-baseline` → **probe** (a no-op can never `allow`); `cand-efficient
 **probe**; `cand-degraded` (test fixture, promotion-excluded) → **block** (confirms contamination →
 FDR); `cand-invalid-immutable` → **block** at the canonical gate (touches frozen gold).
 
-## Phase 10G — real-model qualification status
+## Phase 10G/10I — real-model qualification status: COMPLETED
 
-The adapter contract + deterministic fake adapter + protocol tests are complete. A real blind
-qualification run is **BLOCKED/SKIPPED**: no sufficiently isolated LM backend is configured in this
-environment. The `runs/model-skipped-*` run records this honestly (status `skipped`, NON-SUCCESS). A
-simulator/fake success is **never** presented as real-model qualification, and nothing promotes
-automatically.
+The adapter contract + deterministic fake adapter + protocol tests were complete in 10G; the earlier
+`runs/model-skipped-*` honestly recorded a SKIP when no backend was configured. **Phase 10I qualified a
+real model.** A local, capability-limited backend (ollama `qwen3:8b`) was driven through the provider-
+neutral subprocess adapter via `tools/ollama-researcher-cli.py` — a thin bridge that talks only to
+`http://localhost:11434` over loopback (no credentials, no external egress) and sees only the blind
+mediated view. As the adapter notes, the scrubbed env + empty cwd is a **transport boundary, not a kernel
+sandbox**; a local model is used precisely because it needs no API key and makes no outbound provider
+call. The `runs/model-completed-*` run records the blind, paired, 3/3 result:
+
+- incumbent disciplined: **coverage 1, FDR 0** on both techniques (the model runs core + negative_control
+  + replay and adjudicates from broker responses);
+- no-op `cand-baseline` → **probe** (a no-op never becomes a win);
+- degraded card → **FDR 4 → block** (the model follows the card's “skip the control / always confirm”
+  and the FDR veto fires);
+- `cand-invalid-immutable` → **block** at the measured materialization gate;
+- every candidate **3/3 replay-stable** (temperature 0 + seeded);
+- the model's `confirmed` claims granted **no** coverage without matching broker events.
+
+The run is a real signal, not a simulator result; the manifest pins a **redacted** backend command
+(program + sha256, never raw args). Nothing promotes automatically. Before a higher-trust qualification
+(e.g. one that gates promotion), run the researcher under OS-level isolation, not just the transport
+boundary (see Decision 0004 / 0003).

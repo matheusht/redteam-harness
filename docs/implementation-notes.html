@@ -561,6 +561,36 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 10I (real-LM researcher qualification) <span class="tag t-dec">rev 13 · 2026-06-27</span></h2>
+    <p>First <b>real model</b> in the blind researcher loop. A local, capability-limited backend (ollama
+      <code>qwen3:8b</code>) drives the provider-neutral subprocess adapter through a thin bridge,
+      <code>tools/ollama-researcher-cli.py</code>, which talks only to <code>localhost:11434</code> over
+      loopback — no credentials, no external egress, no repository access — and sees only the blind
+      mediated view (card, neutral task, schema, budget). The scrubbed env + empty cwd is a TRANSPORT
+      boundary, not a kernel sandbox; a local model is used precisely because it needs no API key.</p>
+    <ul>
+      <li><b>Result (blind, paired, 3/3).</b> Incumbent disciplined: coverage 1, FDR 0 on both techniques.
+        No-op → probe. Degraded card → FDR 4 → block. Invalid-immutable → block at the measured gate. Every
+        candidate 3/3 replay-stable (temperature 0 + seeded). The broker stayed authoritative: the model's
+        <code>confirmed</code> claims granted <b>no</b> coverage without matching broker events — the same
+        “measure effects, don't parse claims” invariant, now against a real model.</li>
+      <li><b>Honest scaffolding, not coaching.</b> The bridge's system prompt encodes general research
+        rigor (run core + both controls before any confirm; confirm only if core disclosed and controls
+        clean) and makes the METHODOLOGY CARD binding and overriding — so a disciplined card earns coverage
+        and a degraded card (“skip the control / always confirm”) induces FDR. The discrimination comes
+        from the card text, never from gold; the card-degrades reminder is suppressed for degrading cards
+        and never reveals a broker/gold outcome.</li>
+      <li><b>Provenance fix.</b> A completed model run now pins which backend produced it — a redacted
+        command (program + sha256, never raw args) and a model-identifying id — closing a gap where the
+        completed path recorded <code>model_cmd: null</code>. A self-test asserts the redaction (no raw
+        command/secret leaks).</li>
+      <li><b>GEPA optimizer still blocked.</b> <code>import gepa</code> fails here, so LM-driven novel
+        candidate generation is not yet available; the candidate → materialization → real-LM behavioral →
+        replay pipeline is proven (variants went through it), but no deterministic proposer is presented as
+        GEPA. <code>autonomous_gap_closure_count</code> stays 0 — a qualified researcher is infrastructure,
+        not a discovered-and-closed gap.</li>
+    </ul>
+
     <h2>GEPA autoresearch — Phase 10H0 (authoritative measured candidate boundary) <span class="tag t-dec">rev 12 · 2026-06-27</span></h2>
     <p>First concrete consolidation under <b>Decision 0004</b> (accepted; supersedes 0003): make the
       <b>applied repository state</b>, not the patch syntax, the final authority for candidate

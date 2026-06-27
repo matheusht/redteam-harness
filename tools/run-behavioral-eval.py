@@ -432,6 +432,11 @@ def run_cli(campaign_path, backend="fake", only_candidate=None, model_cmd=None):
         entries = [c for c in entries if c["candidate_id"] == only_candidate]
     events, rows = [], []
     model_id = "deterministic-fake" if backend == "fake" else f"model:{(_redact_cmd(model_cmd) or {}).get('program', 'unconfigured')}"
+    promotable_note = (
+        "fake/simulator backend cannot authorize promotion; a real-model qualification plus PR review is "
+        "required." if backend == "fake" else
+        "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); "
+        "promotion still requires an OS-isolated qualification and human PR review.")
     try:
         for entry in entries:
             cand = load(os.path.join(ROOT, entry["manifest"]))     # canonical candidate manifest
@@ -444,8 +449,7 @@ def run_cli(campaign_path, backend="fake", only_candidate=None, model_cmd=None):
                                      campaign["behavioral_budget"], backend, config, campaign.get("seed", "seed"), events)
             rows.append({"candidate_id": cand["candidate_id"], "technique": technique,
                          "promotion_eligibility": eligibility, "promotable": False,
-                         "promotable_note": "fake/simulator backend cannot authorize promotion; a real-model "
-                         "qualification (Phase 10G) plus PR review is required.", **res})
+                         "promotable_note": promotable_note, **res})
     except ADA.ResearcherError as e:
         run_dir = new_run_dir(campaign_path, backend, "failed")
         manifest = base_manifest(campaign, campaign_path, backend, "failed", run_dir, model_id=model_id, model_cmd=model_cmd)
@@ -459,8 +463,10 @@ def run_cli(campaign_path, backend="fake", only_candidate=None, model_cmd=None):
 
     status = "completed"
     run_dir = new_run_dir(campaign_path, backend, status)
+    # A completed model run must pin WHICH backend produced it, exactly like the skipped/failed paths:
+    # the redacted model command (program + sha256, never the raw args) and a model-identifying id.
     manifest = base_manifest(campaign, campaign_path, backend, status, run_dir,
-                             model_id="deterministic-fake" if backend == "fake" else "model")
+                             model_id=model_id, model_cmd=model_cmd)
     report = {"campaign_id": campaign["campaign_id"], "status": status, "backend": backend,
               "candidates": rows, "promoted_any": False,
               "metric_boundary": "routing is a measured protected capability (not coverage); coverage = "
@@ -655,6 +661,22 @@ def self_test():
         ok = False; print("[self-test] model backend without command should be unavailable")
     except ADA.ModelUnavailable:
         print("[self-test] model backend without command -> ModelUnavailable (honest skip): ok")
+
+    # a COMPLETED model run must pin which backend produced it: a redacted command (program + sha256),
+    # never the raw args, never None — same provenance the skipped/failed paths already record.
+    with tempfile.TemporaryDirectory() as d:
+        cpath = os.path.join(d, "camp.json"); open(cpath, "w").write("{}")
+        rd = os.path.join(d, "runs", "model-completed-x"); os.makedirs(rd)
+        camp_min = {"campaign_id": "c", "candidates": [], "seed": "s", "behavioral_budget": {}, "budgets": {}}
+        m = base_manifest(camp_min, cpath, "model", "completed", rd,
+                          model_id="model:python3", model_cmd="python3 /abs/secret/path --key SECRETTOKEN")
+        rc = m.get("model_cmd")
+        leaked = "/abs/secret/path" in json.dumps(m) or "SECRETTOKEN" in json.dumps(m)
+        if not (isinstance(rc, dict) and rc.get("program") == "python3" and len(rc.get("sha256", "")) == 64
+                and str(m.get("model_id", "")).startswith("model") and not leaked):
+            ok = False; print(f"[self-test] completed model manifest must pin a redacted model_cmd + id (got {rc}, leaked={leaked})")
+        else:
+            print("[self-test] completed model run pins a redacted backend command (no raw cmd/secret): ok")
 
     print("\nSELF-TEST:", "PASS" if ok else "FAIL")
     return 0 if ok else 1

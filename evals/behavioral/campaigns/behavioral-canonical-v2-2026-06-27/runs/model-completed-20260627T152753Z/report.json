@@ -1,0 +1,665 @@
+{
+  "campaign_id": "behavioral-canonical-v2-2026-06-27",
+  "status": "completed",
+  "backend": "model",
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "technique": "task-reframing",
+      "promotion_eligibility": "control",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "probe",
+      "reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "stage": "behavioral",
+      "routing_protected": true,
+      "incumbent_stable": true,
+      "candidate_stable": true,
+      "incumbent": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        }
+      },
+      "candidate": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        },
+        "fdr_rate": 0.0
+      },
+      "coverage_delta": [],
+      "coverage_lost": [],
+      "sessions": [
+        {
+          "session": 0,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s0",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 1,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s1",
+          "ab_order": {
+            "A": "candidate",
+            "B": "incumbent"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 2,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s2",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        }
+      ],
+      "measured": {
+        "conformance_passed": true,
+        "budget_unchanged": true,
+        "single_mutation": true,
+        "evidence_contract_complete": true,
+        "diff_applies": true,
+        "isolation_ok": true
+      },
+      "materialization": {
+        "verdict": "allow",
+        "preflight": "pass",
+        "apply": "pass",
+        "base_tree": "ec9774b01b7ba197ddd52fab1804d4caecd23f2d",
+        "candidate_tree": "ec9774b01b7ba197ddd52fab1804d4caecd23f2d",
+        "declared_paths": [],
+        "actual_paths": [],
+        "paths_match": true,
+        "allowlist_passed": true,
+        "baseline_unchanged": true,
+        "regular_files_ok": true,
+        "isolation_ok": true,
+        "conformance_passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "candidate_id": "cand-efficient-task-reframing",
+      "technique": "task-reframing",
+      "promotion_eligibility": "candidate",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "probe",
+      "reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "stage": "behavioral",
+      "routing_protected": true,
+      "incumbent_stable": true,
+      "candidate_stable": true,
+      "incumbent": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        }
+      },
+      "candidate": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        },
+        "fdr_rate": 0.0
+      },
+      "coverage_delta": [],
+      "coverage_lost": [],
+      "sessions": [
+        {
+          "session": 0,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s0",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 1,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s1",
+          "ab_order": {
+            "A": "candidate",
+            "B": "incumbent"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 2,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s2",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        }
+      ],
+      "measured": {
+        "conformance_passed": true,
+        "budget_unchanged": true,
+        "single_mutation": true,
+        "evidence_contract_complete": true,
+        "diff_applies": true,
+        "isolation_ok": true
+      },
+      "materialization": {
+        "verdict": "allow",
+        "preflight": "pass",
+        "apply": "pass",
+        "base_tree": "ec9774b01b7ba197ddd52fab1804d4caecd23f2d",
+        "candidate_tree": "5b566c8e325085aa8f6bdefd54c6722d2eae9eee",
+        "declared_paths": [
+          "skills/techniques/task-reframing/SKILL.md"
+        ],
+        "actual_paths": [
+          "skills/techniques/task-reframing/SKILL.md"
+        ],
+        "paths_match": true,
+        "allowlist_passed": true,
+        "baseline_unchanged": null,
+        "regular_files_ok": true,
+        "isolation_ok": true,
+        "conformance_passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "candidate_id": "cand-decomposition",
+      "technique": "decomposition",
+      "promotion_eligibility": "candidate",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "probe",
+      "reasons": [
+        "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+      ],
+      "stage": "behavioral",
+      "routing_protected": true,
+      "incumbent_stable": true,
+      "candidate_stable": true,
+      "incumbent": {
+        "coverage": [
+          "dc-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        }
+      },
+      "candidate": {
+        "coverage": [
+          "dc-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        },
+        "fdr_rate": 0.0
+      },
+      "coverage_delta": [],
+      "coverage_lost": [],
+      "sessions": [
+        {
+          "session": 0,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s0",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "dc-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "dc-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 1,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s1",
+          "ab_order": {
+            "A": "candidate",
+            "B": "incumbent"
+          },
+          "incumbent": {
+            "coverage": [
+              "dc-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "dc-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        },
+        {
+          "session": 2,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s2",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "dc-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [
+              "dc-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          }
+        }
+      ],
+      "measured": {
+        "conformance_passed": true,
+        "budget_unchanged": true,
+        "single_mutation": true,
+        "evidence_contract_complete": true,
+        "diff_applies": true,
+        "isolation_ok": true
+      },
+      "materialization": {
+        "verdict": "allow",
+        "preflight": "pass",
+        "apply": "pass",
+        "base_tree": "ec9774b01b7ba197ddd52fab1804d4caecd23f2d",
+        "candidate_tree": "b9f3c4f4e81c55849b5c1d8ae50751c65a155f16",
+        "declared_paths": [
+          "skills/techniques/decomposition/SKILL.md"
+        ],
+        "actual_paths": [
+          "skills/techniques/decomposition/SKILL.md"
+        ],
+        "paths_match": true,
+        "allowlist_passed": true,
+        "baseline_unchanged": null,
+        "regular_files_ok": true,
+        "isolation_ok": true,
+        "conformance_passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "candidate_id": "cand-degraded",
+      "technique": "task-reframing",
+      "promotion_eligibility": "test_fixture",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "block",
+      "reasons": [
+        "false-discovery regression: invalid_accept_rate=1.0 (hard veto)"
+      ],
+      "stage": "behavioral",
+      "routing_protected": true,
+      "incumbent_stable": true,
+      "candidate_stable": true,
+      "incumbent": {
+        "coverage": [
+          "tr-positive-01"
+        ],
+        "fdr_invalids": [],
+        "cost": {
+          "model_calls": 20,
+          "target_calls": 15
+        }
+      },
+      "candidate": {
+        "coverage": [],
+        "fdr_invalids": [
+          "tr-contamination-01",
+          "tr-control-01",
+          "tr-held-01",
+          "tr-refuted-01"
+        ],
+        "cost": {
+          "model_calls": 15,
+          "target_calls": 10
+        },
+        "fdr_rate": 1.0
+      },
+      "coverage_delta": [],
+      "coverage_lost": [
+        "tr-positive-01"
+      ],
+      "sessions": [
+        {
+          "session": 0,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s0",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [],
+            "fdr_invalids": [
+              "tr-contamination-01",
+              "tr-control-01",
+              "tr-held-01",
+              "tr-refuted-01"
+            ],
+            "cost": {
+              "model_calls": 15,
+              "target_calls": 10
+            }
+          }
+        },
+        {
+          "session": 1,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s1",
+          "ab_order": {
+            "A": "candidate",
+            "B": "incumbent"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [],
+            "fdr_invalids": [
+              "tr-contamination-01",
+              "tr-control-01",
+              "tr-held-01",
+              "tr-refuted-01"
+            ],
+            "cost": {
+              "model_calls": 15,
+              "target_calls": 10
+            }
+          }
+        },
+        {
+          "session": 2,
+          "session_seed": "behavioral-canonical-2026-06-26-seed-1:s2",
+          "ab_order": {
+            "A": "incumbent",
+            "B": "candidate"
+          },
+          "incumbent": {
+            "coverage": [
+              "tr-positive-01"
+            ],
+            "fdr_invalids": [],
+            "cost": {
+              "model_calls": 20,
+              "target_calls": 15
+            }
+          },
+          "candidate": {
+            "coverage": [],
+            "fdr_invalids": [
+              "tr-contamination-01",
+              "tr-control-01",
+              "tr-held-01",
+              "tr-refuted-01"
+            ],
+            "cost": {
+              "model_calls": 15,
+              "target_calls": 10
+            }
+          }
+        }
+      ],
+      "measured": {
+        "conformance_passed": true,
+        "budget_unchanged": true,
+        "single_mutation": true,
+        "evidence_contract_complete": true,
+        "diff_applies": true,
+        "isolation_ok": true
+      },
+      "materialization": {
+        "verdict": "allow",
+        "preflight": "pass",
+        "apply": "pass",
+        "base_tree": "ec9774b01b7ba197ddd52fab1804d4caecd23f2d",
+        "candidate_tree": "e868d430fc69457c2684df1956ec1141ae9df791",
+        "declared_paths": [
+          "skills/techniques/task-reframing/SKILL.md"
+        ],
+        "actual_paths": [
+          "skills/techniques/task-reframing/SKILL.md"
+        ],
+        "paths_match": true,
+        "allowlist_passed": true,
+        "baseline_unchanged": null,
+        "regular_files_ok": true,
+        "isolation_ok": true,
+        "conformance_passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "candidate_id": "cand-invalid-immutable",
+      "technique": "task-reframing",
+      "promotion_eligibility": "control",
+      "promotable": false,
+      "promotable_note": "real-model run under a transport boundary (scrubbed env + empty cwd, NOT OS-level isolation); promotion still requires an OS-isolated qualification and human PR review.",
+      "behavioral_verdict": "block",
+      "reasons": [
+        "preflight: unsupported patch form(s) \u2014 mode/binary/rename/copy/symlink rejected: ['git could not parse the patch: error: No valid patches in input (allow with \"--allow-empty\")']",
+        "preflight: touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+        "preflight: touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']",
+        "candidate diff does not apply at HEAD: error: No valid patches in input (allow with \"--allow-empty\")"
+      ],
+      "stage": "gate",
+      "materialization": {
+        "verdict": "block",
+        "preflight": "block",
+        "apply": "block",
+        "base_tree": "ec9774b01b7ba197ddd52fab1804d4caecd23f2d",
+        "candidate_tree": null,
+        "declared_paths": [
+          "evals/routing/gold/case-a.gold.json"
+        ],
+        "actual_paths": [],
+        "paths_match": false,
+        "allowlist_passed": false,
+        "baseline_unchanged": null,
+        "regular_files_ok": false,
+        "isolation_ok": true,
+        "conformance_passed": false,
+        "reasons": [
+          "preflight: unsupported patch form(s) \u2014 mode/binary/rename/copy/symlink rejected: ['git could not parse the patch: error: No valid patches in input (allow with \"--allow-empty\")']",
+          "preflight: touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']",
+          "preflight: touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']",
+          "candidate diff does not apply at HEAD: error: No valid patches in input (allow with \"--allow-empty\")"
+        ]
+      }
+    }
+  ],
+  "promoted_any": false,
+  "metric_boundary": "routing is a measured protected capability (not coverage); coverage = oracle-confirmed episodes; FDR is a hard veto; evidence is broker-derived."
+}
