@@ -14,4 +14,5 @@ than a one-off field note. Decision docs should explain:
 
 - [0001 — Casebooks, pattern cards, and recon routing](0001-casebooks-patterns-routing.md)
 - [0002 — GEPA autoresearch scope, DSPy posture, and capability ladder](0002-gepa-autoresearch-scope.md)
-- [0003 — Autonomy envelopes](0003-autonomy-envelopes.md)
+- [0003 — Autonomy envelopes](0003-autonomy-envelopes.md) — _superseded by 0004_
+- [0004 — Epistemic autonomy and complexity budget](0004-epistemic-autonomy-complexity-budget.md) — **canonical autonomy + complexity policy**

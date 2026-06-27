@@ -142,10 +142,27 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       non-success; deterministic fake CLI tests the wire protocol in CI. **Real-model qualification run is
       BLOCKED** (no isolated LM backend); simulator success is never substituted. Autonomy envelope recorded
       in Decision 0003.
-- [ ] **Next: real-LM behavioral qualification.** Configure a sufficiently isolated LM backend
-      (`--backend model --model-cmd ...`) and capture one blind, paired, 3/3 qualification (incumbent → no-op
-      → degraded → task-reframing → decomposition). Only after it passes does real GEPA generate novel
-      candidates. Then the sealed evaluator boundary + autonomous campaign controller.
+- [ ] **Next — consolidation proof: authoritative apply-then-measure boundary.** Keep
+      `check-campaign` as a fast manifest/hash preflight, but make isolated worktree application plus the
+      actual changed tree the authority for `declared == actual`, mutable-allowlist membership, and
+      byte-empty baselines. No final candidate `allow` before materialization. This is the first concrete
+      application of Decision 0004's “measure effects, do not parse claims” rule; delete patch-format
+      special cases only after parity/adversarial tests prove the measured contract is faithful.
+- [ ] **Real-LM behavioral qualification.** Configure a sufficiently isolated LM backend
+      (`--backend model --model-cmd ...`) and capture one blind, paired, 3/3 qualification (incumbent →
+      no-op → degraded → task-reframing → decomposition). Only after it passes may real GEPA generate
+      novel candidates; simulator results remain plumbing evidence, not autonomous learning.
+- [ ] **Lifecycle consolidation checkpoint — before the autonomous controller.** Establish one
+      canonical public experiment flow (`preflight → apply → measure → score → replay → record`), one
+      run-status/artifact contract, and mark existing lifecycle entrypoints internal or historical.
+      Compose tested functions incrementally; do not introduce a new framework or role-class hierarchy.
+- [ ] **Then: sealed evaluator → first real GEPA campaign → autonomous campaign controller.** The
+      controller may schedule, replay, reject, archive, and create evidence PRs inside the autonomy
+      envelope (Decision 0004, absorbing 0003). Live bounded operation and automatic promotion remain
+      separate review decisions.
+- **Learning north-star (Decision 0004):** `autonomous_gap_closure_count = 0`. Increment only
+  when the system discovers and closes a previously uncovered behavior without a human authoring the
+  case or candidate, while preserving FDR=0, protected cases, replay, and evaluator immutability.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,

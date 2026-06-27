@@ -1,11 +1,17 @@
 # Decision 0003 — Autonomy envelopes
 
-**Status:** accepted as product direction; control-plane prepared in Phase 10F–10G\
+**Status:** superseded by [Decision 0004 — Epistemic autonomy and complexity budget](0004-epistemic-autonomy-complexity-budget.md)\
 **Date:** 2026-06-27\
 **Supersedes:** nothing. **Preserves:** Decision 0002 (GEPA autoresearch scope) as historical context;
 this decision extends it, it does not relax it.\
 **Related:** `AGENTS.md`, `docs/phase-10f-10g-behavioral-qualification-plan.md`,
 `docs/gepa-autoresearch-implementation-plan.md`, `docs/autoresearch-evaluation-rfc.html`
+
+> **Superseded.** Decision 0004 absorbs this autonomy envelope unchanged and adds the complexity-budget
+> and "measure effects, do not parse claims" policy. The load-bearing invariant below — a candidate can
+> never change its evaluator and then use it to authorize itself — is retained verbatim by 0004 and
+> remains in force. This document is kept as historical provenance for the Phase 10F–10G control plane;
+> for current autonomy and complexity policy, read Decision 0004.
 
 ## Context
 
