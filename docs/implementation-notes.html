@@ -561,6 +561,36 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 10H0 (authoritative measured candidate boundary) <span class="tag t-dec">rev 12 · 2026-06-27</span></h2>
+    <p>First concrete consolidation under <b>Decision 0004</b> (accepted; supersedes 0003): make the
+      <b>applied repository state</b>, not the patch syntax, the final authority for candidate
+      authorization. The standing reframe is &ldquo;stop parsing what the untrusted thing claims; measure
+      what actually happened.&rdquo;</p>
+    <ul>
+      <li><b>One measured result.</b> <code>apply-candidate-eval.materialize_candidate</code> runs the
+        contract gate as a fast <b>preflight</b> (it may reject, it cannot authorize), then applies the diff
+        with <code>git apply --index</code> in a clean detached worktree at committed HEAD and measures the
+        STAGED tree: changed paths from the index (never the patch text), base/candidate tree ids, file
+        modes, and binary status. <code>allow</code> requires preflight pass <i>and</i> every measured
+        check: <code>declared == actual</code>, mutable-allowlist membership, no immutable touch,
+        regular-file type, the baseline (unchanged tree) / non-baseline (changed tree) rule, and trusted
+        conformance materialized from committed HEAD. Fail-closed; the worktree is always cleaned up.</li>
+      <li><b>Measured catches every patch-parser rejection.</b> A pure <code>measured_policy</code> takes
+        measured facts and returns the blocking reasons, so the parity is unit-tested directly: an
+        exec-bit flip, symlink/gitlink post-state, deletion, binary content, declared≠actual,
+        out-of-allowlist, immutable touch, and the baseline/non-baseline tree rules all fall out of the
+        tree, not the diff header. The patch parser stays as preflight defense-in-depth until that parity
+        is trusted; it no longer authorizes.</li>
+      <li><b>Shared, not reimplemented.</b> The behavioral evaluator and the promotion renderer consume the
+        one result instead of re-deriving apply/gating. Behavioral run rows pin the
+        <code>materialization</code> summary (verdict + base/candidate tree ids + actual paths). Promotion
+        is eligible only with a pinned <code>materialization.verdict == allow</code>; replay is classified
+        non-authorizing (downgrade-only). Re-running the canonical v2 campaign reproduced every disposition
+        exactly (baseline→probe, efficient→allow, decomposition→probe, degraded→block, invalid-immutable→
+        block), now each backed by a measured tree id. <code>autonomous_gap_closure_count</code> stays 0 —
+        this phase adds trust, not autonomous learning.</li>
+    </ul>
+
     <h2>GEPA autoresearch — Phase 10F/10G (behavioral integrity hardening + real-model adapter) <span class="tag t-dec">rev 11 · 2026-06-27</span></h2>
     <p>Turned the Phase-10 simulator proof into a trustworthy boundary, per
       <code>docs/phase-10f-10g-behavioral-qualification-plan.md</code> and Decision 0003. The core move:

@@ -6,10 +6,12 @@ mechanical verdict and the Phase 4 replay-adjusted verdict with the candidate di
 scorer + replay results, false-discovery result, a cost comparison, a redaction report, and a human
 checklist — conforming to schemas/promotion-bundle.schema.json.
 
-It PROMOTES NOTHING. It never applies the diff, never writes under skills/, never commits or merges.
-A candidate is promotable ONLY if its replay-adjusted verdict is `allow` AND the redaction scan is
-clean; a `block`/`probe` candidate (everything in shadow mode) is rendered as archived-only. Promotion
-happens later, by a human, through a reviewed PR on an isolated branch.
+It PROMOTES NOTHING. It never writes under skills/, never commits or merges. A candidate is promotable
+ONLY if its replay-adjusted verdict is `allow`, the redaction scan is clean, AND the Phase 10H0 measured
+boundary authorizes it: the diff is applied with `git apply --index` in an isolated worktree at HEAD and
+the resulting tree is measured (`materialization.verdict == allow`). Patch syntax never authorizes
+promotion. A `block`/`probe` candidate (everything in shadow mode) is rendered as archived-only.
+Promotion happens later, by a human, through a reviewed PR on an isolated branch.
 
   GEPA candidate -> isolated branch -> scorers + replay -> THIS bundle -> human review -> PR -> merge
 
@@ -49,10 +51,11 @@ def _mod(name, filename):
 
 
 CONF = _mod("check_conformance", "check-conformance.py")
+APE = _mod("apply_candidate_eval", "apply-candidate-eval.py")
 
 BUNDLE_REQUIRED = ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff",
                    "scores", "false_discovery", "cost_comparison", "redaction_report",
-                   "review_checklist", "verdict", "pinned"]
+                   "review_checklist", "verdict", "materialization", "pinned"]
 
 
 def sha256_file(path):
@@ -90,13 +93,15 @@ def _sha256_text(text):
 
 
 def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, replay_summary,
-                 diff_text, bundle_text, paths, pinned):
+                 diff_text, bundle_text, paths, pinned, materialization):
     """Pure: returns (bundle_dict, promotable, redaction_list). No disk I/O."""
     phase3 = report_candidate["keep_discard"]["verdict"]
     final = replay_summary["verdict"] if replay_summary else phase3
 
     redaction = redaction_hits([("diff", diff_text), ("evidence-bundle", bundle_text)])
     redaction_clean = not redaction
+
+    materialized_allow = (materialization or {}).get("verdict") == "allow"
 
     fdr = scoreboard["false_discovery"]
     inc_cost = {"model_calls": 0, "target_calls": scoreboard["hermetic_bola"]["target_calls"]}
@@ -112,6 +117,8 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
     checklist = [
         {"item": f"Single mutated component identified: {mt}", "checked": single_component},
         {"item": "No immutable file touched (contract gate allowed the candidate)", "checked": contract_gate_allow},
+        {"item": "Measured boundary authoritative: isolated `git apply --index` + measured tree + trusted "
+                 "conformance == allow", "checked": materialized_allow},
         {"item": "False-discovery invalid_accept_rate == 0", "checked": bool(fdr["passed"])},
         {"item": "Replay-stable: primary + 2 fresh-session replays reproduced", "checked": replay_stable},
         {"item": "Diff hash matches candidate_hash", "checked": diff_hash_ok},
@@ -134,9 +141,10 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         "redaction_report": {"scanned": True, "secret_hits": redaction},
         "review_checklist": checklist,
         "verdict": final,
+        "materialization": materialization,
         "pinned": pinned,
     }
-    promotable = (final == "allow") and redaction_clean
+    promotable = (final == "allow") and redaction_clean and materialized_allow
     return bundle, promotable, redaction
 
 
@@ -262,8 +270,9 @@ def render_cli(campaign_path, candidate_id):
         "frozen_input_hashes": {name: spec["sha256"] for name, spec in campaign.get("frozen_inputs", {}).items()},
         "benchmark_version": _benchmark_version(campaign),
     }
+    materialization = APE.materialization_summary(APE.materialize_candidate(campaign, candidate_manifest, ROOT))
     bundle, promotable, _ = build_bundle(campaign, candidate_manifest, rc, report["baseline_scoreboard"],
-                                         replay_summary, diff_text, bundle_text, paths, pinned)
+                                         replay_summary, diff_text, bundle_text, paths, pinned, materialization)
     missing = validate_bundle(bundle)
     if missing:
         print(f"bundle invalid, missing: {missing}")
@@ -296,25 +305,36 @@ def self_test():
              "scores": "report.json", "replay_summary": "rs.json"}
     pinned = {"campaign_manifest_hash": "x", "candidate_manifest_hash": "y",
               "frozen_input_hashes": {}, "benchmark_version": "bench-0"}
+    mat_allow = {"verdict": "allow", "conformance_passed": True, "paths_match": True}
+    mat_block = {"verdict": "block", "reasons": ["measured boundary: declared != actual paths"]}
 
     b, promotable, red = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
-                                      diff_text, "# clean bundle\n", paths, pinned)
+                                      diff_text, "# clean bundle\n", paths, pinned, mat_allow)
     if not promotable or validate_bundle(b) or b["verdict"] != "allow":
-        ok = False; print("[self-test] allow + stable + clean should be promotable & schema-complete")
+        ok = False; print("[self-test] allow + stable + clean + materialized should be promotable & schema-complete")
     else:
-        print("[self-test] allow + stable + clean -> promotable: ok")
+        print("[self-test] allow + stable + clean + materialized-allow -> promotable: ok")
 
     _, prom_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
-                                    diff_text, "# clean\n", paths, pinned)
+                                    diff_text, "# clean\n", paths, pinned, mat_allow)
     if prom_probe:
         ok = False; print("[self-test] probe candidate must NOT be promotable")
     else:
         print("[self-test] probe -> archived, not promotable: ok")
 
+    # measured boundary is authoritative for promotion: an allow+clean candidate whose materialized
+    # apply BLOCKS (e.g. declared != actual) is NOT promotable, even though the patch gate passed.
+    _, prom_unmat, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
+                                    diff_text, "# clean\n", paths, pinned, mat_block)
+    if prom_unmat:
+        ok = False; print("[self-test] candidate without a materialized allow must NOT be promotable")
+    else:
+        print("[self-test] materialization block -> not promotable (measured boundary authoritative): ok")
+
     secret_diff = diff_text + "Authorization: Bearer abcdef0123456789xyz\n"
     cm2 = dict(cm, candidate_hash=_sha256_text(secret_diff))
     _, prom_secret, red2 = build_bundle(campaign, cm2, rc, scoreboard, {"verdict": "allow", "stable": True},
-                                        secret_diff, "# clean\n", paths, pinned)
+                                        secret_diff, "# clean\n", paths, pinned, mat_allow)
     if prom_secret or not red2:
         ok = False; print("[self-test] secret in diff must block promotion via redaction")
     else:

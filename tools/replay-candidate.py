@@ -14,6 +14,13 @@ The replay gate can only DOWNGRADE, never upgrade:
     allow  -> allow if stable, else probe   (non-deterministic success becomes probe)
     probe  -> probe
 
+Caller classification (Decision 0004 / Phase 10H0): this gate is NON-AUTHORIZING. It only reduces an
+already-recorded verdict for variance; it never applies a diff and never turns a non-allow into an allow.
+Final candidate authorization comes from the measured materialization boundary
+(`apply-candidate-eval.materialize_candidate`), and promotion eligibility additionally requires a pinned
+`materialization.verdict == allow` (`render-promotion-bundle`). Replay stability is necessary but not
+sufficient for promotion.
+
 In shadow mode the benchmark is deterministic, so the three runs are identical reproductions and the
 variance spread is 0 — honest, and the machinery is still exercised. The self-test injects real
 instability to prove the downgrade fires.

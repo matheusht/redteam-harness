@@ -37,12 +37,18 @@ EVALUATOR process (holds gold, owns the BROKER)        RESEARCHER (blind, mediat
 - **False-discovery** = any non-positive episode confirmed — a hard veto.
 - **Cost** is broker-accounted. A `fake`/simulator cost win can never authorize promotion.
 
-## Canonical gating + immutable runs (10F)
+## Canonical gating + immutable runs (10F) — authoritative measured boundary (10H0)
 
-Every candidate passes the canonical campaign/candidate contract gate (`check-campaign.py`), is applied
-in an isolated `git worktree`, and has conformance MEASURED in the patched workspace. Eligibility flags
-(`conformance_passed`, `budget_unchanged`, `single_mutation`, `evidence_contract_complete`) and the
-protected routing capability are measured, never hardcoded. Each invocation writes an immutable
+Every candidate passes the canonical campaign/candidate contract gate (`check-campaign.py`) as a fast
+**preflight**, but authorization is **measured, not parsed** (Phase 10H0 / Decision 0004): the diff is
+applied with `git apply --index` in an isolated detached worktree at committed HEAD, and the resulting
+STAGED tree is the authority — `declared == actual` paths, mutable-allowlist membership, regular-file
+type, the baseline/non-baseline tree rule, and trusted conformance. This evaluator does not reimplement
+apply/gating; it shares the one measured result (`apply-candidate-eval.materialize_candidate`), and each
+candidate's run row pins the `materialization` summary (verdict + base/candidate tree ids + actual
+paths). Eligibility flags (`conformance_passed`, `budget_unchanged`, `single_mutation`,
+`evidence_contract_complete`) and the protected routing capability are measured, never hardcoded. No
+final `allow` is ever derived from preflight alone. Each invocation writes an immutable
 `runs/<run-id>/{run-manifest.json,report.json,report.md,events.jsonl}` pinning campaign/candidate/card/
 episode/scorer/adapter hashes, backend/model/config, seeds, budgets, timestamps, and status. A skipped
 or failed run never overwrites a completed one.

@@ -273,37 +273,39 @@ def evidence_complete(bundle_rel):
 
 
 def measure_candidate(campaign, candidate):
-    """Run the canonical gate + isolated apply + patched-workspace conformance. Returns measured flags
-    and the patched card text. NOTHING here is hardcoded true."""
-    gate_verdict, gate_reasons = CC.gate(campaign, candidate, ROOT)
+    """Authoritative measured boundary, shared with apply-candidate-eval (Phase 10H0): the diff is applied
+    with `git apply --index` in isolation and the resulting STAGED tree decides. The contract gate is a
+    fast preflight only. This evaluator does not reimplement apply/gating; it consumes the one measured
+    result and derives its eligibility flags from it. NOTHING here is hardcoded true."""
+    mat = APE.materialize_candidate(campaign, candidate, ROOT)
     mt = candidate.get("mutation_target", "")
-    target_rel = (mt + "SKILL.md") if mt.endswith("/") else mt
-    out = {"gate": gate_verdict, "gate_reasons": gate_reasons, "target_rel": target_rel,
-           "diff_applies": None, "isolation_ok": None, "conformance_passed": False,
-           "evidence_contract_complete": evidence_complete(candidate.get("evidence_bundle")),
-           "budget_unchanged": candidate.get("budget") in (None, campaign.get("budgets")),
-           "single_mutation": gate_verdict == "allow" and all(
-               t == mt or t.startswith(mt) for t in candidate.get("touched_files", [])),
-           "patched_card_text": None}
-    if gate_verdict != "allow":
-        return out
-    iso = APE.apply_in_isolation(ROOT, candidate["diff"], target_rel)
-    out["diff_applies"], out["isolation_ok"] = iso["diff_applies"], iso["isolation_ok"]
-    if iso["worktree"] and iso["diff_applies"]:
-        out["conformance_passed"] = APE.measure_conformance(iso["worktree"])
-        wp = os.path.join(iso["worktree"], target_rel)
-        out["patched_card_text"] = open(wp).read() if os.path.isfile(wp) else None
-    APE.cleanup_worktree(ROOT, iso["worktree"])
-    return out
+    target_rel = mat.get("target_rel") or ((mt + "SKILL.md") if mt.endswith("/") else mt)
+    return {
+        "materialization": mat,
+        "authoritative_verdict": mat["verdict"],
+        "gate": "allow" if mat["preflight"] == "pass" else "block",
+        "gate_reasons": mat["preflight_reasons"],
+        "target_rel": target_rel,
+        "diff_applies": mat["apply"] == "pass",
+        "isolation_ok": mat["isolation_ok"],
+        "conformance_passed": mat["conformance_passed"],
+        "evidence_contract_complete": evidence_complete(candidate.get("evidence_bundle")),
+        "budget_unchanged": candidate.get("budget") in (None, campaign.get("budgets")),
+        "single_mutation": mat["verdict"] == "allow" and mat["paths_match"] and mat["allowlist_passed"],
+        "patched_card_text": mat["patched_card_text"],
+    }
 
 
 def behavioral_verdict(campaign, candidate, episode_set, incumbent_text, measured, budget, backend, config, seed, events_sink):
-    if measured["gate"] != "allow":
-        return {"behavioral_verdict": "block", "reasons": ["contract gate: " + "; ".join(measured["gate_reasons"])],
-                "stage": "gate"}
-    if not measured["isolation_ok"] or not measured["diff_applies"] or measured["patched_card_text"] is None:
+    mat = measured["materialization"]
+    if mat["verdict"] != "allow":             # measured tree state is authoritative, not the patch gate
+        stage = "gate" if mat["preflight"] != "pass" else "materialization"
+        return {"behavioral_verdict": "block", "reasons": mat["reasons"], "stage": stage,
+                "materialization": APE.materialization_summary(mat)}
+    if measured["patched_card_text"] is None:
         return {"behavioral_verdict": "block",
-                "reasons": ["isolated apply failed or violated isolation"], "stage": "apply"}
+                "reasons": ["no patched card text after isolated apply"], "stage": "apply",
+                "materialization": APE.materialization_summary(mat)}
 
     routing_ok = RG.baseline_scoreboard()["routing_qualified"]    # MEASURED protected capability
     sessions, inc_stable, cand_stable = paired_eval(
@@ -338,6 +340,7 @@ def behavioral_verdict(campaign, candidate, episode_set, incumbent_text, measure
         "sessions": _session_summaries(sessions),
         "measured": {k: measured[k] for k in ("conformance_passed", "budget_unchanged", "single_mutation",
                                               "evidence_contract_complete", "diff_applies", "isolation_ok")},
+        "materialization": APE.materialization_summary(mat),
     }
 
 

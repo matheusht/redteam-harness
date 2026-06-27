@@ -59,6 +59,27 @@
       }
     },
     "verdict": { "enum": ["allow", "block", "probe"], "description": "the replay-adjusted verdict (Phase 3 keep/discard ∧ Phase 4 replay); promotion still requires human PR review" },
+    "materialization": {
+      "type": "object",
+      "required": ["verdict"],
+      "description": "Phase 10H0 authoritative measured boundary: the diff applied with `git apply --index` in an isolated worktree at committed HEAD, then the resulting STAGED tree measured (declared==actual paths, allowlist, regular-file type, baseline rule, trusted conformance). A candidate is promotable only when verdict == allow here; patch syntax never authorizes promotion. Optional for historical bundles rendered before 10H0; required by the renderer going forward.",
+      "properties": {
+        "verdict": { "enum": ["allow", "block"] },
+        "preflight": { "enum": ["pass", "block"] },
+        "apply": { "enum": ["pass", "block"] },
+        "base_tree": { "type": ["string", "null"] },
+        "candidate_tree": { "type": ["string", "null"] },
+        "declared_paths": { "type": "array", "items": { "type": "string" } },
+        "actual_paths": { "type": "array", "items": { "type": "string" } },
+        "paths_match": { "type": "boolean" },
+        "allowlist_passed": { "type": "boolean" },
+        "baseline_unchanged": { "type": ["boolean", "null"] },
+        "regular_files_ok": { "type": "boolean" },
+        "isolation_ok": { "type": "boolean" },
+        "conformance_passed": { "type": "boolean" },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
     "pinned": {
       "type": "object",
       "additionalProperties": false,
