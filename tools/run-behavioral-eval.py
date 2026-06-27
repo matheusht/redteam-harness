@@ -52,7 +52,7 @@ RG = _mod("run_gepa_shadow", "run-gepa-shadow.py")
 ADA = _mod("researcher_adapter", "researcher_adapter.py")
 
 FORBIDDEN_IN_VIEW = ["signal_available", "contaminated", "gold_verdict", "win_requires",
-                     "correct_verdict", "observation_key", "\"class\"", "candidate_id", "incumbent"]
+                     "correct_verdict", "observation_key", "class", "candidate_id", "incumbent"]
 
 
 def load(path):
@@ -101,8 +101,12 @@ def researcher_view(episode, card_text, budget):
 
 
 def assert_blind(view):
+    # Check the evaluator-only fields as serialized JSON KEYS, not bare substrings. A technique card
+    # legitimately discusses "contamination" / "contaminated context" / "class of attacks" in its prose,
+    # and that must NOT trip the blind check; a genuine leak serializes the gold field as a key
+    # (e.g. "contaminated": true). This keeps the guard honest without punishing on-topic card text.
     blob = json.dumps(view)
-    leaked = [k for k in FORBIDDEN_IN_VIEW if k in blob]
+    leaked = [k for k in FORBIDDEN_IN_VIEW if f'"{k}":' in blob]
     if leaked:
         raise AssertionError(f"researcher view leaked evaluator-only fields: {leaked}")
 
@@ -601,6 +605,24 @@ def self_test():
         ok = False; print(f"[self-test] task prompt injection changed behavior: {injrun}")
     else:
         print("[self-test] task prompt injection does not move coverage/FDR: ok")
+
+    # blind check is structural (keys), not substring: a card that discusses contamination/class in prose
+    # passes; a view that actually leaks a gold KEY raises.
+    prose_view = researcher_view({"task": "t"}, "Run the negative control to rule out a contaminated "
+                                 "context; this whole class of reframes can confabulate.", budget)
+    try:
+        assert_blind(prose_view); prose_ok = True
+    except AssertionError:
+        prose_ok = False
+    leak_view = dict(prose_view, contaminated=True)
+    try:
+        assert_blind(leak_view); leak_caught = False
+    except AssertionError:
+        leak_caught = True
+    if not (prose_ok and leak_caught):
+        ok = False; print(f"[self-test] blind check wrong (prose_ok={prose_ok}, leak_caught={leak_caught})")
+    else:
+        print("[self-test] blind check is structural: on-topic 'contaminated/class' prose passes, leaked key raises: ok")
 
     # immutable artifacts: a second write to the same run dir is refused; skipped never overwrites completed.
     import tempfile

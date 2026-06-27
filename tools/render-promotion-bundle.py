@@ -55,7 +55,8 @@ APE = _mod("apply_candidate_eval", "apply-candidate-eval.py")
 
 BUNDLE_REQUIRED = ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff",
                    "scores", "false_discovery", "cost_comparison", "redaction_report",
-                   "review_checklist", "verdict", "authoritative_verdict", "materialization", "pinned"]
+                   "review_checklist", "verdict", "authoritative_verdict", "authoritative_stage",
+                   "materialization", "pinned"]
 
 
 def sha256_file(path):
@@ -93,8 +94,13 @@ def _sha256_text(text):
 
 
 def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, replay_summary,
-                 diff_text, bundle_text, paths, pinned, materialization):
-    """Pure: returns (bundle_dict, promotable, redaction_list). No disk I/O."""
+                 diff_text, bundle_text, paths, pinned, materialization, behavioral=None):
+    """Pure: returns (bundle_dict, promotable, redaction_list). No disk I/O.
+
+    `behavioral` (optional, from the Phase 13 bridge) carries {behavioral_verdict, in_scope}. The single
+    authoritative answer is layered: materialization block > off-scope card > real-LM behavioral verdict >
+    (no behavioral) the replay-adjusted shadow verdict. Automation reads authoritative_verdict; it must not
+    have to remember the precedence."""
     phase3 = report_candidate["keep_discard"]["verdict"]
     final = replay_summary["verdict"] if replay_summary else phase3
 
@@ -103,11 +109,16 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
 
     materialized_allow = (materialization or {}).get("verdict") == "allow"
     materialized_block = (materialization or {}).get("verdict") == "block"
-    # The single authoritative answer: the measured materialization is the boundary (Decision 0004 /
-    # Phase 10H0). When it blocks, that is the verdict — automation must not have to remember that
-    # materialization overrides a `probe` from the unapplied shadow scoreboard. Otherwise the
-    # replay-adjusted shadow verdict stands.
-    authoritative_verdict = "block" if materialized_block else final
+    behavioral_verdict = (behavioral or {}).get("behavioral_verdict")
+    off_scope = bool(behavioral) and behavioral.get("in_scope") is False
+    if materialized_block:
+        authoritative_verdict, authoritative_stage = "block", "materialization"
+    elif off_scope:
+        authoritative_verdict, authoritative_stage = "block", "scope"
+    elif behavioral_verdict is not None:
+        authoritative_verdict, authoritative_stage = behavioral_verdict, "behavioral"
+    else:
+        authoritative_verdict, authoritative_stage = final, "shadow"
 
     fdr = scoreboard["false_discovery"]
     inc_cost = {"model_calls": 0, "target_calls": scoreboard["hermetic_bola"]["target_calls"]}
@@ -152,10 +163,15 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         "review_checklist": checklist,
         "verdict": final,
         "authoritative_verdict": authoritative_verdict,
+        "authoritative_stage": authoritative_stage,
+        "behavioral_verdict": behavioral_verdict,
         "materialization": materialization,
         "pinned": pinned,
     }
-    promotable = (final == "allow") and redaction_clean and materialized_allow
+    # promotable only if the AUTHORITATIVE verdict is allow (a behavioral allow already implies 3/3 + no
+    # FDR), the materialized boundary allowed, and redaction is clean. A fake/transport-boundary run is
+    # never authoritative-allow, so it is never promotable here.
+    promotable = (authoritative_verdict == "allow") and redaction_clean and materialized_allow
     return bundle, promotable, redaction
 
 
@@ -197,16 +213,21 @@ def validate_bundle(bundle):
 def render_md(bundle, promotable):
     status = "PROMOTABLE — open a PR" if promotable else "NOT PROMOTABLE — archived only"
     auth = bundle.get("authoritative_verdict", bundle["verdict"])
+    stage = bundle.get("authoritative_stage", "shadow")
     differ = auth != bundle["verdict"]
+    stage_note = {
+        "materialization": "the **measured materialization** (the shadow scoreboard does not apply the diff)",
+        "scope": "the **scope guard** (materialization passed but the card content is out of scope for this harness)",
+        "behavioral": "the **real-LM behavioral evaluator** (broker-owned coverage/FDR, strict 3/3 replay)",
+    }.get(stage)
     lines = [
         f"# Promotion bundle — {bundle['candidate_id']}",
         "",
-        f"**Status: {status}**  ·  **authoritative verdict: `{auth}`**  ·  shadow/replay-adjusted: "
-        f"`{bundle['verdict']}`  ·  campaign `{bundle['campaign_id']}`",
+        f"**Status: {status}**  ·  **authoritative verdict: `{auth}`** (stage: `{stage}`)  ·  "
+        f"shadow/replay-adjusted: `{bundle['verdict']}`  ·  campaign `{bundle['campaign_id']}`",
         "",
-    ] + ([f"> The authoritative verdict is the **measured materialization** "
-          f"(`{(bundle.get('materialization') or {}).get('verdict')}`); the shadow scoreboard does not apply "
-          f"the diff, so its `{bundle['verdict']}` is not authoritative here.", ""] if differ else []) + [
+    ] + ([f"> Authoritative verdict comes from {stage_note}; the shadow `{bundle['verdict']}` is not "
+          f"authoritative here.", ""] if differ and stage_note else []) + [
         "This bundle promotes nothing. Promotion is a human action via a reviewed PR on an isolated "
         "branch; the diff is NOT applied here and nothing is written under `skills/`.",
         "",
@@ -288,8 +309,13 @@ def render_cli(campaign_path, candidate_id):
         "benchmark_version": _benchmark_version(campaign),
     }
     materialization = APE.materialization_summary(APE.materialize_candidate(campaign, candidate_manifest, ROOT))
+    # If the Phase 13 bridge has run, its result carries the real-LM behavioral verdict + scope flag, which
+    # make the authoritative verdict (materialization > scope > behavioral > shadow).
+    br_path = os.path.join(cand_dir, "bridge-result.json")
+    behavioral = load(br_path) if os.path.isfile(br_path) else None
     bundle, promotable, _ = build_bundle(campaign, candidate_manifest, rc, report["baseline_scoreboard"],
-                                         replay_summary, diff_text, bundle_text, paths, pinned, materialization)
+                                         replay_summary, diff_text, bundle_text, paths, pinned,
+                                         materialization, behavioral)
     missing = validate_bundle(bundle)
     if missing:
         print(f"bundle invalid, missing: {missing}")
@@ -352,6 +378,30 @@ def self_test():
                           f"(auth={b_unmat.get('authoritative_verdict')}, replay={replay_item})")
     else:
         print("[self-test] materialization block -> not promotable, authoritative=block, replay N/A: ok")
+
+    # Phase 13 bridge: a materialization-allow candidate's authoritative verdict comes from the real-LM
+    # behavioral evaluator. behavioral allow -> authoritative allow (stage behavioral), promotable;
+    # behavioral probe -> authoritative probe, not promotable; off-scope -> authoritative block (stage scope).
+    b_beh_allow, prom_beh, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
+                                            diff_text, "# clean\n", paths, pinned, mat_allow,
+                                            {"behavioral_verdict": "allow", "in_scope": True})
+    b_beh_probe, prom_beh_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
+                                                  diff_text, "# clean\n", paths, pinned, mat_allow,
+                                                  {"behavioral_verdict": "probe", "in_scope": True})
+    b_offscope, prom_off, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
+                                           diff_text, "# clean\n", paths, pinned, mat_allow,
+                                           {"behavioral_verdict": None, "in_scope": False})
+    beh_ok = (b_beh_allow["authoritative_verdict"] == "allow" and b_beh_allow["authoritative_stage"] == "behavioral"
+              and prom_beh and b_beh_probe["authoritative_verdict"] == "probe" and not prom_beh_probe
+              and b_offscope["authoritative_verdict"] == "block" and b_offscope["authoritative_stage"] == "scope"
+              and not prom_off)
+    if not beh_ok:
+        ok = False; print(f"[self-test] behavioral bridge verdicts wrong: allow={b_beh_allow['authoritative_verdict']}/"
+                          f"{b_beh_allow['authoritative_stage']} probe={b_beh_probe['authoritative_verdict']} "
+                          f"offscope={b_offscope['authoritative_verdict']}/{b_offscope['authoritative_stage']}")
+    else:
+        print("[self-test] behavioral bridge: allow->authoritative allow(behavioral)+promotable; probe->probe; "
+              "off-scope->block(scope): ok")
 
     secret_diff = diff_text + "Authorization: Bearer abcdef0123456789xyz\n"
     cm2 = dict(cm, candidate_hash=_sha256_text(secret_diff))

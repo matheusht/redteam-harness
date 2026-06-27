@@ -59,7 +59,9 @@
       }
     },
     "verdict": { "enum": ["allow", "block", "probe"], "description": "the replay-adjusted SHADOW verdict (Phase 3 keep/discard ∧ Phase 4 replay); NOT authoritative on its own — the shadow scoreboard does not apply the diff" },
-    "authoritative_verdict": { "enum": ["allow", "block", "probe"], "description": "the single verdict automation should read: the measured materialization (Phase 10H0) when it blocks, else the replay-adjusted shadow verdict. Optional for historical bundles; required by the renderer going forward." },
+    "authoritative_verdict": { "enum": ["allow", "block", "probe"], "description": "the single verdict automation should read. Precedence: materialization block > off-scope > real-LM behavioral verdict > replay-adjusted shadow. Optional for historical bundles; required by the renderer going forward." },
+    "authoritative_stage": { "enum": ["materialization", "scope", "behavioral", "shadow"], "description": "which stage produced authoritative_verdict (Phase 13). `materialization`/`scope` block before any behavioral claim; `behavioral` is a real-LM broker-mediated verdict; `shadow` means behavioral was not run." },
+    "behavioral_verdict": { "type": ["string", "null"], "enum": ["allow", "block", "probe", null], "description": "the real-LM behavioral evaluator's verdict for this candidate, or null when materialization/scope blocked before behavioral evaluation or no behavioral run occurred." },
     "materialization": {
       "type": "object",
       "required": ["verdict"],
