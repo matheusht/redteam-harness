@@ -561,11 +561,64 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 10F/10G (behavioral integrity hardening + real-model adapter) <span class="tag t-dec">rev 11 · 2026-06-27</span></h2>
+    <p>Turned the Phase-10 simulator proof into a trustworthy boundary, per
+      <code>docs/phase-10f-10g-behavioral-qualification-plan.md</code> and Decision 0003. The core move:
+      the researcher can no longer self-report what it did — an evaluator-side <b>broker</b> owns all
+      evidence.</p>
+
+    <h3>Implemented invariants (10F)</h3>
+    <ul>
+      <li><b>Broker-authoritative evidence.</b> The researcher requests one action per turn (probe | final);
+        the broker executes against a deterministic target, appends an event, enforces the budget, and
+        adjudicates coverage/FDR from its OWN event log. Final <code>controls_claimed</code>/evidence are
+        advisory and ignored. A confirmed counts only if the event log proves core-disclosed + the required
+        controls ran + controls clean + replay stable.</li>
+      <li><b>Canonical measured gating.</b> Each candidate goes through <code>check-campaign.gate</code> +
+        isolated <code>git worktree</code> apply + <code>check-conformance</code> in the patched workspace;
+        <code>conformance_passed/budget_unchanged/single_mutation/evidence_contract_complete</code> and the
+        protected routing capability are MEASURED, never hardcoded true.</li>
+      <li><b>Truly paired 3-session A/B.</b> Incumbent and candidate run in every session (primary + two
+        fresh) with recorded anonymized A/B order; a hermetic <code>allow</code> requires strict 3/3
+        reproduction (else downgraded to <code>probe</code>).</li>
+      <li><b>Immutable runs.</b> Each invocation writes <code>runs/&lt;run-id&gt;/{run-manifest,report.json,
+        report.md,events.jsonl}</code> pinning campaign/candidate/card/episode/scorer/adapter hashes,
+        backend/model/config, seeds, budgets, timestamps, status. A skipped/failed run gets its own dir and
+        can never overwrite a completed one (the writer refuses).</li>
+      <li><b>Capability blindness by construction.</b> The model adapter runs as a subprocess in an empty
+        scratch cwd with a scrubbed env — no repo/worktree, gold, scorers, candidate identity, credentials,
+        or network. The action vocabulary has no file-read; <code>assert_blind</code> is defense-in-depth.</li>
+    </ul>
+
+    <h3>Adapter contract (10G)</h3>
+    <ul>
+      <li><b>Provider-neutral.</b> <code>researcher_adapter.py</code> + a per-turn JSONL subprocess wire
+        contract; strict action/final schemas; bounded malformed-output retries; usage accounting;
+        <code>ModelUnavailable</code> → recorded <code>skipped</code>, NON-SUCCESS (rc 2). A deterministic
+        <code>fake-researcher-cli.py</code> tests the protocol in CI without credentials.</li>
+      <li><b>No LLM judge override.</b> The broker + <code>score-candidate</code> are mechanical; the
+        researcher's claims never override a mechanical failure.</li>
+    </ul>
+
+    <h3>Adversarial fixtures run (all green)</h3>
+    <p>no-op cannot allow; degraded card blocks (contamination FDR); invented controls → no coverage;
+      confirming contamination with no controls → FDR; task prompt-injection does not move coverage/FDR;
+      immutable/budget mutation blocks at the gate; completed run cannot be overwritten; malformed output
+      exhausts bounded retries; model-unavailable → honest non-success. Routing stays a measured protected
+      capability; FDR is a hard veto.</p>
+
+    <h3>Real-model result <span class="tag t-q">honest blocker</span></h3>
+    <div class="open"><b>BLOCKED:</b> no sufficiently isolated LM backend is configured here, so the
+      real-model qualification run is recorded <code>skipped</code>/non-success (<code>runs/model-skipped-*</code>).
+      The adapter contract and every model-free integrity test are complete; a simulator/fake success is not
+      substituted and qualification is not claimed. Next: configure an isolated LM and capture one blind,
+      paired, 3/3 qualification.</div>
+
     <h2>GEPA autoresearch — Phase 10 (blind technique-sensitive behavioral evaluation) <span class="tag t-dec">rev 10 · 2026-06-26</span></h2>
     <p>The reviewer correction: evaluate technique <em>behavior</em>, not a routing rerun, behind a real
       blindness boundary. Built <code>tools/run-behavioral-eval.py</code> + <code>evals/behavioral/</code>.
       A card-guided researcher chooses probes and adjudicates on hermetic episodes, so the technique wording
-      can change outcomes. First campaign <code>behavioral-2026-06-26</code> over the existing Phase-8
+      can change outcomes. First campaign <code>behavioral-canonical-2026-06-26</code> (hardened in 10F) over the existing Phase-8
       candidates: baseline probe, the task-reframing candidate <code>allow</code> by measured cost reduction
       (marked non-promotable for the simulator), decomposition probe, degraded control <code>block</code>.</p>
 

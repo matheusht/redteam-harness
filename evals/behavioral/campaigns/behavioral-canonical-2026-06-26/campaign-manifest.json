@@ -1,0 +1,89 @@
+{
+  "campaign_id": "behavioral-canonical-2026-06-26",
+  "created": "2026-06-26",
+  "note": "Canonical behavioral campaign (Phase 10F). Built deterministically from HEAD by tools/build-behavioral-campaign.py. Consumed by tools/run-behavioral-eval.py with the canonical contract gate + measured patched-workspace conformance.",
+  "tracks": [
+    {
+      "name": "task-reframing",
+      "mutation_target": "skills/techniques/task-reframing/",
+      "kind": "existing-card-variant"
+    },
+    {
+      "name": "decomposition",
+      "mutation_target": "skills/techniques/decomposition/",
+      "kind": "existing-card-variant"
+    }
+  ],
+  "mutable_allowlist": [
+    "skills/techniques/task-reframing/",
+    "skills/techniques/decomposition/"
+  ],
+  "immutable": [
+    "engine/",
+    "skills/oracles/",
+    "skills/patterns/",
+    "skills/vulns/"
+  ],
+  "frozen_inputs": {
+    "episodes:task-reframing": {
+      "path": "evals/behavioral/episodes/task-reframing.json",
+      "sha256": "9234f134c8596146e773880bf63a567f7cad3d145832d93030ff6c20269be324"
+    },
+    "episodes:decomposition": {
+      "path": "evals/behavioral/episodes/decomposition.json",
+      "sha256": "1127710f06e41efa336cd91e2b512e0f8d3b706c9a9e691432d686f023782238"
+    },
+    "scorer:score-candidate": {
+      "path": "tools/score-candidate.py",
+      "sha256": "954a842f350335451130804bd336481a195ff1ccec28009caa46e8de2140b65a"
+    },
+    "gate:check-campaign": {
+      "path": "tools/check-campaign.py",
+      "sha256": "3ea011945494baf85f897ff38b89b5570aa5d9f2b3586add102af6ce3c1bd1dc"
+    },
+    "adapter:researcher_adapter": {
+      "path": "tools/researcher_adapter.py",
+      "sha256": "af0e47983acf3a69962d26187bfa014b4b350e42e02fa34f5a3ac4f4d93fd71f"
+    }
+  },
+  "budgets": {
+    "model_calls": 60,
+    "target_calls": 120,
+    "tokens": null
+  },
+  "behavioral_budget": {
+    "max_probes": 6
+  },
+  "seed": "behavioral-canonical-2026-06-26-seed-1",
+  "benchmark_set": [
+    "behavioral:task-reframing",
+    "behavioral:decomposition"
+  ],
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-baseline/candidate-manifest.json",
+      "eligibility": "control"
+    },
+    {
+      "candidate_id": "cand-efficient-task-reframing",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-efficient-task-reframing/candidate-manifest.json",
+      "eligibility": "candidate"
+    },
+    {
+      "candidate_id": "cand-decomposition",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-decomposition/candidate-manifest.json",
+      "eligibility": "candidate"
+    },
+    {
+      "candidate_id": "cand-degraded",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-degraded/candidate-manifest.json",
+      "eligibility": "test_fixture"
+    },
+    {
+      "candidate_id": "cand-invalid-immutable",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-invalid-immutable/candidate-manifest.json",
+      "eligibility": "control"
+    }
+  ]
+}

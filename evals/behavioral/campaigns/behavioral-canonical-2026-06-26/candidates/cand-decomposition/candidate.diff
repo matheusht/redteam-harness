@@ -1,0 +1,9 @@
+--- a/skills/techniques/decomposition/SKILL.md
++++ b/skills/techniques/decomposition/SKILL.md
+@@ -28,3 +28,6 @@
+ artifact**, not individual chunks.
+ 
+ **Pairs well with:** task-reframing (reframe each chunk as a legitimate sub-task).
++
++## Behavioral variant: chunk ledger
++Record a ledger row per chunk and recompose only after an oracle check and a fresh-session replay.

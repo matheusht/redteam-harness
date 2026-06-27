@@ -1,0 +1,20 @@
+{
+  "candidate_id": "cand-decomposition",
+  "campaign_id": "behavioral-canonical-2026-06-26",
+  "parent": "incumbent",
+  "track": "decomposition",
+  "technique": "decomposition",
+  "eligibility": "candidate",
+  "mutation_target": "skills/techniques/decomposition/",
+  "touched_files": [
+    "skills/techniques/decomposition/SKILL.md"
+  ],
+  "diff": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-decomposition/candidate.diff",
+  "candidate_hash": "e6e9eb65335997339aa0ca45680c55c726b87e05c6ce47526191825834e1737e",
+  "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-decomposition/evidence-bundle.md",
+  "budget": {
+    "model_calls": 60,
+    "target_calls": 120,
+    "tokens": null
+  }
+}

@@ -1,7 +1,0 @@
-{
-  "campaign": "behavioral-2026-06-26",
-  "backend": "model",
-  "status": "skipped",
-  "reason": "no LM configured for the behavioral researcher (set up a model backend); the model path must not silently succeed.",
-  "promoted_any": false
-}

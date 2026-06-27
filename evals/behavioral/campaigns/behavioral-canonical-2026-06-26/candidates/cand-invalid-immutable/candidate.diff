@@ -1,0 +1,5 @@
+--- a/evals/routing/gold/case-a.gold.json
++++ b/evals/routing/gold/case-a.gold.json
+@@
+-  "case": "case-a"
++  "case": "case-a"

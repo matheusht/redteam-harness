@@ -365,7 +365,7 @@ change outcomes. Built as `tools/run-behavioral-eval.py` + `evals/behavioral/`.
 - **10D — mechanical scoring + replay.** Coverage = oracle-confirmed positives; FDR (any non-positive
   confirmed) is a hard veto; protected-case regression blocks; primary + two fresh-session replays gate
   stability; real accounting (model/target calls, model id, seed, elapsed).
-- **10E — first behavioral campaign.** `evals/behavioral/campaigns/behavioral-2026-06-26/` over the
+- **10E — first behavioral campaign.** `evals/behavioral/campaigns/behavioral-canonical-2026-06-26/` over the
   existing hand-authored Phase-8 candidates + a degraded control. Result: baseline probe, an efficiency
   candidate allow (cost, marked non-promotable for the simulator), decomposition probe, degraded control
   block. A simulator cost-only win cannot authorize promotion; promotion stays PR-only.
@@ -376,6 +376,20 @@ oracle-confirmed coverage or ≥10% measured cost reduction; nothing auto-promot
 
 The remaining model-dependent step is wiring a real LM into `--backend model` so an `allow` comes from a
 real researcher's measured behavior and accounting, not the deterministic simulator.
+
+### Phase 10F–10G — provenance/integrity hardening + real-model adapter (DONE; real run BLOCKED)
+
+Per `docs/phase-10f-10g-behavioral-qualification-plan.md`: replaced researcher self-reporting with an
+evaluator-side **broker** (authoritative for probes/controls/replay/responses/evidence/cost); made the
+behavioral evaluator consume canonical campaign/candidate manifests with **measured** gating + isolated
+apply + patched-workspace conformance (no hardcoded eligibility); paired incumbent/candidate across a
+primary + two fresh sessions with recorded anonymized A/B and strict 3/3; wrote **immutable**
+`runs/<run-id>/` artifacts (no overwrite, hash-pinned); enforced capability blindness for the `model`
+adapter (jailed subprocess). Added a provider-neutral researcher adapter (`tools/researcher_adapter.py`)
+with strict action/final schemas, bounded malformed-output retries, usage accounting, and an honest
+`skipped`/non-success on model unavailability, plus a deterministic fake CLI for CI. The real-model
+qualification run is BLOCKED (no isolated LM backend); the adapter + all model-free integrity tests are
+complete. Autonomy direction recorded in Decision 0003.
 
 ## Phase 11 — Future review tracks (post-behavioral qualification)
 

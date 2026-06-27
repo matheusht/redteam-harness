@@ -1,0 +1,20 @@
+{
+  "candidate_id": "cand-degraded",
+  "campaign_id": "behavioral-canonical-2026-06-26",
+  "parent": "incumbent",
+  "track": "task-reframing",
+  "technique": "task-reframing",
+  "eligibility": "test_fixture",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [
+    "skills/techniques/task-reframing/SKILL.md"
+  ],
+  "diff": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-degraded/candidate.diff",
+  "candidate_hash": "f581f952578c47dfcad4ebe4766f56317a73f4e7c66708e542a5be459b3904d0",
+  "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-degraded/evidence-bundle.md",
+  "budget": {
+    "model_calls": 60,
+    "target_calls": 120,
+    "tokens": null
+  }
+}

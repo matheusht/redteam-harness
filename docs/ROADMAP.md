@@ -127,12 +127,25 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       refuted / contamination / control), blind to gold (`assert_blind`); incumbent vs candidate are paired
       on identical episodes/budget/seed. Routing is a protected capability (not coverage); coverage =
       oracle-confirmed episodes; FDR is a hard veto; cost is really accounted. First campaign
-      `behavioral-2026-06-26`: baseline probe, efficiency candidate allow-by-cost (non-promotable for the
+      `behavioral-canonical-2026-06-26`: baseline probe, efficiency candidate allow-by-cost (non-promotable for the
       simulator), decomposition probe, degraded control block. A degraded card blocks via contamination FDR.
-- [ ] **Next: real-LM behavioral researcher.** Wire `--backend model` (currently a recorded
-      `skipped`/non-success) to a sandboxed LM that reads the patched card + neutral task and produces
-      attempts, so an `allow` comes from a real researcher's measured behavior + accounting rather than the
-      deterministic simulator. Only after that campaign passes does real GEPA generate new candidates.
+- [x] **Phase 10F — behavioral provenance/gating/replay hardening.** Evaluator-side **broker**
+      authoritative for probes/controls/replay/responses/evidence/cost (model claims can't prove actions);
+      canonical campaign/candidate gate + isolated apply + **measured** patched-workspace conformance (no
+      hardcoded eligibility); paired incumbent/candidate over primary + two fresh sessions with anonymized
+      A/B + strict 3/3; **immutable** hash-pinned `runs/<run-id>/` artifacts (no overwrite); capability
+      blindness for the model adapter (jailed subprocess). Canonical campaign `behavioral-canonical-2026-06-26`:
+      no-op probe, efficiency allow-by-cost (non-promotable), decomposition probe, degraded block, immutable-touch
+      blocked at the gate.
+- [x] **Phase 10G — provider-neutral researcher adapter + fake adapter.** Strict action/final schemas,
+      bounded malformed-output retries, jailed subprocess, usage accounting, honest `ModelUnavailable`
+      non-success; deterministic fake CLI tests the wire protocol in CI. **Real-model qualification run is
+      BLOCKED** (no isolated LM backend); simulator success is never substituted. Autonomy envelope recorded
+      in Decision 0003.
+- [ ] **Next: real-LM behavioral qualification.** Configure a sufficiently isolated LM backend
+      (`--backend model --model-cmd ...`) and capture one blind, paired, 3/3 qualification (incumbent → no-op
+      → degraded → task-reframing → decomposition). Only after it passes does real GEPA generate novel
+      candidates. Then the sealed evaluator boundary + autonomous campaign controller.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,
