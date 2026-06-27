@@ -1,0 +1,8 @@
+{
+  "campaign_id": "behavioral-canonical-2026-06-26",
+  "status": "skipped",
+  "backend": "model",
+  "status_note": "real-model run BLOCKED: no researcher command configured (set config.model_cmd or BEHAVIORAL_LM_CMD). No simulator result is substituted; qualification is NOT claimed.",
+  "candidates": [],
+  "promoted_any": false
+}
