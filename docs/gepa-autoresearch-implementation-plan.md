@@ -1,6 +1,6 @@
 # GEPA / Autoresearch Implementation Plan
 
-**Status:** implemented through Phase 8 in shadow; candidate-applied evaluation not yet built  
+**Status:** implemented through Phase 10 (blind technique-sensitive behavioral evaluation, simulator backend); the model backend for a real-LM researcher is the next step  
 **Date:** 2026-06-26  
 **Related:** `docs/decisions/0002-gepa-autoresearch-scope.md`, `docs/architecture-brainstorm-gepa-dspy.html`, `docs/autoresearch-evaluation-rfc.html`, `docs/ROADMAP.md`
 
@@ -323,10 +323,13 @@ Current result:
 - All allowed candidates correctly remain `probe`: the frozen scorer gates artifacts but does not
   apply candidate diffs to a live orchestrator/session.
 
-## Phase 9 — Candidate-applied evaluation (next)
+## Phase 9 — Candidate-applied evaluation (DONE)
 
-Purpose: create actual learning pressure. The harness needs to evaluate candidate behavior, not just
-candidate provenance.
+Purpose: apply a candidate diff in isolation and re-measure model-free signals. Built as
+`tools/apply-candidate-eval.py`: gate → `git worktree` apply at HEAD (live tree asserted byte-identical)
+→ re-run `check-conformance.py` against the patched workspace → keep/discard. A card variant that breaks
+the harness now blocks by MEASUREMENT. Note: the frozen scorers do not read technique cards, so this
+phase still cannot produce a behavioral coverage delta — that is Phase 10's job.
 
 Implementation surface:
 
@@ -344,7 +347,37 @@ Acceptance:
 - Produces a candidate-specific scoreboard instead of reproducing the incumbent by construction.
 - Still promotes nothing automatically.
 
-## Phase 10 — Future review tracks
+## Phase 10 — Blind technique-sensitive behavioral evaluation (DONE)
+
+Purpose: create actual learning pressure by evaluating technique BEHAVIOR, not a routing rerun. A
+card-guided researcher chooses probes and adjudicates on hermetic episodes, so the technique wording can
+change outcomes. Built as `tools/run-behavioral-eval.py` + `evals/behavioral/`.
+
+- **10A — blind researcher adapter.** A structured input/output contract and a minimal researcher view
+  (patched card + neutral task + allowed cards + schema + budget); `assert_blind()` rejects any view
+  carrying gold/oracle/class. A deterministic `simulator` backend is the CI control; `--backend model`
+  is gated and records a `skipped` NON-SUCCESS result (never a silent pass).
+- **10B — technique-sensitive episodes.** `evals/behavioral/episodes/{task-reframing,decomposition}.json`
+  with positive / held / refuted / contamination / control cases. A deterministic target answers probes;
+  the card's discipline (run controls) and efficiency (probe count) drive behavior.
+- **10C — paired evaluation.** Incumbent and candidate cards run through the SAME episodes, budget, and
+  seed. Routing qualification is a PROTECTED capability, not coverage.
+- **10D — mechanical scoring + replay.** Coverage = oracle-confirmed positives; FDR (any non-positive
+  confirmed) is a hard veto; protected-case regression blocks; primary + two fresh-session replays gate
+  stability; real accounting (model/target calls, model id, seed, elapsed).
+- **10E — first behavioral campaign.** `evals/behavioral/campaigns/behavioral-2026-06-26/` over the
+  existing hand-authored Phase-8 candidates + a degraded control. Result: baseline probe, an efficiency
+  candidate allow (cost, marked non-promotable for the simulator), decomposition probe, degraded control
+  block. A simulator cost-only win cannot authorize promotion; promotion stays PR-only.
+
+Acceptance met: a candidate affects behavior without seeing gold; a deliberately degraded card blocks;
+baseline is stable; held/refuted/contamination never become confirmed; an `allow` needs new
+oracle-confirmed coverage or ≥10% measured cost reduction; nothing auto-promotes.
+
+The remaining model-dependent step is wiring a real LM into `--backend model` so an `allow` comes from a
+real researcher's measured behavior and accounting, not the deterministic simulator.
+
+## Phase 11 — Future review tracks (post-behavioral qualification)
 
 These are approved directions, not current implementation permissions.
 

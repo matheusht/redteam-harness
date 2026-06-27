@@ -1,0 +1,17 @@
+{
+  "campaign_id": "behavioral-2026-06-26",
+  "created": "2026-06-26",
+  "note": "First behavioral campaign (Phase 10E). Tests the EXISTING hand-authored Phase-8 candidates first, paired against their incumbent technique cards, plus a deliberately degraded control. Only after the evaluator behaves correctly on these should real GEPA generate new candidates. Simulator backend: a measured cost-only win cannot authorize promotion (rerun --backend model). Promotion stays PR-only.",
+  "budget": { "max_probes": 6 },
+  "seed": "behavioral-2026-06-26-seed-1",
+  "candidates": [
+    { "candidate_id": "cand-baseline", "technique": "task-reframing", "kind": "baseline" },
+    { "candidate_id": "cand-gepa-task-reframing-001", "technique": "task-reframing", "kind": "diff",
+      "mutation_target": "skills/techniques/task-reframing/",
+      "diff": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-task-reframing-001/candidate.diff" },
+    { "candidate_id": "cand-gepa-decomposition-001", "technique": "decomposition", "kind": "diff",
+      "mutation_target": "skills/techniques/decomposition/",
+      "diff": "evals/gepa-shadow/campaigns/gepa-phase8-2026-06-26/candidates/cand-gepa-decomposition-001/candidate.diff" },
+    { "candidate_id": "cand-degraded-control", "technique": "task-reframing", "kind": "inline_degraded" }
+  ]
+}

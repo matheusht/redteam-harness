@@ -122,10 +122,17 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       the keep/discard policy. A variant that breaks the harness blocks by measurement; a clean variant is
       `probe` (frozen scorers don't read technique cards, so no behavioral delta without a model). On the
       Phase-8 campaign: 4 applied clean (probe), 1 gold-touch blocked, 0 promoted.
-- [ ] **Next: model-in-the-loop applied delta.** Wire `--backend model` to re-route the blind
-      orchestrator against the patched workspace, so a card variant can earn a real `allow`/`block` from
-      behavior (a true coverage delta) instead of provenance. This is the first point real learning
-      pressure appears; it needs an LM in the loop.
+- [x] **Phase 10 — blind technique-sensitive behavioral evaluation (`tools/run-behavioral-eval.py`).**
+      A card-guided researcher chooses probes and adjudicates on hermetic episodes (positive / held /
+      refuted / contamination / control), blind to gold (`assert_blind`); incumbent vs candidate are paired
+      on identical episodes/budget/seed. Routing is a protected capability (not coverage); coverage =
+      oracle-confirmed episodes; FDR is a hard veto; cost is really accounted. First campaign
+      `behavioral-2026-06-26`: baseline probe, efficiency candidate allow-by-cost (non-promotable for the
+      simulator), decomposition probe, degraded control block. A degraded card blocks via contamination FDR.
+- [ ] **Next: real-LM behavioral researcher.** Wire `--backend model` (currently a recorded
+      `skipped`/non-success) to a sandboxed LM that reads the patched card + neutral task and produces
+      attempts, so an `allow` comes from a real researcher's measured behavior + accounting rather than the
+      deterministic simulator. Only after that campaign passes does real GEPA generate new candidates.
 - **FDR is a hard veto, not a tradeoff term:** a candidate that raises coverage AND raises
   false-discovery rate is rejected — coverage and FDR are not fungible.
 - **Scope fence:** autoresearch mutates **technique-card variants only** — never the evaluator, oracle,

@@ -561,6 +561,59 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 10 (blind technique-sensitive behavioral evaluation) <span class="tag t-dec">rev 10 · 2026-06-26</span></h2>
+    <p>The reviewer correction: evaluate technique <em>behavior</em>, not a routing rerun, behind a real
+      blindness boundary. Built <code>tools/run-behavioral-eval.py</code> + <code>evals/behavioral/</code>.
+      A card-guided researcher chooses probes and adjudicates on hermetic episodes, so the technique wording
+      can change outcomes. First campaign <code>behavioral-2026-06-26</code> over the existing Phase-8
+      candidates: baseline probe, the task-reframing candidate <code>allow</code> by measured cost reduction
+      (marked non-promotable for the simulator), decomposition probe, degraded control <code>block</code>.</p>
+
+    <h3>Acceptance, mapped to evidence</h3>
+    <table>
+      <thead><tr><th>Spec acceptance</th><th>Enforced where</th></tr></thead>
+      <tbody>
+        <tr><td>Candidate affects behavior without seeing gold</td><td><code>researcher_view()</code> carries only card+task+schema+budget; <code>assert_blind()</code> rejects any gold/oracle/class field; the degraded card changes FDR/coverage purely from card text</td></tr>
+        <tr><td>A deliberately degraded card blocks</td><td><code>cand-degraded-control</code> (overclaim → controls off) confirms the contamination episode → FDR → block; self-test "degraded → block"</td></tr>
+        <tr><td>Baseline remains stable</td><td><code>cand-baseline</code> (identical card) → probe; self-test "identical → probe"</td></tr>
+        <tr><td>Held/refuted/contamination never confirmed</td><td>the deterministic target only discloses on the negative control / loses the canary on replay for contamination; a disciplined card returns needs_review/refuted; self-test asserts no non-positive episode is confirmed</td></tr>
+        <tr><td>An <code>allow</code> needs new coverage or ≥10% measured cost cut</td><td><code>score-candidate.decide</code> fed by MEASURED coverage/cost; the task-reframing candidate allowed via a 20% probe reduction</td></tr>
+        <tr><td>Routing is a protected capability, not coverage</td><td><code>protected_cases["routing-qualification"]</code>; coverage = oracle-confirmed episodes only</td></tr>
+        <tr><td>Model backend never silently succeeds</td><td><code>--backend model</code> with no LM writes <code>status: skipped</code> and returns rc 2; self-test asserts it</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Design decisions <span class="tag t-dec">spec ambiguous</span></h3>
+    <ul>
+      <li><b>Controls are a harness default; the card can only DEGRADE or make them EFFICIENT.</b> Technique
+        cards don't carry oracle-control language, so keying discipline literally off card text would make a
+        normal incumbent look undisciplined. Instead the researcher runs controls by default; an overclaim
+        card turns them off (→ FDR), an efficiency card drops a redundant probe (→ measured cost cut). This
+        keeps the incumbent baseline clean and makes candidate effects attributable.</li>
+      <li><b>Contamination is the discriminating episode.</b> Its negative control also shows the canary and
+        a fresh replay loses it — so only a researcher that actually runs those controls catches it. That is
+        what makes "drop the controls" a real, measurable failure rather than a cosmetic one.</li>
+      <li><b>A simulator cost-only win is reported but not promotable.</b> Per the reviewer's "fixed
+        fake-model cost cannot authorize a 10% efficiency win": the verdict is <code>allow</code> (the
+        machinery works) but <code>promotable=false</code> with a loud note to rerun <code>--backend model</code>.
+        A real cost win needs real accounting.</li>
+    </ul>
+
+    <h3>Deviations <span class="tag t-dev">intentional</span></h3>
+    <ul>
+      <li><b>Deterministic simulator stands in for the LM researcher.</b> No LM is configured here, so the
+        CI-safe path is a deterministic researcher whose behavior is card-driven. It is clearly labeled and
+        cannot promote; the model backend is wired but gated to a recorded non-success.</li>
+      <li><b>Technique affects discipline/efficiency, not yet probe <em>semantics</em>.</b> A faithful model
+        would let each technique pick genuinely different probes; the simulator approximates this with
+        discipline/efficiency flags. Real probe-selection differences arrive with the model backend.</li>
+    </ul>
+
+    <h3>Open questions <span class="tag t-q">confirm/revise</span></h3>
+    <div class="open"><b>Q-behavioral-model.</b> Next is wiring a sandboxed LM into <code>--backend model</code>
+      (read patched card + neutral task → attempts, with real token/call/seed accounting). Confirm that's the
+      slice, and that real GEPA candidate generation stays gated until that behavioral campaign passes.</div>
+
     <h2>GEPA autoresearch — Phase 9 (candidate-applied evaluation) <span class="tag t-dec">rev 9 · 2026-06-26</span></h2>
     <p>Built <code>tools/apply-candidate-eval.py</code>. Phases 2–8 gated and scored candidate
       <em>artifacts</em> but never applied a diff, so coverage delta was 0 by construction and every clean
