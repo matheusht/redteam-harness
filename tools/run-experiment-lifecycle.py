@@ -145,7 +145,7 @@ def run_lifecycle(campaign_path, backend="deterministic", behavioral_backend="no
     # 4. record: assemble one lifecycle-result per candidate
     cids = GR.discover_campaign_candidates(campaign_path)
     if only_candidate:
-        cids = [c for c in cids if c == only_candidate]
+        cids = [c for c in cids if c == only_candidate]   # reporting filter only; the whole campaign ran above
     rows = []
     for cid in cids:
         result = assemble_lifecycle_result(campaign_path, cid)
@@ -221,6 +221,23 @@ def self_test():
         else:
             print("[self-test] missing real-LM backend -> status=skipped, authoritative != allow (no fake win): ok")
 
+        # --behavioral-backend none: materialize but do NOT run the behavioral evaluator. A
+        # materialized-allow candidate must get NO behavioral stage, NO allow, and NO failure status —
+        # and the promotion bundle's authoritative stage must AGREE with the lifecycle-result (no
+        # contradictory artifacts).
+        run_lifecycle(camp_path, backend="deterministic", behavioral_backend="none")
+        nb = load(os.path.join(d, "candidates", "cand-baseline", "lifecycle-result.json"))
+        nb_bundle = load(os.path.join(d, "candidates", "cand-baseline", "promotion", "promotion-bundle.json"))
+        none_ok = (nb["stages"]["behavioral"] is None and nb["authoritative_verdict"] != "allow"
+                   and nb["status"] == "completed" and nb["authoritative_stage"] == "materialization"
+                   and nb_bundle["authoritative_stage"] == nb["authoritative_stage"])
+        if not none_ok:
+            ok = False
+            print(f"[self-test] --behavioral-backend none broken: lifecycle={nb['status']}/{nb['authoritative_stage']}/"
+                  f"{nb['authoritative_verdict']} behavioral={nb['stages']['behavioral']} bundle_stage={nb_bundle['authoritative_stage']}")
+        else:
+            print("[self-test] --behavioral-backend none -> materialize-only (no behavioral, no allow, no failure; bundle stage agrees): ok")
+
         # contract completeness: required fields present
         req = ["campaign_id", "candidate_id", "status", "stages", "authoritative_stage",
                "authoritative_verdict", "promotable", "artifacts", "reasons"]
@@ -242,7 +259,9 @@ def main(argv):
     ap.add_argument("--backend", choices=["deterministic", "gepa"], default="deterministic")
     ap.add_argument("--behavioral-backend", choices=["none", "fake", "model"], default="none")
     ap.add_argument("--behavioral-model-cmd")
-    ap.add_argument("--candidate")
+    ap.add_argument("--candidate", help="REPORTING FILTER: limit the written lifecycle-result rows to this "
+                    "candidate id. Generation, materialization, and behavioral evaluation still run for the "
+                    "whole campaign (the campaign is the unit of a run); this only narrows what is recorded.")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv[1:])
     if args.self_test:

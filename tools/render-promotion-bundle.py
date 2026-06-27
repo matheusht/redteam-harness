@@ -123,6 +123,12 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         authoritative_verdict, authoritative_stage = "block", "scope"
     elif behavioral_verdict is not None:
         authoritative_verdict, authoritative_stage = behavioral_verdict, "behavioral"
+    elif materialized_allow:
+        # materialized allow but no behavioral verdict (behavioral not run / skipped / unavailable):
+        # `probe` at materialization — allow requires a behavioral allow, and the shadow score is only
+        # advisory. (This agrees with the bridge-result / lifecycle-result; the shadow case below is for a
+        # candidate that never even reached materialization.)
+        authoritative_verdict, authoritative_stage = "probe", "materialization"
     else:
         authoritative_verdict, authoritative_stage = final, "shadow"
     # A simulator (fake/none) behavioral run can legitimately produce an allow (e.g. a cost cut) but must
@@ -395,12 +401,15 @@ def self_test():
     mat_allow = {"verdict": "allow", "conformance_passed": True, "paths_match": True}
     mat_block = {"verdict": "block", "reasons": ["measured boundary: declared != actual paths"]}
 
-    b, promotable, red = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
-                                      diff_text, "# clean bundle\n", paths, pinned, mat_allow)
-    if not promotable or validate_bundle(b) or b["verdict"] != "allow" or b["authoritative_verdict"] != "allow":
-        ok = False; print("[self-test] allow + stable + clean + materialized should be promotable & schema-complete")
+    # a SHADOW 'allow' with NO behavioral run is NOT authoritative (shadow is advisory) — it is probe at
+    # materialization and not promotable. Only a real-LM behavioral allow promotes (tested below).
+    b, prom_shadow, red = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
+                                       diff_text, "# clean bundle\n", paths, pinned, mat_allow)
+    if validate_bundle(b) or b["authoritative_verdict"] != "probe" or b["authoritative_stage"] != "materialization" or prom_shadow:
+        ok = False; print(f"[self-test] shadow-only allow must be probe@materialization + not promotable; "
+                          f"got {b['authoritative_verdict']}/{b['authoritative_stage']}/prom={prom_shadow}")
     else:
-        print("[self-test] allow + stable + clean + materialized-allow -> promotable, authoritative=allow: ok")
+        print("[self-test] shadow 'allow' (no behavioral) -> probe@materialization, NOT promotable (shadow advisory): ok")
 
     _, prom_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
                                     diff_text, "# clean\n", paths, pinned, mat_allow)
