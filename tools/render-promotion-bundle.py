@@ -94,7 +94,8 @@ def _sha256_text(text):
 
 
 def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, replay_summary,
-                 diff_text, bundle_text, paths, pinned, materialization, behavioral=None):
+                 diff_text, bundle_text, paths, pinned, materialization, behavioral=None,
+                 behavioral_path=None):
     """Pure: returns (bundle_dict, promotable, redaction_list). No disk I/O.
 
     `behavioral` (optional, from the Phase 13 bridge) carries {behavioral_verdict, in_scope}. The single
@@ -149,6 +150,23 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         {"item": "HUMAN: approve Plane-1 promotion via this PR (no direct-to-main, no manual copy)", "checked": False},
     ]
 
+    # When the authoritative stage is behavioral, the SHADOW cost_comparison/false_discovery above are NOT
+    # the authoritative numbers — the broker-owned behavioral run is. Surface that evidence + links so a
+    # reviewer/automation reads the right metrics, not stale shadow ones.
+    behavioral_evidence = None
+    if behavioral and behavioral.get("behavioral_verdict") is not None:
+        blinks = behavioral.get("links", {}) or {}
+        behavioral_evidence = {
+            "verdict": behavioral.get("behavioral_verdict"),
+            "cost": behavioral.get("cost"),
+            "fdr_invalids": behavioral.get("fdr_invalids"),
+            "coverage_delta": behavioral.get("coverage_delta"),
+            "replay": behavioral.get("replay"),
+            "bridge_result": behavioral_path,
+            "behavioral_run": blinks.get("behavioral_run"),
+            "broker_events": blinks.get("broker_events"),
+        }
+
     bundle = {
         "candidate_id": candidate_manifest["candidate_id"],
         "campaign_id": campaign["campaign_id"],
@@ -165,6 +183,7 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         "authoritative_verdict": authoritative_verdict,
         "authoritative_stage": authoritative_stage,
         "behavioral_verdict": behavioral_verdict,
+        "behavioral_evidence": behavioral_evidence,
         "materialization": materialization,
         "pinned": pinned,
     }
@@ -234,15 +253,29 @@ def render_md(bundle, promotable):
         "## Mutated component (single)",
         f"`{bundle['candidate_manifest']}` → see `diff`. The PR must identify exactly one mutated component.",
         "",
-        "## Mechanical results",
+        "## Mechanical results (shadow scoreboard — NOT authoritative when behavioral evidence is present)",
         f"- false-discovery: invalid_accept_rate={bundle['false_discovery']['invalid_accept_rate']:.3f} "
         f"(passed={bundle['false_discovery']['passed']})",
         f"- cost: incumbent {bundle['cost_comparison']['incumbent']} vs candidate "
         f"{bundle['cost_comparison']['candidate']} (Δ {bundle['cost_comparison']['delta_pct']}%)",
         f"- redaction: {'clean' if not bundle['redaction_report']['secret_hits'] else bundle['redaction_report']['secret_hits']}",
         "",
-        "## Review checklist",
     ]
+    be = bundle.get("behavioral_evidence")
+    if be:
+        lines += [
+            "## Behavioral evidence (authoritative — real-LM broker-mediated)",
+            f"- behavioral verdict: `{be.get('verdict')}`",
+            f"- cost (broker-accounted): {be.get('cost')}",
+            f"- false-discovery invalids: {be.get('fdr_invalids')}",
+            f"- coverage delta vs incumbent: {be.get('coverage_delta')}",
+            f"- replay (strict 3/3): {be.get('replay')}",
+            f"- bridge result: `{be.get('bridge_result')}`",
+            f"- behavioral run: `{be.get('behavioral_run')}`",
+            f"- broker events: `{be.get('broker_events')}`",
+            "",
+        ]
+    lines.append("## Review checklist")
     for c in bundle["review_checklist"]:
         lines.append(f"- [{'x' if c['checked'] else ' '}] {c['item']}")
     lines += ["", "## Artifacts",
@@ -315,7 +348,8 @@ def render_cli(campaign_path, candidate_id):
     behavioral = load(br_path) if os.path.isfile(br_path) else None
     bundle, promotable, _ = build_bundle(campaign, candidate_manifest, rc, report["baseline_scoreboard"],
                                          replay_summary, diff_text, bundle_text, paths, pinned,
-                                         materialization, behavioral)
+                                         materialization, behavioral,
+                                         behavioral_path=rel(br_path) if behavioral else None)
     missing = validate_bundle(bundle)
     if missing:
         print(f"bundle invalid, missing: {missing}")
@@ -382,9 +416,18 @@ def self_test():
     # Phase 13 bridge: a materialization-allow candidate's authoritative verdict comes from the real-LM
     # behavioral evaluator. behavioral allow -> authoritative allow (stage behavioral), promotable;
     # behavioral probe -> authoritative probe, not promotable; off-scope -> authoritative block (stage scope).
+    beh_full = {"behavioral_verdict": "allow", "in_scope": True, "cost": {"model_calls": 20, "target_calls": 15},
+                "fdr_invalids": [], "coverage_delta": ["case-x"], "replay": {"incumbent_stable": True, "candidate_stable": True},
+                "links": {"behavioral_run": "runs/r", "broker_events": "runs/r/events.jsonl"}}
     b_beh_allow, prom_beh, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
-                                            diff_text, "# clean\n", paths, pinned, mat_allow,
-                                            {"behavioral_verdict": "allow", "in_scope": True})
+                                            diff_text, "# clean\n", paths, pinned, mat_allow, beh_full,
+                                            behavioral_path="cand/bridge-result.json")
+    be = b_beh_allow.get("behavioral_evidence") or {}
+    if be.get("cost") != {"model_calls": 20, "target_calls": 15} or be.get("bridge_result") != "cand/bridge-result.json" \
+            or "Behavioral evidence (authoritative" not in render_md(b_beh_allow, True):
+        ok = False; print(f"[self-test] behavioral_evidence not surfaced in bundle/md: {be}")
+    else:
+        print("[self-test] behavioral stage surfaces authoritative broker cost/FDR/coverage + links (not shadow): ok")
     b_beh_probe, prom_beh_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
                                                   diff_text, "# clean\n", paths, pinned, mat_allow,
                                                   {"behavioral_verdict": "probe", "in_scope": True})

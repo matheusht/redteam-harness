@@ -71,11 +71,12 @@
   "authoritative_verdict": "block",
   "authoritative_stage": "materialization",
   "behavioral_verdict": null,
+  "behavioral_evidence": null,
   "materialization": {
     "verdict": "block",
     "preflight": "block",
     "apply": "block",
-    "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+    "base_tree": "13a90a7029a96a68725439512f41f9ae126d9bfd",
     "candidate_tree": null,
     "declared_paths": [
       "evals/routing/gold/case-a.gold.json"
@@ -95,7 +96,7 @@
     ]
   },
   "pinned": {
-    "rendered_at_commit": "03b8cdbde2ff3b647ca7d8bcea5e5feb6de79d5b",
+    "rendered_at_commit": "43348d2d2734e4f3c5e6539577b41fe479332cf2",
     "campaign_manifest_hash": "b3edb175ade7e45199179fa1a46eee2287509b1bc2d9cdbe7a4acc0a1c677e09",
     "candidate_manifest_hash": "0e8262d361618effcb5748b06d495cfe6c3b4bc04e0b617b2d632a5941fc3abd",
     "frozen_input_hashes": {},

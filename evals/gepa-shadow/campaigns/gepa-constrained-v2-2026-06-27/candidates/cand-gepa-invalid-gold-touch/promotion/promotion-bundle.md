@@ -7,7 +7,7 @@ This bundle promotes nothing. Promotion is a human action via a reviewed PR on a
 ## Mutated component (single)
 `evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-gepa-invalid-gold-touch/candidate-manifest.json` → see `diff`. The PR must identify exactly one mutated component.
 
-## Mechanical results
+## Mechanical results (shadow scoreboard — NOT authoritative when behavioral evidence is present)
 - false-discovery: invalid_accept_rate=0.000 (passed=True)
 - cost: incumbent {'model_calls': 0, 'target_calls': 5} vs candidate {'model_calls': 0, 'target_calls': 5} (Δ 0.0%)
 - redaction: clean

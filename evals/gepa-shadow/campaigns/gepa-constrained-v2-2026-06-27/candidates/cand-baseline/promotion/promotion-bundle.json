@@ -73,12 +73,28 @@
   "authoritative_verdict": "probe",
   "authoritative_stage": "behavioral",
   "behavioral_verdict": "probe",
+  "behavioral_evidence": {
+    "verdict": "probe",
+    "cost": {
+      "model_calls": 20,
+      "target_calls": 15
+    },
+    "fdr_invalids": [],
+    "coverage_delta": [],
+    "replay": {
+      "incumbent_stable": true,
+      "candidate_stable": true
+    },
+    "bridge_result": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/candidates/cand-baseline/bridge-result.json",
+    "behavioral_run": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/behavioral/runs/model-completed-20260627T192333Z",
+    "broker_events": "evals/gepa-shadow/campaigns/gepa-constrained-v2-2026-06-27/behavioral/runs/model-completed-20260627T192333Z/events.jsonl"
+  },
   "materialization": {
     "verdict": "allow",
     "preflight": "pass",
     "apply": "pass",
-    "base_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
-    "candidate_tree": "9cf0f882a474d2ab4505e569a3c95aecf80b21f2",
+    "base_tree": "13a90a7029a96a68725439512f41f9ae126d9bfd",
+    "candidate_tree": "13a90a7029a96a68725439512f41f9ae126d9bfd",
     "declared_paths": [],
     "actual_paths": [],
     "paths_match": true,
@@ -90,7 +106,7 @@
     "reasons": []
   },
   "pinned": {
-    "rendered_at_commit": "03b8cdbde2ff3b647ca7d8bcea5e5feb6de79d5b",
+    "rendered_at_commit": "43348d2d2734e4f3c5e6539577b41fe479332cf2",
     "campaign_manifest_hash": "b3edb175ade7e45199179fa1a46eee2287509b1bc2d9cdbe7a4acc0a1c677e09",
     "candidate_manifest_hash": "ec68fcde5add0344b8cec8e206af58edb6986a64b3f788c8468b28621120e97d",
     "frozen_input_hashes": {},

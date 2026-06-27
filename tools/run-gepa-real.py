@@ -263,7 +263,10 @@ class DeterministicBackend:
 def _claude_reflection_lm(model="claude-opus-4-8"):
     """A GEPA LanguageModel callable backed by the local `claude` CLI (Opus). Each call is a fresh
     `claude -p` process — the proposer's context is fully separate from the blind researcher's, so the
-    proposer cannot grade its own candidate. Tools are disallowed; it is a text proposer only."""
+    proposer cannot grade its own candidate. Process boundary (mirrors the researcher path): tools are
+    disallowed and the call runs in an EMPTY cwd so no repository/project file is loaded. The real env is
+    preserved because the `claude` CLI needs it to authenticate; it is a text proposer, not the
+    adjudicator."""
     disallow = ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch", "Task"]
 
     def lm(prompt):
@@ -271,8 +274,13 @@ def _claude_reflection_lm(model="claude-opus-4-8"):
             text = prompt
         else:
             text = "\n".join((m.get("content", "") if isinstance(m, dict) else str(m)) for m in prompt)
-        proc = subprocess.run(["claude", "-p", "--model", model, "--disallowed-tools", *disallow],
-                              input=text, capture_output=True, text=True, timeout=240)
+        empty_cwd = tempfile.mkdtemp(prefix="gepa-proposer-")
+        try:
+            proc = subprocess.run(["claude", "-p", "--model", model, "--disallowed-tools", *disallow],
+                                  input=text, capture_output=True, text=True, timeout=240, cwd=empty_cwd)
+        finally:
+            import shutil
+            shutil.rmtree(empty_cwd, ignore_errors=True)
         if proc.returncode != 0:
             raise RuntimeError(f"claude reflection exited {proc.returncode}: {proc.stderr.strip()[:200]}")
         return proc.stdout
