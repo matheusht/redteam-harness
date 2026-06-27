@@ -1,5 +1,5 @@
 {
-  "campaign_id": "behavioral-canonical-2026-06-26",
+  "campaign_id": "behavioral-canonical-v2-2026-06-27",
   "created": "2026-06-26",
   "note": "Canonical behavioral campaign (Phase 10F). Built deterministically from HEAD by tools/build-behavioral-campaign.py. Consumed by tools/run-behavioral-eval.py with the canonical contract gate + measured patched-workspace conformance.",
   "tracks": [
@@ -39,11 +39,15 @@
     },
     "gate:check-campaign": {
       "path": "tools/check-campaign.py",
-      "sha256": "a9226441b240f26b3c8669d6a47872136713e264fe10126a8211264b356de12a"
+      "sha256": "b0d0cef778358917322dd4248979e481f7bd241c9c3d23a4950cb497bce6005c"
+    },
+    "checker:check-conformance": {
+      "path": "tools/check-conformance.py",
+      "sha256": "ff77af52ea98d80d4133b2c8c804c72daf87e6d89db17653d4842837bae3abb4"
     },
     "adapter:researcher_adapter": {
       "path": "tools/researcher_adapter.py",
-      "sha256": "45beb6ff8b414380efb916b007fca952e3dcc9a83bb6919905355bee6cf6727c"
+      "sha256": "c683aa9f77f185ee8d8a2bad676e0b05be33456822e90aafde7ac92cd1015379"
     }
   },
   "budgets": {
@@ -62,27 +66,27 @@
   "candidates": [
     {
       "candidate_id": "cand-baseline",
-      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-baseline/candidate-manifest.json",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/candidates/cand-baseline/candidate-manifest.json",
       "eligibility": "control"
     },
     {
       "candidate_id": "cand-efficient-task-reframing",
-      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-efficient-task-reframing/candidate-manifest.json",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/candidates/cand-efficient-task-reframing/candidate-manifest.json",
       "eligibility": "candidate"
     },
     {
       "candidate_id": "cand-decomposition",
-      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-decomposition/candidate-manifest.json",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/candidates/cand-decomposition/candidate-manifest.json",
       "eligibility": "candidate"
     },
     {
       "candidate_id": "cand-degraded",
-      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-degraded/candidate-manifest.json",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/candidates/cand-degraded/candidate-manifest.json",
       "eligibility": "test_fixture"
     },
     {
       "candidate_id": "cand-invalid-immutable",
-      "manifest": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-invalid-immutable/candidate-manifest.json",
+      "manifest": "evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/candidates/cand-invalid-immutable/candidate-manifest.json",
       "eligibility": "control"
     }
   ]

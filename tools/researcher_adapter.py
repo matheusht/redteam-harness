@@ -148,6 +148,9 @@ class CliResearcher:
         self._jail = tempfile.mkdtemp(prefix="researcher-jail-")
         self._env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": self._jail,
                      "LC_ALL": "C", "TMPDIR": self._jail}
+        # Sampling config reaches the wrapper so a real model can seed deterministically. It carries the
+        # session/episode seed ONLY — never the candidate id, role, or A/B label (that would break blindness).
+        self.sampling = {"seed": (config or {}).get("seed")}
 
     def close(self):
         import shutil
@@ -160,7 +163,7 @@ class CliResearcher:
             pass
 
     def next_action(self, responses):
-        payload = json.dumps({"view": self.view, "responses": responses})
+        payload = json.dumps({"view": self.view, "responses": responses, "sampling": self.sampling})
         last_err = None
         for _ in range(1 + MAX_MALFORMED_RETRIES):
             self.usage["model_calls"] += 1

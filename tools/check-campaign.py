@@ -26,6 +26,8 @@ Usage:
 import hashlib
 import json
 import os
+import re
+import subprocess
 import sys
 import tempfile
 
@@ -70,20 +72,72 @@ def _under(path, prefix):
     return path == prefix or path.startswith(prefix + "/")
 
 
-def diff_touched_paths(diff_text):
-    """Derive the repo-relative paths a unified diff ACTUALLY touches, from its file headers. The gate
-    must not trust the manifest's touched_files: a candidate could declare only its card while its diff
-    quietly edits an immutable file (e.g. the conformance checker that then judges it)."""
-    paths = set()
-    for line in (diff_text or "").splitlines():
-        if line.startswith("--- ") or line.startswith("+++ "):
-            p = line[4:].split("\t")[0].strip()
-            if p in ("/dev/null", ""):
-                continue
-            if p.startswith("a/") or p.startswith("b/"):
-                p = p[2:]
-            paths.add(p)
-    return paths
+def _rename_paths(p):
+    """A numstat path may encode a rename as 'old => new' or 'pre/{old => new}/post'."""
+    if "=>" not in p:
+        return {p}
+    p = p.replace("{", "").replace("}", "")
+    if "{" not in p and " => " in p and "/" not in p.split(" => ")[0].split("/")[-1]:
+        pass
+    out = set()
+    # generic: split on ' => ', recombine brace context if present
+    if "{" in p or "/" in p:
+        # best-effort: take both sides verbatim
+        left, right = p.split(" => ", 1)
+        out.add(left.strip())
+        out.add(right.strip())
+    else:
+        left, right = p.split(" => ", 1)
+        out.add(left.strip())
+        out.add(right.strip())
+    return {x for x in out if x}
+
+
+def git_patch_analysis(diff_path, root):
+    """Derive touched paths and detect UNSUPPORTED patch forms using git's own parser. The header-only
+    parser missed mode-only, binary, rename, copy, and symlink patches — a candidate could change a
+    file's mode (e.g. make the conformance checker executable) with a patch that has no ---/+++ headers
+    and so derived no paths. Returns (paths, unsupported_reasons). Fail closed: callers must block on
+    any unsupported reason and on a non-empty patch that yields no paths."""
+    paths, unsupported = set(), []
+    num = subprocess.run(["git", "-C", root, "apply", "--numstat", diff_path], capture_output=True, text=True)
+    if num.returncode == 0:
+        for ln in num.stdout.splitlines():
+            parts = ln.split("\t")
+            if len(parts) == 3:
+                added, removed, p = parts
+                if added == "-" and removed == "-":
+                    unsupported.append(f"binary patch: {p}")
+                paths |= _rename_paths(p)
+    else:
+        unsupported.append(f"git could not parse the patch: {num.stderr.strip()[:120]}")
+    summ = subprocess.run(["git", "-C", root, "apply", "--summary", diff_path], capture_output=True, text=True)
+    for ln in summ.stdout.splitlines():
+        t = ln.strip()
+        if t.startswith("rename ") or t.startswith("copy ") or t.startswith("mode change"):
+            unsupported.append(t)
+        if "120000" in t:
+            unsupported.append(f"symlink: {t}")
+    text = open(diff_path).read()
+    for ln in text.splitlines():
+        m = re.match(r"diff --git a/(.+?) b/(.+)$", ln)
+        if m:
+            paths.add(m.group(1)); paths.add(m.group(2))
+        if ln.startswith("--- ") or ln.startswith("+++ "):
+            p = ln[4:].split("\t")[0].strip()
+            if p not in ("/dev/null", ""):
+                paths.add(p[2:] if p[:2] in ("a/", "b/") else p)
+        if ln.startswith("old mode") or ln.startswith("new mode"):
+            unsupported.append("mode change")
+        if ln.startswith("rename from") or ln.startswith("rename to"):
+            unsupported.append("rename")
+        if ln.startswith("copy from") or ln.startswith("copy to"):
+            unsupported.append("copy")
+        if ln.startswith("GIT binary patch") or ln.startswith("Binary files"):
+            unsupported.append("binary patch")
+        if "120000" in ln:
+            unsupported.append("symlink mode")
+    return {p for p in paths if p and p != "/dev/null"}, sorted(set(unsupported))
 
 
 def gate(campaign, candidate, root):
@@ -114,13 +168,23 @@ def gate(campaign, candidate, root):
         if not is_baseline:
             reasons.append(f"diff missing: {diff}")
     else:
-        diff_text = open(diff_path).read()
         if sha256_file(diff_path) != candidate.get("candidate_hash"):
             reasons.append("candidate_hash does not match diff contents (tamper)")
-        derived = diff_touched_paths(diff_text)
-        if derived != declared:
-            reasons.append(f"declared touched_files {sorted(declared)} do not match diff-derived paths "
-                           f"{sorted(derived)} (a candidate cannot hide edits from the manifest)")
+        size = os.path.getsize(diff_path)
+        if is_baseline:
+            if size != 0:
+                reasons.append("baseline candidate diff must be byte-empty")
+        else:
+            if size == 0:
+                reasons.append("non-baseline candidate diff is empty (fail closed)")
+            derived, unsupported = git_patch_analysis(diff_path, root)
+            if unsupported:
+                reasons.append(f"unsupported patch form(s) — mode/binary/rename/copy/symlink rejected: {unsupported}")
+            if not derived:
+                reasons.append("diff derives no touched paths (fail closed)")
+            if derived != declared:
+                reasons.append(f"declared touched_files {sorted(declared)} do not match diff-derived paths "
+                               f"{sorted(derived)} (a candidate cannot hide edits from the manifest)")
 
     effective = declared | derived
     if mt:
@@ -184,6 +248,7 @@ CARD = "skills/techniques/task-reframing/SKILL.md"
 def self_test():
     ok = True
     with tempfile.TemporaryDirectory() as root:
+        subprocess.run(["git", "-C", root, "init", "-q"], check=False)   # git's patch parser needs a repo
         frozen_rel = "evals/routing/gold/case-x.gold.json"
         _write(root, frozen_rel, '{"case":"x"}\n')
         frozen_hash = sha256_file(os.path.join(root, frozen_rel))
@@ -260,6 +325,34 @@ def self_test():
 
         drifted = dict(campaign, frozen_inputs={"routing-gold-x": {"path": frozen_rel, "sha256": "0" * 64}})
         expect("frozen-input drift blocks", base, "block", camp=drifted)
+
+        # P0 (round 2): Git patch forms that a header-only parser misses.
+        def mkraw(name, text):
+            _write(root, f"evals/c/{name}.diff", text)
+            return f"evals/c/{name}.diff", sha256_file(os.path.join(root, f"evals/c/{name}.diff"))
+
+        mode_rel, mode_h = mkraw("mode", "diff --git a/tools/check-conformance.py b/tools/check-conformance.py\n"
+                                 "old mode 100644\nnew mode 100755\n")
+        expect("P0: mode-only patch declared as empty baseline -> block",
+               dict(base, candidate_id="cand-mode-baseline", is_baseline=True, touched_files=[],
+                    diff=mode_rel, candidate_hash=mode_h), "block")
+        expect("P0: mode-only patch on the checker (non-baseline) -> block",
+               dict(base, candidate_id="cand-mode", touched_files=["tools/check-conformance.py"],
+                    diff=mode_rel, candidate_hash=mode_h), "block")
+
+        bin_rel, bin_h = mkraw("bin", "diff --git a/skills/techniques/task-reframing/SKILL.md "
+                               "b/skills/techniques/task-reframing/SKILL.md\nGIT binary patch\nliteral 3\nabc\n")
+        expect("P0: binary patch -> block",
+               dict(base, candidate_id="cand-bin", touched_files=[CARD], diff=bin_rel, candidate_hash=bin_h), "block")
+
+        ren_rel, ren_h = mkraw("ren", "diff --git a/skills/techniques/task-reframing/SKILL.md b/skills/techniques/x.md\n"
+                               "rename from skills/techniques/task-reframing/SKILL.md\nrename to skills/techniques/x.md\n")
+        expect("P0: rename patch -> block",
+               dict(base, candidate_id="cand-ren", touched_files=[CARD], diff=ren_rel, candidate_hash=ren_h), "block")
+
+        expect("non-empty baseline diff blocks",
+               dict(baseline, candidate_id="cand-baseline-nonempty", touched_files=[],
+                    diff=card_diff, candidate_hash=card_h), "block")
 
     print("\nSELF-TEST:", "PASS" if ok else "FAIL")
     return 0 if ok else 1

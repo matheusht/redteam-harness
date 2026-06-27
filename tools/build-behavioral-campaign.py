@@ -17,7 +17,9 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CAMP_ID = "behavioral-canonical-2026-06-26"
+# Evaluator changes get a NEW campaign revision; prior revisions are preserved append-only, never
+# mutated/replaced in place (see the superseding SUPERSEDED.md note).
+CAMP_ID = "behavioral-canonical-v2-2026-06-27"
 CAMP_DIR = os.path.join(ROOT, "evals", "behavioral", "campaigns", CAMP_ID)
 
 
@@ -79,6 +81,7 @@ def build():
                       ("episodes:decomposition", "evals/behavioral/episodes/decomposition.json"),
                       ("scorer:score-candidate", "tools/score-candidate.py"),
                       ("gate:check-campaign", "tools/check-campaign.py"),
+                      ("checker:check-conformance", "tools/check-conformance.py"),
                       ("adapter:researcher_adapter", "tools/researcher_adapter.py")]:
         frozen_inputs[name] = {"path": rel, "sha256": sha256_file(os.path.join(ROOT, rel))}
 

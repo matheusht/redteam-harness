@@ -365,7 +365,7 @@ change outcomes. Built as `tools/run-behavioral-eval.py` + `evals/behavioral/`.
 - **10D — mechanical scoring + replay.** Coverage = oracle-confirmed positives; FDR (any non-positive
   confirmed) is a hard veto; protected-case regression blocks; primary + two fresh-session replays gate
   stability; real accounting (model/target calls, model id, seed, elapsed).
-- **10E — first behavioral campaign.** `evals/behavioral/campaigns/behavioral-canonical-2026-06-26/` over the
+- **10E — first behavioral campaign.** `evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/` over the
   existing hand-authored Phase-8 candidates + a degraded control. Result: baseline probe, an efficiency
   candidate allow (cost, marked non-promotable for the simulator), decomposition probe, degraded control
   block. A simulator cost-only win cannot authorize promotion; promotion stays PR-only.

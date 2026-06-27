@@ -1,6 +1,6 @@
 # Behavioral run — behavioral-canonical-2026-06-26 — SKIPPED
 
-_backend: model · model: unavailable · run: model-skipped-20260627T023316Z_
+_backend: model · model: unavailable · run: model-skipped-20260627T020314Z_
 
 Blind, broker-mediated, paired. The researcher sees only card+task+schema+budget and mediated responses; the broker owns all evidence. Routing is a measured protected capability, not coverage. Promotes nothing.
 

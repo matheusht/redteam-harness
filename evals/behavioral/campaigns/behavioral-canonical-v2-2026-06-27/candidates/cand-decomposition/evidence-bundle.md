@@ -1,6 +1,6 @@
 # Evidence bundle — cand-decomposition
 
-- campaign: `behavioral-canonical-2026-06-26`
+- campaign: `behavioral-canonical-v2-2026-06-27`
 - technique: `decomposition`
 - mutation target: `skills/techniques/decomposition/SKILL.md`
 - eligibility: `candidate`

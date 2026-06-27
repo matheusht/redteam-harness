@@ -428,7 +428,7 @@ def run_cli(campaign_path, backend="fake", only_candidate=None, model_cmd=None):
     if only_candidate:
         entries = [c for c in entries if c["candidate_id"] == only_candidate]
     events, rows = [], []
-    model_id = "deterministic-fake" if backend == "fake" else "model"
+    model_id = "deterministic-fake" if backend == "fake" else f"model:{(_redact_cmd(model_cmd) or {}).get('program', 'unconfigured')}"
     try:
         for entry in entries:
             cand = load(os.path.join(ROOT, entry["manifest"]))     # canonical candidate manifest

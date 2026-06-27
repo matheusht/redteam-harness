@@ -71,11 +71,11 @@ drops them (or overclaims) confirms it → FDR → block.
 
 ```
 python3 tools/build-behavioral-campaign.py
-python3 tools/run-behavioral-eval.py --campaign evals/behavioral/campaigns/behavioral-canonical-2026-06-26/campaign-manifest.json
+python3 tools/run-behavioral-eval.py --campaign evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/campaign-manifest.json
 python3 tools/run-behavioral-eval.py --self-test
 ```
 
-## Canonical campaign: `behavioral-canonical-2026-06-26`
+## Canonical campaign: `behavioral-canonical-v2-2026-06-27`
 
 Canonical campaign + candidate manifests + real diffs. `fake`-backend run (`runs/fake-completed-*`):
 no-op `cand-baseline` → **probe** (a no-op can never `allow`); `cand-efficient-task-reframing` →

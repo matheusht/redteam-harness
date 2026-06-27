@@ -127,14 +127,14 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       refuted / contamination / control), blind to gold (`assert_blind`); incumbent vs candidate are paired
       on identical episodes/budget/seed. Routing is a protected capability (not coverage); coverage =
       oracle-confirmed episodes; FDR is a hard veto; cost is really accounted. First campaign
-      `behavioral-canonical-2026-06-26`: baseline probe, efficiency candidate allow-by-cost (non-promotable for the
+      `behavioral-canonical-v2-2026-06-27`: baseline probe, efficiency candidate allow-by-cost (non-promotable for the
       simulator), decomposition probe, degraded control block. A degraded card blocks via contamination FDR.
 - [x] **Phase 10F — behavioral provenance/gating/replay hardening.** Evaluator-side **broker**
       authoritative for probes/controls/replay/responses/evidence/cost (model claims can't prove actions);
       canonical campaign/candidate gate + isolated apply + **measured** patched-workspace conformance (no
       hardcoded eligibility); paired incumbent/candidate over primary + two fresh sessions with anonymized
       A/B + strict 3/3; **immutable** hash-pinned `runs/<run-id>/` artifacts (no overwrite); capability
-      blindness for the model adapter (jailed subprocess). Canonical campaign `behavioral-canonical-2026-06-26`:
+      blindness for the model adapter (jailed subprocess). Canonical campaign `behavioral-canonical-v2-2026-06-27`:
       no-op probe, efficiency allow-by-cost (non-promotable), decomposition probe, degraded block, immutable-touch
       blocked at the gate.
 - [x] **Phase 10G — provider-neutral researcher adapter + fake adapter.** Strict action/final schemas,

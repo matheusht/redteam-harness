@@ -1,5 +1,5 @@
 {
-  "campaign_id": "behavioral-canonical-2026-06-26",
+  "campaign_id": "behavioral-canonical-v2-2026-06-27",
   "status": "completed",
   "backend": "fake",
   "candidates": [
@@ -541,7 +541,7 @@
       "promotable_note": "fake/simulator backend cannot authorize promotion; a real-model qualification (Phase 10G) plus PR review is required.",
       "behavioral_verdict": "block",
       "reasons": [
-        "contract gate: touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']; touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
+        "contract gate: unsupported patch form(s) \u2014 mode/binary/rename/copy/symlink rejected: ['git could not parse the patch: error: No valid patches in input (allow with \"--allow-empty\")']; touches files outside mutation_target 'skills/techniques/task-reframing/': ['evals/routing/gold/case-a.gold.json']; touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
       ],
       "stage": "gate"
     }

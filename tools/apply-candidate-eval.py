@@ -123,20 +123,20 @@ def cleanup_worktree(root, wt):
 
 
 def measure_conformance(worktree):
-    """Run a TRUSTED conformance checker against the patched workspace. Defense-in-depth: the candidate
-    diff is gated so it cannot touch the checker, but we still overwrite the worktree's copy with the
-    evaluator's own HEAD checker before running, so a checker the candidate somehow altered can never
-    grade itself. The checker derives its scan root from its own location, so the trusted-content file
-    placed at <worktree>/tools/check-conformance.py scans the patched workspace."""
-    import shutil
+    """Run a TRUSTED conformance checker against the patched workspace. The trusted bytes come from
+    COMMITTED HEAD (`git show HEAD:tools/check-conformance.py`), not the possibly-dirty working tree, so
+    neither an uncommitted local edit nor a candidate diff can make the checker grade itself. The checker
+    derives its scan root from its own location, so writing the trusted bytes to
+    <worktree>/tools/check-conformance.py scans the patched workspace."""
     dst = os.path.join(worktree, "tools", "check-conformance.py")
     if not os.path.isdir(os.path.dirname(dst)):
         return False
-    trusted = os.path.join(ROOT, "tools", "check-conformance.py")
-    try:
-        shutil.copyfile(trusted, dst)
-    except OSError:
+    head = subprocess.run(["git", "-C", ROOT, "show", "HEAD:tools/check-conformance.py"],
+                          capture_output=True, text=True)
+    if head.returncode != 0:
         return False
+    with open(dst, "w") as fh:
+        fh.write(head.stdout)
     r = subprocess.run([sys.executable, dst], cwd=worktree, capture_output=True, text=True)
     return r.returncode == 0
 

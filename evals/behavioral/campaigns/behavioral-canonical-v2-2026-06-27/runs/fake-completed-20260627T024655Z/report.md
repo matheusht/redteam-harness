@@ -1,6 +1,6 @@
-# Behavioral run — behavioral-canonical-2026-06-26 — COMPLETED
+# Behavioral run — behavioral-canonical-v2-2026-06-27 — COMPLETED
 
-_backend: fake · model: deterministic-fake · run: fake-completed-20260627T023315Z_
+_backend: fake · model: deterministic-fake · run: fake-completed-20260627T024655Z_
 
 Blind, broker-mediated, paired. The researcher sees only card+task+schema+budget and mediated responses; the broker owns all evidence. Routing is a measured protected capability, not coverage. Promotes nothing.
 
