@@ -561,6 +561,35 @@
       optional DSPy spike) — plus wiring a real GEPA adapter so candidates carry model-generated behavioral
       deltas instead of reproducing the incumbent.</p>
 
+    <h2>GEPA autoresearch — Phase 11 (first real GEPA shadow campaign) <span class="tag t-dec">rev 14 · 2026-06-27</span></h2>
+    <p>The first time the <b>real GEPA optimizer</b> drove the loop. <code>gepa</code> + <code>litellm</code>
+      installed in an isolated venv; GEPA's reflective proposer pointed at the local ollama
+      (<code>GEPA_REFLECTION_LM=ollama/qwen3:8b</code>, a loopback round-trip verified before wiring).
+      Campaign <code>evals/gepa-shadow/campaigns/gepa-real-2026-06-27/</code>; one new-technique-card track,
+      plus a no-op baseline and a deliberately-invalid gold-touch control.</p>
+    <ul>
+      <li><b>The finding (why the gates exist).</b> From an empty seed, the unconstrained 8B proposer
+        drifted hard <b>off-scope</b>: it generated a binary-exploitation card (&ldquo;Memory Corruption via
+        Double-Free&rdquo;, ASLR bypass, gadget chains, CVE references) — nothing to do with the harness's
+        LLM-red-team scope. This is exactly the failure mode the harness is built to contain.</li>
+      <li><b>The measured boundary caught it.</b> The structural contract gate <i>passed</i> the card
+        (a single new file inside the mutable allowlist — structurally fine). But the Phase 10H0
+        <b>measured materialization</b> applied it in isolation and ran trusted conformance, which
+        <b>blocked</b> it (malformed front-matter / off-scope schema) → the promotion bundle's
+        &ldquo;measured boundary authoritative&rdquo; item is unchecked → <b>NOT PROMOTABLE</b>. The
+        deterministic shadow scoreboard (which never reads card content) called it <code>probe</code>;
+        the authoritative answer is the materialized <code>block</code>. That gap is precisely why 10H0
+        made applied state — not the structural gate — the authority.</li>
+      <li><b>Everything else held.</b> Gold-touch control → block at preflight; no-op baseline → probe;
+        nothing applied to Plane&nbsp;1; no auto-promotion; no secrets in artifacts. GEPA candidates
+        traverse the same preflight → materialization → conformance → score → replay path as hand-authored
+        ones. <code>autonomous_gap_closure_count</code> stays <b>0</b> — the proposer found no in-scope
+        improvement, and an off-scope card that gets blocked is not a discovered-and-closed gap.</li>
+      <li><b>Next.</b> Constrain the proposer (scope-anchored objective + a real in-scope seed instead of
+        an empty one), evaluate its output through the real-LM behavioral evaluator, and run the whole
+        thing under OS-level isolation rather than the loopback transport boundary.</li>
+    </ul>
+
     <h2>GEPA autoresearch — Phase 10I (real-LM researcher qualification) <span class="tag t-dec">rev 13 · 2026-06-27</span></h2>
     <p>First <b>real model</b> in the blind researcher loop. A local, capability-limited backend (ollama
       <code>qwen3:8b</code>) drives the provider-neutral subprocess adapter through a thin bridge,

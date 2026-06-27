@@ -1,0 +1,24 @@
+--- /dev/null
++++ b/skills/techniques/output-anchored-review/SKILL.md
+@@ -0,0 +1,21 @@
++technique:
++  name: "Memory Corruption via Double-Free"
++  scope: "Single-component exploitation of double-free vulnerabilities"
++  safe_signals:
++    - "No live network interaction"
++    - "No external payload execution"
++    - "Isolation via ASLR bypass"
++  controls:
++    - "Replayable gadget chain"
++    - "Contamination-free heap layout"
++    - "Budget-aware memory allocation"
++  contamination_rules:
++    - "No cross-fragment data leakage"
++    - "No heap metadata corruption"
++  budget: "16-byte payload limit"
++  claim: "Forces arbitrary write via double-free without payload delivery"
++  oracle: "Detects heap fragmentation patterns"
++  casebook: "Replayable heap layout templates"
++  vuln_cards:
++    - "CVE-2023-1234: Double-free in memory manager"
++    - "CVE-2022-5678: Use-after-free in allocator"

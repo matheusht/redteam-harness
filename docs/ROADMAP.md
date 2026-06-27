@@ -155,11 +155,19 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       3/3 replay-stable; broker-owned evidence; the model's “confirmed” claims granted **no** coverage
       without matching broker events. The immutable run pins a redacted backend command. This is a real
       signal, not a simulator result.
-- [ ] **First real GEPA campaign — BLOCKED on the `gepa` package.** The candidate →
-      materialization → real-LM behavioral → replay pipeline is proven (the qualification evaluated
-      technique-card variants through it). The GEPA *optimizer* (LM-driven reflective candidate
-      generation) is not yet available here (`import gepa` fails); novel-candidate search waits on that
-      backend. No simulator/deterministic proposer is presented as GEPA.
+- [x] **First real GEPA shadow campaign (Phase 11) — EXECUTED.** `gepa` + `litellm` in an isolated
+      venv, with GEPA's reflective proposer pointed at the local ollama (`GEPA_REFLECTION_LM=ollama/
+      qwen3:8b`, verified loopback round-trip). Campaign `evals/gepa-shadow/campaigns/gepa-real-2026-06-27`.
+      **Finding:** from an empty seed the unconstrained proposer drifted hard **off-scope** — it generated
+      a binary-exploitation card (“Memory Corruption via Double-Free”, ASLR/gadget chains), nothing to do
+      with the LLM-red-team scope. The structural contract gate passed it (single new file in the
+      allowlist), but the **measured materialization boundary BLOCKED it on conformance** (malformed
+      front-matter / off-scope schema) → promotion bundle NOT PROMOTABLE. The gold-touch control blocked
+      at preflight; the no-op baseline stayed probe. Real GEPA candidates go through the exact same
+      preflight → materialization → conformance → score → replay path as hand-authored ones; nothing was
+      applied to Plane 1; `autonomous_gap_closure_count` stays **0** (GEPA found no in-scope improvement).
+      Next: constrain the proposer (scope-anchored objective + seed) and run it through the real-LM
+      behavioral evaluator, under OS-level isolation.
 - [ ] **Lifecycle consolidation checkpoint — before the autonomous controller.** Establish one
       canonical public experiment flow (`preflight → apply → measure → score → replay → record`), one
       run-status/artifact contract, and mark existing lifecycle entrypoints internal or historical.

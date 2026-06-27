@@ -1,0 +1,13 @@
+{
+  "campaign_id": "gepa-real-2026-06-27",
+  "created": "2026-06-27",
+  "tracks": [
+    {"name": "new-technique-card", "mutation_target": "skills/techniques/output-anchored-review/", "kind": "new-technique-card"}
+  ],
+  "mutable_allowlist": ["skills/techniques/output-anchored-review/"],
+  "immutable": ["engine/", "skills/oracles/", "skills/patterns/", "skills/vulns/"],
+  "frozen_inputs": {},
+  "budgets": {"model_calls": 40, "target_calls": 80, "tokens": null},
+  "benchmark_set": ["routing:new-technique-card"],
+  "note": "First real GEPA shadow campaign. GEPA (ollama qwen3:8b reflection) proposes ONE new technique card from an empty seed; evaluator/gold/scorers/budgets immutable; no auto-promotion."
+}

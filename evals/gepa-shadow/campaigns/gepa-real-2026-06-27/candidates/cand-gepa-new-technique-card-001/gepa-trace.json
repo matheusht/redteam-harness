@@ -1,0 +1,23 @@
+{
+  "candidate_id": "cand-gepa-new-technique-card-001",
+  "campaign_id": "gepa-real-2026-06-27",
+  "generated_on": "2026-06-27",
+  "backend": "gepa.optimize_anything",
+  "reflection_lm": "ollama/qwen3:8b",
+  "fallback_reason": null,
+  "track": {
+    "name": "new-technique-card",
+    "mutation_target": "skills/techniques/output-anchored-review/",
+    "kind": "new-technique-card"
+  },
+  "component": "skills/techniques/output-anchored-review/SKILL.md",
+  "input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "output_sha256": "44a372c6378df36b6b5bf889329a670d5a558f4871107d2a419a509f7d8aae45",
+  "diff_sha256": "29c14d4152e12df9b73f68f1ee1337bb73ccb7dcf0a6049d00747801ad0ac2fd",
+  "adapter_feedback": "Evaluator feedback: keep the candidate scoped to one declared technique component; preserve safe-signal discipline; require controls, replay, contamination rule-out, budget awareness, and a one-sentence claim test. Do not mutate scorers, oracles, gold, budgets, casebooks, or vulnerability cards. No live target behavior is available in this shadow campaign. New technique should be conservative, evidence-anchored, and useful across vuln cards without becoming a payload library.",
+  "summary": "GEPA optimize_anything produced a text variant for the declared component.",
+  "adapter_score": 0.55,
+  "model_calls": 8,
+  "tokens": null,
+  "note": "Trace intentionally stores hashes and summaries, not raw secrets or live engagement data."
+}

@@ -259,6 +259,15 @@ class GepaOptimizeAnythingBackend:
             oa.log(f"heuristic_score={score}")
             return score
 
+        # The reflective proposer needs an LM. GEPA_REFLECTION_LM is a litellm model name (e.g.
+        # "ollama/qwen3:8b") — a local, capability-limited backend over loopback, no credentials. The name
+        # is a model identifier, not a secret; it is recorded for provenance. With no LM configured GEPA
+        # falls back to its own default (which typically needs an API key); choose_backend then surfaces it.
+        reflection_lm_name = os.environ.get("GEPA_REFLECTION_LM")
+        cfg_kwargs = {"engine": EngineConfig(max_metric_calls=max_metric_calls)}
+        if reflection_lm_name:
+            cfg_kwargs["reflection"] = oa.ReflectionConfig(reflection_lm=oa.make_litellm_lm(reflection_lm_name))
+
         result = optimize_anything(
             seed_candidate={"text": current_text},
             evaluator=evaluator,
@@ -267,14 +276,15 @@ class GepaOptimizeAnythingBackend:
                 "Improve this AI red-team harness technique card while preserving scope, benign "
                 "safe-signal objectives, oracle controls, replay discipline, and single-component bounds."
             ),
-            config=GEPAConfig(engine=EngineConfig(max_metric_calls=max_metric_calls)),
+            config=GEPAConfig(**cfg_kwargs),
         )
         proposed = self._extract_text(result)
         return {
             "backend": self.name,
             "proposed_text": proposed,
             "summary": "GEPA optimize_anything produced a text variant for the declared component.",
-            "reflection": "See GEPA optimizer trace/logs from the configured runtime.",
+            "reflection": f"GEPA reflective mutation via reflection_lm={reflection_lm_name or 'default'}.",
+            "reflection_lm": reflection_lm_name,
             "model_calls": max_metric_calls,
             "tokens": None,
             "score": heuristic_score(proposed),
@@ -359,6 +369,7 @@ def write_candidate(campaign_path, campaign, track, backend_result, repo_rel, ol
         "campaign_id": campaign["campaign_id"],
         "generated_on": campaign.get("created", "unknown"),
         "backend": backend_result["backend"],
+        "reflection_lm": backend_result.get("reflection_lm"),
         "fallback_reason": backend_result.get("fallback_reason"),
         "track": track,
         "component": repo_rel,

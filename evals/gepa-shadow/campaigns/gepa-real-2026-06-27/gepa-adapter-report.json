@@ -1,0 +1,15 @@
+{
+  "campaign_id": "gepa-real-2026-06-27",
+  "backend_requested": "gepa",
+  "backend_used": "gepa.optimize_anything",
+  "fallback_reason": null,
+  "generated_candidates": [
+    "cand-gepa-new-technique-card-001",
+    "cand-gepa-invalid-gold-touch"
+  ],
+  "baseline_candidate": "cand-baseline",
+  "run_chain": true,
+  "model_generated": true,
+  "no_auto_promotion": true,
+  "limitation": "The frozen shadow scorer gates candidate artifacts but does not yet apply diffs to a live orchestrator."
+}

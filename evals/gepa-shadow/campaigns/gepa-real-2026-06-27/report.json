@@ -1,0 +1,183 @@
+{
+  "campaign_id": "gepa-real-2026-06-27",
+  "baseline_scoreboard": {
+    "routing_qualified": false,
+    "routing": [],
+    "false_discovery": {
+      "invalid_accept_rate": 0.0,
+      "passed": true
+    },
+    "hermetic_bola": {
+      "verdict": "confirmed",
+      "passed": true,
+      "target_calls": 5,
+      "budget": 8
+    },
+    "hermetic_fakemodel": [
+      {
+        "oracle": "render_escape",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      },
+      {
+        "oracle": "capability_dispatch",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      },
+      {
+        "oracle": "prompt_canary",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      },
+      {
+        "oracle": "router_differential",
+        "verdict": "confirmed",
+        "passed": true,
+        "model_calls": 4
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "candidate_id": "cand-baseline",
+      "track": "new-technique-card",
+      "is_baseline": true,
+      "gate": "allow",
+      "gate_reasons": [],
+      "scored": {
+        "routing_qualified": false,
+        "routing": [],
+        "false_discovery": {
+          "invalid_accept_rate": 0.0,
+          "passed": true
+        },
+        "hermetic_bola": {
+          "verdict": "confirmed",
+          "passed": true,
+          "target_calls": 5,
+          "budget": 8
+        },
+        "hermetic_fakemodel": [
+          {
+            "oracle": "render_escape",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "capability_dispatch",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "prompt_canary",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "router_differential",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          }
+        ]
+      },
+      "coverage_delta_vs_baseline": 0,
+      "keep_discard": {
+        "verdict": "probe",
+        "reasons": [
+          "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+        ]
+      },
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-gepa-invalid-gold-touch",
+      "track": "new-technique-card",
+      "is_baseline": false,
+      "gate": "block",
+      "gate_reasons": [
+        "unsupported patch form(s) \u2014 mode/binary/rename/copy/symlink rejected: ['git could not parse the patch: error: No valid patches in input (allow with \"--allow-empty\")']",
+        "touches files outside mutation_target 'skills/techniques/output-anchored-review/': ['evals/routing/gold/case-a.gold.json']",
+        "touches immutable (evaluator/gold/casebook/budget/schema) files: ['evals/routing/gold/case-a.gold.json']"
+      ],
+      "scored": null,
+      "coverage_delta_vs_baseline": null,
+      "keep_discard": {
+        "verdict": "block",
+        "reasons": [
+          "blocked at contract gate"
+        ]
+      },
+      "promoted": false
+    },
+    {
+      "candidate_id": "cand-gepa-new-technique-card-001",
+      "track": "new-technique-card",
+      "is_baseline": false,
+      "gate": "allow",
+      "gate_reasons": [],
+      "scored": {
+        "routing_qualified": false,
+        "routing": [],
+        "false_discovery": {
+          "invalid_accept_rate": 0.0,
+          "passed": true
+        },
+        "hermetic_bola": {
+          "verdict": "confirmed",
+          "passed": true,
+          "target_calls": 5,
+          "budget": 8
+        },
+        "hermetic_fakemodel": [
+          {
+            "oracle": "render_escape",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "capability_dispatch",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "prompt_canary",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          },
+          {
+            "oracle": "router_differential",
+            "verdict": "confirmed",
+            "passed": true,
+            "model_calls": 4
+          }
+        ]
+      },
+      "coverage_delta_vs_baseline": 0,
+      "keep_discard": {
+        "verdict": "probe",
+        "reasons": [
+          "no new distinct coverage and cost reduction <10% \u2014 not promotable"
+        ]
+      },
+      "promoted": false
+    }
+  ],
+  "allowed": [
+    "cand-baseline",
+    "cand-gepa-new-technique-card-001"
+  ],
+  "blocked": [
+    "cand-gepa-invalid-gold-touch"
+  ],
+  "promoted_any": false
+}

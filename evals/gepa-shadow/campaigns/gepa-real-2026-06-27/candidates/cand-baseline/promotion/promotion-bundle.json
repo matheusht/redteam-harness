@@ -1,0 +1,96 @@
+{
+  "candidate_id": "cand-baseline",
+  "campaign_id": "gepa-real-2026-06-27",
+  "candidate_manifest": "evals/gepa-shadow/campaigns/gepa-real-2026-06-27/candidates/cand-baseline/candidate-manifest.json",
+  "campaign_manifest": "evals/gepa-shadow/campaigns/gepa-real-2026-06-27/campaign-manifest.json",
+  "diff": "evals/gepa-shadow/campaigns/gepa-real-2026-06-27/candidates/cand-baseline/candidate.diff",
+  "scores": "evals/gepa-shadow/campaigns/gepa-real-2026-06-27/report.json",
+  "replays": [
+    "evals/gepa-shadow/campaigns/gepa-real-2026-06-27/candidates/cand-baseline/replays/replay-summary.json"
+  ],
+  "false_discovery": {
+    "invalid_accept_rate": 0.0,
+    "passed": true
+  },
+  "cost_comparison": {
+    "incumbent": {
+      "model_calls": 0,
+      "target_calls": 5
+    },
+    "candidate": {
+      "model_calls": 0,
+      "target_calls": 5
+    },
+    "delta_pct": 0.0
+  },
+  "redaction_report": {
+    "scanned": true,
+    "secret_hits": []
+  },
+  "review_checklist": [
+    {
+      "item": "Single mutated component identified: skills/techniques/output-anchored-review/",
+      "checked": true
+    },
+    {
+      "item": "No immutable file touched (contract gate allowed the candidate)",
+      "checked": true
+    },
+    {
+      "item": "Measured boundary authoritative: isolated `git apply --index` + measured tree + trusted conformance == allow",
+      "checked": true
+    },
+    {
+      "item": "False-discovery invalid_accept_rate == 0",
+      "checked": true
+    },
+    {
+      "item": "Replay-stable: primary + 2 fresh-session replays reproduced",
+      "checked": true
+    },
+    {
+      "item": "Diff hash matches candidate_hash",
+      "checked": true
+    },
+    {
+      "item": "Redaction clean: no secret shapes in diff or evidence bundle",
+      "checked": true
+    },
+    {
+      "item": "HUMAN: read the diff; the change is benign and in scope",
+      "checked": false
+    },
+    {
+      "item": "HUMAN: the evidence bundle justification holds",
+      "checked": false
+    },
+    {
+      "item": "HUMAN: approve Plane-1 promotion via this PR (no direct-to-main, no manual copy)",
+      "checked": false
+    }
+  ],
+  "verdict": "probe",
+  "materialization": {
+    "verdict": "allow",
+    "preflight": "pass",
+    "apply": "pass",
+    "base_tree": "3468e4e3592734aa8763ae9db1ec68961cf74e57",
+    "candidate_tree": "3468e4e3592734aa8763ae9db1ec68961cf74e57",
+    "declared_paths": [],
+    "actual_paths": [],
+    "paths_match": true,
+    "allowlist_passed": true,
+    "baseline_unchanged": true,
+    "regular_files_ok": true,
+    "isolation_ok": true,
+    "conformance_passed": true,
+    "reasons": []
+  },
+  "pinned": {
+    "rendered_at_commit": "89235f346bffe072f36e44347c51de84fe125e6a",
+    "campaign_manifest_hash": "8ed4a016bf04b49b7bd803ca871eadac872a196fdf2075d00f4d5589b5300ba4",
+    "candidate_manifest_hash": "2471c41c9db041010be57e390f3138edbf7522bdf416ba751288977ebaf157f6",
+    "frozen_input_hashes": {},
+    "benchmark_version": "bench-e3b0c44298fc"
+  }
+}
