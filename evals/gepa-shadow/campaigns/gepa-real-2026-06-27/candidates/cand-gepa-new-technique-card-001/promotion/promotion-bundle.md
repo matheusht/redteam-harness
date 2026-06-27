@@ -1,6 +1,8 @@
 # Promotion bundle — cand-gepa-new-technique-card-001
 
-**Status: NOT PROMOTABLE — archived only**  ·  verdict (replay-adjusted): `probe`  ·  campaign `gepa-real-2026-06-27`
+**Status: NOT PROMOTABLE — archived only**  ·  **authoritative verdict: `block`**  ·  shadow/replay-adjusted: `probe`  ·  campaign `gepa-real-2026-06-27`
+
+> The authoritative verdict is the **measured materialization** (`block`); the shadow scoreboard does not apply the diff, so its `probe` is not authoritative here.
 
 This bundle promotes nothing. Promotion is a human action via a reviewed PR on an isolated branch; the diff is NOT applied here and nothing is written under `skills/`.
 
@@ -17,7 +19,7 @@ This bundle promotes nothing. Promotion is a human action via a reviewed PR on a
 - [x] No immutable file touched (contract gate allowed the candidate)
 - [ ] Measured boundary authoritative: isolated `git apply --index` + measured tree + trusted conformance == allow
 - [x] False-discovery invalid_accept_rate == 0
-- [x] Replay-stable: primary + 2 fresh-session replays reproduced
+- [ ] Replay-stable: primary + 2 fresh-session replays reproduced — N/A: candidate blocked at materialization
 - [x] Diff hash matches candidate_hash
 - [x] Redaction clean: no secret shapes in diff or evidence bundle
 - [ ] HUMAN: read the diff; the change is benign and in scope

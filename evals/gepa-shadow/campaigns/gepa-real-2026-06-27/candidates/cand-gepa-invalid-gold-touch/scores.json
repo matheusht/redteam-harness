@@ -13,6 +13,9 @@
       "blocked at contract gate"
     ]
   },
+  "shadow_verdict": "block",
+  "materialization_verdict": "block",
+  "authoritative_verdict": "block",
   "coverage_delta_vs_baseline": null,
   "replay": {
     "candidate_id": "cand-gepa-invalid-gold-touch",
@@ -20,5 +23,5 @@
     "note": "blocked at contract gate; no replay"
   },
   "promoted": false,
-  "note": "scores.json is a per-candidate index into report.json/replay-report.json; it is not a promotion artifact."
+  "note": "scores.json indexes report/replay/promotion-bundle. authoritative_verdict is the measured materialization boundary when it blocks, else the replay-adjusted shadow verdict; shadow_verdict is the unapplied scoreboard view and is not authoritative alone."
 }

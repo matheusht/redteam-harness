@@ -2,7 +2,8 @@
 
 - Campaign: `gepa-real-2026-06-27`
 - Single mutated component: see `evals/gepa-shadow/campaigns/gepa-real-2026-06-27/candidates/cand-baseline/candidate.diff` (candidate manifest `evals/gepa-shadow/campaigns/gepa-real-2026-06-27/candidates/cand-baseline/candidate-manifest.json`)
-- Replay-adjusted verdict: `probe`
+- Authoritative verdict (measured materialization): `probe`
+- Shadow/replay-adjusted verdict: `probe`
 - False-discovery passed: True
 - Redaction: clean
 

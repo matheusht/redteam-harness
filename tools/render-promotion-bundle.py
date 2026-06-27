@@ -55,7 +55,7 @@ APE = _mod("apply_candidate_eval", "apply-candidate-eval.py")
 
 BUNDLE_REQUIRED = ["candidate_id", "campaign_id", "candidate_manifest", "campaign_manifest", "diff",
                    "scores", "false_discovery", "cost_comparison", "redaction_report",
-                   "review_checklist", "verdict", "materialization", "pinned"]
+                   "review_checklist", "verdict", "authoritative_verdict", "materialization", "pinned"]
 
 
 def sha256_file(path):
@@ -102,6 +102,12 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
     redaction_clean = not redaction
 
     materialized_allow = (materialization or {}).get("verdict") == "allow"
+    materialized_block = (materialization or {}).get("verdict") == "block"
+    # The single authoritative answer: the measured materialization is the boundary (Decision 0004 /
+    # Phase 10H0). When it blocks, that is the verdict — automation must not have to remember that
+    # materialization overrides a `probe` from the unapplied shadow scoreboard. Otherwise the
+    # replay-adjusted shadow verdict stands.
+    authoritative_verdict = "block" if materialized_block else final
 
     fdr = scoreboard["false_discovery"]
     inc_cost = {"model_calls": 0, "target_calls": scoreboard["hermetic_bola"]["target_calls"]}
@@ -111,8 +117,12 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
     touched = candidate_manifest.get("touched_files", [])
     single_component = all(t == mt or t.startswith(mt) for t in touched)
     diff_hash_ok = _sha256_text(diff_text) == candidate_manifest.get("candidate_hash")
-    replay_stable = bool(replay_summary and replay_summary.get("stable"))
+    # Replay of the unapplied shadow scoreboard says nothing about a candidate that blocks at
+    # materialization; do not advertise its stability as a meaningful, satisfied gate.
+    replay_stable = bool(replay_summary and replay_summary.get("stable")) and not materialized_block
     contract_gate_allow = report_candidate.get("gate") == "allow"
+    replay_item = ("Replay-stable: primary + 2 fresh-session replays reproduced"
+                   + (" — N/A: candidate blocked at materialization" if materialized_block else ""))
 
     checklist = [
         {"item": f"Single mutated component identified: {mt}", "checked": single_component},
@@ -120,7 +130,7 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         {"item": "Measured boundary authoritative: isolated `git apply --index` + measured tree + trusted "
                  "conformance == allow", "checked": materialized_allow},
         {"item": "False-discovery invalid_accept_rate == 0", "checked": bool(fdr["passed"])},
-        {"item": "Replay-stable: primary + 2 fresh-session replays reproduced", "checked": replay_stable},
+        {"item": replay_item, "checked": replay_stable},
         {"item": "Diff hash matches candidate_hash", "checked": diff_hash_ok},
         {"item": "Redaction clean: no secret shapes in diff or evidence bundle", "checked": redaction_clean},
         {"item": "HUMAN: read the diff; the change is benign and in scope", "checked": False},
@@ -141,6 +151,7 @@ def build_bundle(campaign, candidate_manifest, report_candidate, scoreboard, rep
         "redaction_report": {"scanned": True, "secret_hits": redaction},
         "review_checklist": checklist,
         "verdict": final,
+        "authoritative_verdict": authoritative_verdict,
         "materialization": materialization,
         "pinned": pinned,
     }
@@ -185,12 +196,17 @@ def validate_bundle(bundle):
 
 def render_md(bundle, promotable):
     status = "PROMOTABLE — open a PR" if promotable else "NOT PROMOTABLE — archived only"
+    auth = bundle.get("authoritative_verdict", bundle["verdict"])
+    differ = auth != bundle["verdict"]
     lines = [
         f"# Promotion bundle — {bundle['candidate_id']}",
         "",
-        f"**Status: {status}**  ·  verdict (replay-adjusted): `{bundle['verdict']}`  ·  campaign "
-        f"`{bundle['campaign_id']}`",
+        f"**Status: {status}**  ·  **authoritative verdict: `{auth}`**  ·  shadow/replay-adjusted: "
+        f"`{bundle['verdict']}`  ·  campaign `{bundle['campaign_id']}`",
         "",
+    ] + ([f"> The authoritative verdict is the **measured materialization** "
+          f"(`{(bundle.get('materialization') or {}).get('verdict')}`); the shadow scoreboard does not apply "
+          f"the diff, so its `{bundle['verdict']}` is not authoritative here.", ""] if differ else []) + [
         "This bundle promotes nothing. Promotion is a human action via a reviewed PR on an isolated "
         "branch; the diff is NOT applied here and nothing is written under `skills/`.",
         "",
@@ -223,7 +239,8 @@ def render_pr_body(bundle, promotable):
         "",
         f"- Campaign: `{bundle['campaign_id']}`",
         f"- Single mutated component: see `{bundle['diff']}` (candidate manifest `{bundle['candidate_manifest']}`)",
-        f"- Replay-adjusted verdict: `{bundle['verdict']}`",
+        f"- Authoritative verdict (measured materialization): `{bundle.get('authoritative_verdict', bundle['verdict'])}`",
+        f"- Shadow/replay-adjusted verdict: `{bundle['verdict']}`",
         f"- False-discovery passed: {bundle['false_discovery']['passed']}",
         f"- Redaction: {'clean' if not bundle['redaction_report']['secret_hits'] else 'HITS — do not merge'}",
         "",
@@ -310,10 +327,10 @@ def self_test():
 
     b, promotable, red = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
                                       diff_text, "# clean bundle\n", paths, pinned, mat_allow)
-    if not promotable or validate_bundle(b) or b["verdict"] != "allow":
+    if not promotable or validate_bundle(b) or b["verdict"] != "allow" or b["authoritative_verdict"] != "allow":
         ok = False; print("[self-test] allow + stable + clean + materialized should be promotable & schema-complete")
     else:
-        print("[self-test] allow + stable + clean + materialized-allow -> promotable: ok")
+        print("[self-test] allow + stable + clean + materialized-allow -> promotable, authoritative=allow: ok")
 
     _, prom_probe, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
                                     diff_text, "# clean\n", paths, pinned, mat_allow)
@@ -323,13 +340,18 @@ def self_test():
         print("[self-test] probe -> archived, not promotable: ok")
 
     # measured boundary is authoritative for promotion: an allow+clean candidate whose materialized
-    # apply BLOCKS (e.g. declared != actual) is NOT promotable, even though the patch gate passed.
-    _, prom_unmat, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "allow", "stable": True},
-                                    diff_text, "# clean\n", paths, pinned, mat_block)
-    if prom_unmat:
-        ok = False; print("[self-test] candidate without a materialized allow must NOT be promotable")
+    # apply BLOCKS (e.g. declared != actual) is NOT promotable, even though the patch gate passed. The
+    # bundle must surface authoritative_verdict==block (not the shadow `probe`/`allow`) and must NOT
+    # advertise replay stability as a satisfied gate.
+    b_unmat, prom_unmat, _ = build_bundle(campaign, cm, rc, scoreboard, {"verdict": "probe", "stable": True},
+                                          diff_text, "# clean\n", paths, pinned, mat_block)
+    replay_item = next(c for c in b_unmat["review_checklist"] if c["item"].startswith("Replay-stable"))
+    if (prom_unmat or b_unmat.get("authoritative_verdict") != "block"
+            or replay_item["checked"] or "N/A" not in replay_item["item"]):
+        ok = False; print(f"[self-test] materialization block must give authoritative=block + replay N/A "
+                          f"(auth={b_unmat.get('authoritative_verdict')}, replay={replay_item})")
     else:
-        print("[self-test] materialization block -> not promotable (measured boundary authoritative): ok")
+        print("[self-test] materialization block -> not promotable, authoritative=block, replay N/A: ok")
 
     secret_diff = diff_text + "Authorization: Bearer abcdef0123456789xyz\n"
     cm2 = dict(cm, candidate_hash=_sha256_text(secret_diff))

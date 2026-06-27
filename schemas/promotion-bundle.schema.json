@@ -58,7 +58,8 @@
         }
       }
     },
-    "verdict": { "enum": ["allow", "block", "probe"], "description": "the replay-adjusted verdict (Phase 3 keep/discard ∧ Phase 4 replay); promotion still requires human PR review" },
+    "verdict": { "enum": ["allow", "block", "probe"], "description": "the replay-adjusted SHADOW verdict (Phase 3 keep/discard ∧ Phase 4 replay); NOT authoritative on its own — the shadow scoreboard does not apply the diff" },
+    "authoritative_verdict": { "enum": ["allow", "block", "probe"], "description": "the single verdict automation should read: the measured materialization (Phase 10H0) when it blocks, else the replay-adjusted shadow verdict. Optional for historical bundles; required by the renderer going forward." },
     "materialization": {
       "type": "object",
       "required": ["verdict"],

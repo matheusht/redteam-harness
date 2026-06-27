@@ -43,7 +43,7 @@
       "checked": true
     },
     {
-      "item": "Replay-stable: primary + 2 fresh-session replays reproduced",
+      "item": "Replay-stable: primary + 2 fresh-session replays reproduced \u2014 N/A: candidate blocked at materialization",
       "checked": false
     },
     {
@@ -68,11 +68,12 @@
     }
   ],
   "verdict": "block",
+  "authoritative_verdict": "block",
   "materialization": {
     "verdict": "block",
     "preflight": "block",
     "apply": "block",
-    "base_tree": "3468e4e3592734aa8763ae9db1ec68961cf74e57",
+    "base_tree": "7fb357f6308fde4db0af96da9a41e671382fb22c",
     "candidate_tree": null,
     "declared_paths": [
       "evals/routing/gold/case-a.gold.json"
@@ -92,7 +93,7 @@
     ]
   },
   "pinned": {
-    "rendered_at_commit": "89235f346bffe072f36e44347c51de84fe125e6a",
+    "rendered_at_commit": "9c5b9b195f4dd96465b12ac6629c2af74b0cf01e",
     "campaign_manifest_hash": "8ed4a016bf04b49b7bd803ca871eadac872a196fdf2075d00f4d5589b5300ba4",
     "candidate_manifest_hash": "cdc63efc13ccd0819259783b4fa31c1a70d39cea9682abc9c32c4d7a47f22e3d",
     "frozen_input_hashes": {},

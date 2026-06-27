@@ -45,8 +45,8 @@
       "checked": true
     },
     {
-      "item": "Replay-stable: primary + 2 fresh-session replays reproduced",
-      "checked": true
+      "item": "Replay-stable: primary + 2 fresh-session replays reproduced \u2014 N/A: candidate blocked at materialization",
+      "checked": false
     },
     {
       "item": "Diff hash matches candidate_hash",
@@ -70,12 +70,13 @@
     }
   ],
   "verdict": "probe",
+  "authoritative_verdict": "block",
   "materialization": {
     "verdict": "block",
     "preflight": "pass",
     "apply": "pass",
-    "base_tree": "3468e4e3592734aa8763ae9db1ec68961cf74e57",
-    "candidate_tree": "67f6c8f077e7ec78232a3e425b642e6ee9ac4db0",
+    "base_tree": "7fb357f6308fde4db0af96da9a41e671382fb22c",
+    "candidate_tree": "18786cfb949937628c9cc0f707ebd8ea0e905c46",
     "declared_paths": [
       "skills/techniques/output-anchored-review/SKILL.md"
     ],
@@ -93,7 +94,7 @@
     ]
   },
   "pinned": {
-    "rendered_at_commit": "89235f346bffe072f36e44347c51de84fe125e6a",
+    "rendered_at_commit": "9c5b9b195f4dd96465b12ac6629c2af74b0cf01e",
     "campaign_manifest_hash": "8ed4a016bf04b49b7bd803ca871eadac872a196fdf2075d00f4d5589b5300ba4",
     "candidate_manifest_hash": "563079cc4634a517dc2a0ac39f7c996980e6f74dc774b48edd1bd470bcb7a97a",
     "frozen_input_hashes": {},

@@ -444,16 +444,26 @@ def write_candidate_scores(campaign_path):
     replay_by_id = {r["candidate_id"]: r for r in replay_report.get("candidates", [])}
     for row in report["candidates"]:
         cid = row["candidate_id"]
+        shadow_verdict = (row.get("keep_discard") or {}).get("verdict")
+        bundle_path = os.path.join(camp_dir, "candidates", cid, "promotion", "promotion-bundle.json")
+        bundle = load(bundle_path) if os.path.isfile(bundle_path) else {}
+        materialization_verdict = (bundle.get("materialization") or {}).get("verdict")
+        authoritative_verdict = bundle.get("authoritative_verdict", shadow_verdict)
         score = {
             "candidate_id": cid,
             "campaign_id": report["campaign_id"],
             "gate": row["gate"],
             "gate_reasons": row["gate_reasons"],
             "keep_discard": row["keep_discard"],
+            "shadow_verdict": shadow_verdict,
+            "materialization_verdict": materialization_verdict,
+            "authoritative_verdict": authoritative_verdict,
             "coverage_delta_vs_baseline": row["coverage_delta_vs_baseline"],
             "replay": replay_by_id.get(cid),
             "promoted": row["promoted"],
-            "note": "scores.json is a per-candidate index into report.json/replay-report.json; it is not a promotion artifact.",
+            "note": "scores.json indexes report/replay/promotion-bundle. authoritative_verdict is the "
+                    "measured materialization boundary when it blocks, else the replay-adjusted shadow "
+                    "verdict; shadow_verdict is the unapplied scoreboard view and is not authoritative alone.",
         }
         write_json(os.path.join(camp_dir, "candidates", cid, "scores.json"), score)
 
@@ -506,6 +516,14 @@ def generate(campaign_path, backend_name="auto", max_metric_calls=8, run_chain=T
     write_json(os.path.join(os.path.dirname(campaign_path), "gepa-adapter-report.json"), adapter_report)
 
     if run_chain:
+        # NOTE (Phase 11, integration gap): this chain is shadow-score -> replay -> promotion-render only.
+        # It does NOT yet route a materialized-allow GEPA candidate into the real-LM BEHAVIORAL evaluator
+        # (tools/run-behavioral-eval.py --backend model), so it cannot yet claim behavioral learning. The
+        # first real campaign stayed safe because the GEPA candidate blocked at materialization before any
+        # behavioral step. Next phase: for each candidate whose materialization verdict is `allow`, drive
+        # the blind broker-mediated behavioral eval + replay and record the authoritative behavioral
+        # verdict here. Until then, the promotion bundle's authoritative_verdict reflects the measured
+        # materialization boundary, not a behavioral result.
         RG.run_cli(campaign_path)
         RC.generate_for_campaign(campaign_path)
         render_all_promotions(campaign_path)

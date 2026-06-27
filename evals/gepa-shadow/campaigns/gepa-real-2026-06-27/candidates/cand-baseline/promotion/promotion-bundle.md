@@ -1,6 +1,6 @@
 # Promotion bundle — cand-baseline
 
-**Status: NOT PROMOTABLE — archived only**  ·  verdict (replay-adjusted): `probe`  ·  campaign `gepa-real-2026-06-27`
+**Status: NOT PROMOTABLE — archived only**  ·  **authoritative verdict: `probe`**  ·  shadow/replay-adjusted: `probe`  ·  campaign `gepa-real-2026-06-27`
 
 This bundle promotes nothing. Promotion is a human action via a reviewed PR on an isolated branch; the diff is NOT applied here and nothing is written under `skills/`.
 
