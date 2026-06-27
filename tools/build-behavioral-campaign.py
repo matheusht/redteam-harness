@@ -38,9 +38,11 @@ def sha256_file(p):
 
 
 def udiff(repo_rel, old, new):
+    # n=0 (no surrounding context) keeps the patch free of blank context lines that would carry
+    # trailing whitespace (git diff --check) while remaining a valid `git apply` patch.
     lines = list(difflib.unified_diff(old.splitlines(), new.splitlines(),
                                       fromfile=f"a/{repo_rel}" if old else "/dev/null",
-                                      tofile=f"b/{repo_rel}", lineterm=""))
+                                      tofile=f"b/{repo_rel}", lineterm="", n=0))
     return ("\n".join(lines) + "\n") if lines else ""
 
 

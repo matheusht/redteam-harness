@@ -123,12 +123,21 @@ def cleanup_worktree(root, wt):
 
 
 def measure_conformance(worktree):
-    """Re-run the patched workspace's own conformance checker. The one model-free signal a technique
-    card variant can actually move (broken front-matter / routes / refs)."""
-    checker = os.path.join(worktree, "tools", "check-conformance.py")
-    if not os.path.isfile(checker):
+    """Run a TRUSTED conformance checker against the patched workspace. Defense-in-depth: the candidate
+    diff is gated so it cannot touch the checker, but we still overwrite the worktree's copy with the
+    evaluator's own HEAD checker before running, so a checker the candidate somehow altered can never
+    grade itself. The checker derives its scan root from its own location, so the trusted-content file
+    placed at <worktree>/tools/check-conformance.py scans the patched workspace."""
+    import shutil
+    dst = os.path.join(worktree, "tools", "check-conformance.py")
+    if not os.path.isdir(os.path.dirname(dst)):
         return False
-    r = subprocess.run([sys.executable, checker], cwd=worktree, capture_output=True, text=True)
+    trusted = os.path.join(ROOT, "tools", "check-conformance.py")
+    try:
+        shutil.copyfile(trusted, dst)
+    except OSError:
+        return False
+    r = subprocess.run([sys.executable, dst], cwd=worktree, capture_output=True, text=True)
     return r.returncode == 0
 
 

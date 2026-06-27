@@ -10,7 +10,7 @@
     "skills/techniques/task-reframing/SKILL.md"
   ],
   "diff": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-degraded/candidate.diff",
-  "candidate_hash": "f581f952578c47dfcad4ebe4766f56317a73f4e7c66708e542a5be459b3904d0",
+  "candidate_hash": "d69234c5f75312a619089adc9d90c9b8de67d588bc5a7bc49cd4f76c5e27d46e",
   "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-degraded/evidence-bundle.md",
   "budget": {
     "model_calls": 60,

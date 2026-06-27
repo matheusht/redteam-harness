@@ -39,11 +39,11 @@
     },
     "gate:check-campaign": {
       "path": "tools/check-campaign.py",
-      "sha256": "3ea011945494baf85f897ff38b89b5570aa5d9f2b3586add102af6ce3c1bd1dc"
+      "sha256": "a9226441b240f26b3c8669d6a47872136713e264fe10126a8211264b356de12a"
     },
     "adapter:researcher_adapter": {
       "path": "tools/researcher_adapter.py",
-      "sha256": "af0e47983acf3a69962d26187bfa014b4b350e42e02fa34f5a3ac4f4d93fd71f"
+      "sha256": "45beb6ff8b414380efb916b007fca952e3dcc9a83bb6919905355bee6cf6727c"
     }
   },
   "budgets": {

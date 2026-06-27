@@ -20,10 +20,13 @@ EVALUATOR process (holds gold, owns the BROKER)        RESEARCHER (blind, mediat
   ledger. A `confirmed` counts only when the broker's event log proves every oracle requirement.
   Missing, invented, duplicated, or out-of-budget events block or downgrade — the model cannot
   self-report that a control or replay happened.
-- **Capability blindness, not just a payload scan.** The researcher receives only the serialized view +
-  mediated responses. The `model` adapter runs as a subprocess in an empty scratch cwd with a scrubbed
-  env — no repository/worktree, gold, scorers, candidate identity, credentials, or network by
-  construction. `assert_blind()` remains a defense-in-depth payload check, not the boundary.
+- **Capability blindness — a transport boundary, not a security sandbox.** The researcher receives only
+  the serialized view + mediated responses; the `model` adapter runs as a subprocess in an empty scratch
+  cwd with a scrubbed env, and the action vocabulary has no file-read. This bounds the contract and
+  reduces accidental leakage, but a scrubbed env + empty cwd do **not** prevent a hostile process from
+  reading absolute filesystem paths or using the network. Before any real-model qualification, run the
+  researcher under OS-level isolation or a remote, capability-limited model service with no local
+  filesystem access (see Decision 0003). `assert_blind()` remains a defense-in-depth payload check.
 
 ## Metric boundary
 

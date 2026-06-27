@@ -585,9 +585,13 @@
         report.md,events.jsonl}</code> pinning campaign/candidate/card/episode/scorer/adapter hashes,
         backend/model/config, seeds, budgets, timestamps, status. A skipped/failed run gets its own dir and
         can never overwrite a completed one (the writer refuses).</li>
-      <li><b>Capability blindness by construction.</b> The model adapter runs as a subprocess in an empty
-        scratch cwd with a scrubbed env — no repo/worktree, gold, scorers, candidate identity, credentials,
-        or network. The action vocabulary has no file-read; <code>assert_blind</code> is defense-in-depth.</li>
+      <li><b>Capability blindness — transport boundary, not a sandbox.</b> The model adapter runs as a
+        subprocess in an empty scratch cwd with a scrubbed env, receiving only the serialized view +
+        mediated responses; the action vocabulary has no file-read. This bounds the contract and reduces
+        accidental leakage, but it does <em>not</em> stop a hostile process from reading absolute paths or
+        the network — real-model qualification MUST run under OS-level isolation or a remote,
+        capability-limited model service (recorded in Decision 0003). <code>assert_blind</code> is
+        defense-in-depth.</li>
     </ul>
 
     <h3>Adapter contract (10G)</h3>

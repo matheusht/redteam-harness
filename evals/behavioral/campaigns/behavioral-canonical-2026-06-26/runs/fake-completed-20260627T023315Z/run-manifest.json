@@ -1,11 +1,11 @@
 {
-  "run_id": "model-skipped-20260627T020314Z",
-  "status": "skipped",
-  "backend": "model",
-  "model_id": "unavailable",
+  "run_id": "fake-completed-20260627T023315Z",
+  "status": "completed",
+  "backend": "fake",
+  "model_id": "deterministic-fake",
   "model_cmd": null,
   "campaign_id": "behavioral-canonical-2026-06-26",
-  "campaign_manifest_sha256": "5c4a7638154fae6c230287b6098f43132f640c3839c172a54ea5e5d2737d94b1",
+  "campaign_manifest_sha256": "de21ad5897d9e5bd27104c10c85bb29c94a06f24de8fd9930ee5ee7798ef6a74",
   "seed": "behavioral-canonical-2026-06-26-seed-1",
   "behavioral_budget": {
     "max_probes": 6
@@ -26,18 +26,18 @@
       "incumbent_card": "985b69b87276e2a62b46bf44962541123bcba2a36dad9ff74dccc218cc5bd121"
     },
     "cand-efficient-task-reframing": {
-      "candidate_manifest": "007f363d0a70c907f18bb8ee69d214d2515c490fb4ce1a97465ae59aba59da15",
-      "diff": "e0536e0be036556f28b451593bd14df77a44dbb89b9973823de81b7540532a73",
+      "candidate_manifest": "e10853bb2be4a1df37412b46a8ad1607db29be0ef491bf1326d239ff9fffa626",
+      "diff": "f0b9b914fb0b7d59a65b7bcb02018c1078385f797f88b4e5216af41bae63ebc4",
       "incumbent_card": "985b69b87276e2a62b46bf44962541123bcba2a36dad9ff74dccc218cc5bd121"
     },
     "cand-decomposition": {
-      "candidate_manifest": "98f23df5f8bc6a88d6cadf3c3f5f4d4692c7bdfc422d2556ef62b459c68b0531",
-      "diff": "e6e9eb65335997339aa0ca45680c55c726b87e05c6ce47526191825834e1737e",
+      "candidate_manifest": "956e5de3cf885e1216590d9fb1c7c8d98e208142a192d132fd66cb95ce7b8f27",
+      "diff": "d1f56313268d7b1e5a511ee068d9578b6afe730182d559f527cc0dcae885db97",
       "incumbent_card": "9da966880c4e7f9deba8543f3f6efae41493feae6f103334d6de4116ea1e5827"
     },
     "cand-degraded": {
-      "candidate_manifest": "87490061f142dc9e9980a64942558c906c257ddfa658624adb5ab46472982c65",
-      "diff": "f581f952578c47dfcad4ebe4766f56317a73f4e7c66708e542a5be459b3904d0",
+      "candidate_manifest": "ec572f78120dd674526f01af7a73fbd6d8e5bd32dc25ff0728910ac1716fea80",
+      "diff": "d69234c5f75312a619089adc9d90c9b8de67d588bc5a7bc49cd4f76c5e27d46e",
       "incumbent_card": "985b69b87276e2a62b46bf44962541123bcba2a36dad9ff74dccc218cc5bd121"
     },
     "cand-invalid-immutable": {
@@ -47,13 +47,13 @@
     }
   },
   "tool_hashes": {
-    "run-behavioral-eval.py": "0556ec03c441c87ab096c121dd699a52da799da753940a81f93d2b67431c77bd",
+    "run-behavioral-eval.py": "03662a81066d6058d0c79aec08b9d583cdf52feecec67e2e40c1afc16bca6824",
     "score-candidate.py": "954a842f350335451130804bd336481a195ff1ccec28009caa46e8de2140b65a",
-    "check-campaign.py": "3ea011945494baf85f897ff38b89b5570aa5d9f2b3586add102af6ce3c1bd1dc",
-    "apply-candidate-eval.py": "842de0fb04b2a8cb8aeb60f28b8a9b22e411f4d0620ff1f00131db49ce2ec58d",
-    "researcher_adapter.py": "af0e47983acf3a69962d26187bfa014b4b350e42e02fa34f5a3ac4f4d93fd71f",
+    "check-campaign.py": "a9226441b240f26b3c8669d6a47872136713e264fe10126a8211264b356de12a",
+    "apply-candidate-eval.py": "f5fe3390af15e83185a0e772db2db1536857b239caaffacfef24db25c5fcdf9b",
+    "researcher_adapter.py": "45beb6ff8b414380efb916b007fca952e3dcc9a83bb6919905355bee6cf6727c",
     "fake-researcher-cli.py": "8d3c54c2411be815f50fc6cc0e02276fa056c51f06ed02886df02583489e599a"
   },
-  "generated_at_unix": 1782525794,
+  "generated_at_unix": 1782527595,
   "note": "Hashes pin exactly what this run was scored against; a skipped/failed run never overwrites a completed one (immutable run dirs)."
 }

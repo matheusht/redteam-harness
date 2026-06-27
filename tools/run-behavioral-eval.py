@@ -64,6 +64,16 @@ def sha256_text(text):
     return hashlib.sha256((text or "").encode()).hexdigest()
 
 
+def _redact_cmd(cmd):
+    """Never store a raw model command (it may carry credentials/keys in args). Record the program name
+    + a hash of the full command for provenance only."""
+    if not cmd:
+        return None
+    s = cmd if isinstance(cmd, str) else " ".join(str(x) for x in cmd)
+    prog = (s.split() or ["?"])[0]
+    return {"program": os.path.basename(prog), "sha256": sha256_text(s)}
+
+
 def sha256_file(path):
     if not os.path.isfile(path):
         return None
@@ -175,15 +185,21 @@ def drive_episode(researcher, broker):
     return broker.adjudicate()
 
 
-def run_card_session(card_text, episode_set, budget, backend, config, seed, events_sink=None):
+def run_card_session(card_text, episode_set, budget, backend, config, seed, events_sink=None, meta=None):
+    meta = meta or {}
     coverage, fdr_ids, per, target_calls = [], [], [], 0
     usage = {"model_calls": 0, "tokens": 0}
     for ep in episode_set["episodes"]:
         view = researcher_view(ep, card_text, budget)
         assert_blind(view)
         researcher = ADA.make_researcher(backend, view, dict(config or {}, seed=f"{seed}:{ep['id']}"))
-        broker = Broker(ep, budget)
-        adj = drive_episode(researcher, broker)
+        try:
+            broker = Broker(ep, budget)
+            adj = drive_episode(researcher, broker)
+        finally:
+            closer = getattr(researcher, "close", None)
+            if callable(closer):
+                closer()
         if adj["oracle_confirmed"]:
             coverage.append(ep["id"])
         if adj["fdr_invalid"]:
@@ -195,7 +211,7 @@ def run_card_session(card_text, episode_set, budget, backend, config, seed, even
                                         "fdr_invalid", "controls_executed", "target_calls", "over_budget_requests")})
         if events_sink is not None:
             for e in adj["events"]:
-                events_sink.append({"seed": seed, "episode_id": ep["id"], **e})
+                events_sink.append({**meta, "session_seed": seed, "episode_id": ep["id"], **e})
     nonpos = [e for e in episode_set["episodes"] if e["class"] != "positive"]
     return {"coverage": sorted(coverage), "fdr_invalids": sorted(fdr_ids),
             "fdr_rate": round(len(fdr_ids) / max(1, len(nonpos)), 3),
@@ -203,15 +219,20 @@ def run_card_session(card_text, episode_set, budget, backend, config, seed, even
             "tokens": usage["tokens"], "per_episode": per}
 
 
-def paired_eval(incumbent_text, candidate_text, episode_set, budget, backend, config, base_seed, events_sink=None):
+def paired_eval(incumbent_text, candidate_text, episode_set, budget, backend, config, base_seed,
+                events_sink=None, candidate_id="?", technique="?"):
     sessions = []
     for s in range(3):
         ab = ["incumbent", "candidate"] if s % 2 == 0 else ["candidate", "incumbent"]
+        ab_label = {ab[0]: "A", ab[1]: "B"}
+        session_seed = f"{base_seed}:s{s}"          # IDENTICAL seed for both arms; role is metadata only
         runs = {}
         for role in ab:
             text = incumbent_text if role == "incumbent" else candidate_text
-            runs[role] = run_card_session(text, episode_set, budget, backend, config, f"{base_seed}:s{s}:{role}", events_sink)
-        sessions.append({"session": s, "ab_order": {"A": ab[0], "B": ab[1]},
+            meta = {"candidate_id": candidate_id, "technique": technique, "session": s,
+                    "role": role, "ab_label": ab_label[role]}
+            runs[role] = run_card_session(text, episode_set, budget, backend, config, session_seed, events_sink, meta)
+        sessions.append({"session": s, "session_seed": session_seed, "ab_order": {"A": ab[0], "B": ab[1]},
                          "incumbent": runs["incumbent"], "candidate": runs["candidate"]})
 
     def stable(role):
@@ -221,7 +242,35 @@ def paired_eval(incumbent_text, candidate_text, episode_set, budget, backend, co
     return sessions, stable("incumbent"), stable("candidate")
 
 
+def _session_summaries(sessions):
+    """All three sessions' per-arm coverage/FDR/cost, so the claimed 3/3 can be reconstructed."""
+    out = []
+    for x in sessions:
+        out.append({"session": x["session"], "session_seed": x["session_seed"], "ab_order": x["ab_order"],
+                    "incumbent": {"coverage": x["incumbent"]["coverage"], "fdr_invalids": x["incumbent"]["fdr_invalids"], "cost": x["incumbent"]["cost"]},
+                    "candidate": {"coverage": x["candidate"]["coverage"], "fdr_invalids": x["candidate"]["fdr_invalids"], "cost": x["candidate"]["cost"]}})
+    return out
+
+
 # ---- canonical measured gating ----
+
+EVIDENCE_REQUIRED_TOKENS = ("campaign", "mutation target", "eligibility")
+
+
+def evidence_complete(bundle_rel):
+    """Structural check, not mere existence: the bundle must be non-trivial and carry the required
+    provenance fields. An empty or stub bundle fails."""
+    if not bundle_rel:
+        return False
+    p = os.path.join(ROOT, bundle_rel)
+    if not os.path.isfile(p):
+        return False
+    text = open(p).read()
+    if len(text.strip()) < 40:
+        return False
+    low = text.lower()
+    return all(tok in low for tok in EVIDENCE_REQUIRED_TOKENS)
+
 
 def measure_candidate(campaign, candidate):
     """Run the canonical gate + isolated apply + patched-workspace conformance. Returns measured flags
@@ -231,7 +280,7 @@ def measure_candidate(campaign, candidate):
     target_rel = (mt + "SKILL.md") if mt.endswith("/") else mt
     out = {"gate": gate_verdict, "gate_reasons": gate_reasons, "target_rel": target_rel,
            "diff_applies": None, "isolation_ok": None, "conformance_passed": False,
-           "evidence_contract_complete": os.path.isfile(os.path.join(ROOT, candidate.get("evidence_bundle", "x"))),
+           "evidence_contract_complete": evidence_complete(candidate.get("evidence_bundle")),
            "budget_unchanged": candidate.get("budget") in (None, campaign.get("budgets")),
            "single_mutation": gate_verdict == "allow" and all(
                t == mt or t.startswith(mt) for t in candidate.get("touched_files", [])),
@@ -258,7 +307,8 @@ def behavioral_verdict(campaign, candidate, episode_set, incumbent_text, measure
 
     routing_ok = RG.baseline_scoreboard()["routing_qualified"]    # MEASURED protected capability
     sessions, inc_stable, cand_stable = paired_eval(
-        incumbent_text, measured["patched_card_text"], episode_set, budget, backend, config, seed, events_sink)
+        incumbent_text, measured["patched_card_text"], episode_set, budget, backend, config, seed,
+        events_sink, candidate_id=candidate.get("candidate_id", "?"), technique=episode_set.get("technique", "?"))
 
     inc, cand = sessions[0]["incumbent"], sessions[0]["candidate"]
     cand_fdr_rate = max(x["candidate"]["fdr_rate"] for x in sessions)
@@ -285,7 +335,7 @@ def behavioral_verdict(campaign, candidate, episode_set, incumbent_text, measure
                       "fdr_rate": cand_fdr_rate},
         "coverage_delta": sorted(set(cand["coverage"]) - set(inc["coverage"])),
         "coverage_lost": sorted(set(inc["coverage"]) - set(cand["coverage"])),
-        "ab_orders": [x["ab_order"] for x in sessions],
+        "sessions": _session_summaries(sessions),
         "measured": {k: measured[k] for k in ("conformance_passed", "budget_unchanged", "single_mutation",
                                               "evidence_contract_complete", "diff_applies", "isolation_ok")},
     }
@@ -378,19 +428,31 @@ def run_cli(campaign_path, backend="fake", only_candidate=None, model_cmd=None):
     if only_candidate:
         entries = [c for c in entries if c["candidate_id"] == only_candidate]
     events, rows = [], []
-    for entry in entries:
-        cand = load(os.path.join(ROOT, entry["manifest"]))     # canonical candidate manifest
-        technique = cand["technique"]
-        eligibility = entry.get("eligibility", cand.get("eligibility", "candidate"))
-        episode_set = load_episodes(technique)
-        incumbent_text = APE_read_head(measure_target(cand))
-        measured = measure_candidate(campaign, cand)
-        res = behavioral_verdict(campaign, cand, episode_set, incumbent_text, measured,
-                                 campaign["behavioral_budget"], backend, config, campaign.get("seed", "seed"), events)
-        rows.append({"candidate_id": cand["candidate_id"], "technique": technique,
-                     "promotion_eligibility": eligibility, "promotable": False,
-                     "promotable_note": "fake/simulator backend cannot authorize promotion; a real-model "
-                     "qualification (Phase 10G) plus PR review is required.", **res})
+    model_id = "deterministic-fake" if backend == "fake" else "model"
+    try:
+        for entry in entries:
+            cand = load(os.path.join(ROOT, entry["manifest"]))     # canonical candidate manifest
+            technique = cand["technique"]
+            eligibility = entry.get("eligibility", cand.get("eligibility", "candidate"))
+            episode_set = load_episodes(technique)
+            incumbent_text = APE_read_head(measure_target(cand))
+            measured = measure_candidate(campaign, cand)
+            res = behavioral_verdict(campaign, cand, episode_set, incumbent_text, measured,
+                                     campaign["behavioral_budget"], backend, config, campaign.get("seed", "seed"), events)
+            rows.append({"candidate_id": cand["candidate_id"], "technique": technique,
+                         "promotion_eligibility": eligibility, "promotable": False,
+                         "promotable_note": "fake/simulator backend cannot authorize promotion; a real-model "
+                         "qualification (Phase 10G) plus PR review is required.", **res})
+    except ADA.ResearcherError as e:
+        run_dir = new_run_dir(campaign_path, backend, "failed")
+        manifest = base_manifest(campaign, campaign_path, backend, "failed", run_dir, model_id=model_id, model_cmd=model_cmd)
+        report = {"campaign_id": campaign["campaign_id"], "status": "failed", "backend": backend,
+                  "status_note": f"runtime researcher failure during evaluation ({type(e).__name__}: {e}); "
+                  "no qualification claimed. Partial candidates recorded below.", "candidates": rows,
+                  "promoted_any": False}
+        write_immutable(run_dir, manifest, report, events)
+        print(json.dumps({"status": "failed", "run_dir": os.path.relpath(run_dir, ROOT), "error": str(e)}, indent=2))
+        return 3        # NON-SUCCESS
 
     status = "completed"
     run_dir = new_run_dir(campaign_path, backend, status)
@@ -435,7 +497,7 @@ def base_manifest(campaign, campaign_path, backend, status, run_dir, model_id=""
     ep_hashes = {t: sha256_file(os.path.join(EPISODES_DIR, f"{t}.json")) for t in sorted(techniques) if t}
     return {
         "run_id": os.path.basename(run_dir), "status": status, "backend": backend,
-        "model_id": model_id, "model_cmd": (model_cmd if backend == "model" else None),
+        "model_id": model_id, "model_cmd": (_redact_cmd(model_cmd) if backend == "model" else None),
         "campaign_id": campaign["campaign_id"],
         "campaign_manifest_sha256": sha256_file(campaign_path),
         "seed": campaign.get("seed"), "behavioral_budget": campaign.get("behavioral_budget"),
@@ -557,6 +619,32 @@ def self_test():
         ok = False; print("[self-test] immutable-touch candidate must block at the gate")
     else:
         print("[self-test] immutable-touch candidate blocks at the canonical gate (measured): ok")
+
+    # event attribution + identical paired seeds: every event carries candidate_id/session/role/A-B,
+    # and both arms of a session share one seed (role is metadata, not sampling input).
+    sink = []
+    paired_eval(BASELINE, EFFICIENT, eps, budget, "fake", {}, "base", sink, candidate_id="cand-x", technique="task-reframing")
+    need = ("candidate_id", "technique", "session", "role", "ab_label", "session_seed")
+    attributed = all(all(k in e for k in need) for e in sink) and {e["candidate_id"] for e in sink} == {"cand-x"}
+    s0 = [e["session_seed"] for e in sink if e["session"] == 0]
+    same_seed = len(set(s0)) == 1                     # incumbent and candidate arms share one session seed
+    if not attributed or not same_seed:
+        ok = False; print(f"[self-test] events must be attributable + paired seeds identical (attributed={attributed}, same_seed={same_seed})")
+    else:
+        print("[self-test] events carry candidate/session/role/A-B + both arms share one session seed: ok")
+
+    # structural evidence completeness: an empty/stub bundle is not complete
+    import tempfile as _tf
+    with _tf.TemporaryDirectory() as d:
+        rel = os.path.relpath(os.path.join(d, "b.md"), ROOT)
+        open(os.path.join(d, "b.md"), "w").write("")
+        empty_ok = not evidence_complete(rel)
+        open(os.path.join(d, "b.md"), "w").write("# bundle\n\n- campaign: c\n- mutation target: x\n- eligibility: candidate\n")
+        full_ok = evidence_complete(rel)
+        if not (empty_ok and full_ok):
+            ok = False; print("[self-test] evidence completeness must be structural (empty fails, structured passes)")
+        else:
+            print("[self-test] evidence completeness is structural (empty bundle fails): ok")
 
     # model backend without a configured command -> ModelUnavailable (honest non-success at the adapter)
     try:

@@ -1,9 +1,9 @@
 # Decision 0003 — Autonomy envelopes
 
-**Status:** accepted as product direction; control-plane prepared in Phase 10F–10G  
-**Date:** 2026-06-27  
+**Status:** accepted as product direction; control-plane prepared in Phase 10F–10G\
+**Date:** 2026-06-27\
 **Supersedes:** nothing. **Preserves:** Decision 0002 (GEPA autoresearch scope) as historical context;
-this decision extends it, it does not relax it.  
+this decision extends it, it does not relax it.\
 **Related:** `AGENTS.md`, `docs/phase-10f-10g-behavioral-qualification-plan.md`,
 `docs/gepa-autoresearch-implementation-plan.md`, `docs/autoresearch-evaluation-rfc.html`
 

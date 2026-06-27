@@ -10,7 +10,7 @@
     "skills/techniques/decomposition/SKILL.md"
   ],
   "diff": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-decomposition/candidate.diff",
-  "candidate_hash": "e6e9eb65335997339aa0ca45680c55c726b87e05c6ce47526191825834e1737e",
+  "candidate_hash": "d1f56313268d7b1e5a511ee068d9578b6afe730182d559f527cc0dcae885db97",
   "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-2026-06-26/candidates/cand-decomposition/evidence-bundle.md",
   "budget": {
     "model_calls": 60,

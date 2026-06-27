@@ -70,6 +70,22 @@ def _under(path, prefix):
     return path == prefix or path.startswith(prefix + "/")
 
 
+def diff_touched_paths(diff_text):
+    """Derive the repo-relative paths a unified diff ACTUALLY touches, from its file headers. The gate
+    must not trust the manifest's touched_files: a candidate could declare only its card while its diff
+    quietly edits an immutable file (e.g. the conformance checker that then judges it)."""
+    paths = set()
+    for line in (diff_text or "").splitlines():
+        if line.startswith("--- ") or line.startswith("+++ "):
+            p = line[4:].split("\t")[0].strip()
+            if p in ("/dev/null", ""):
+                continue
+            if p.startswith("a/") or p.startswith("b/"):
+                p = p[2:]
+            paths.add(p)
+    return paths
+
+
 def gate(campaign, candidate, root):
     """Return (verdict, reasons). verdict is 'allow' or 'block'."""
     reasons = []
@@ -82,19 +98,38 @@ def gate(campaign, candidate, root):
     if mt not in targets:
         reasons.append(f"mutation_target '{mt}' is not a declared track target {sorted(targets)}")
 
-    touched = candidate.get("touched_files", [])
+    declared = set(candidate.get("touched_files", []))
     is_baseline = bool(candidate.get("is_baseline"))
 
-    if is_baseline and touched:
+    if is_baseline and declared:
         reasons.append("baseline candidate must be a no-op (touched_files must be empty)")
 
+    # Derive the diff's ACTUAL paths and require the declaration matches exactly. Then run the
+    # mutation-target / immutable checks against the UNION, so a file hidden from touched_files but
+    # present in the diff still blocks.
+    diff = candidate.get("diff")
+    diff_path = os.path.join(root, diff) if diff else None
+    derived = set()
+    if not diff or not os.path.isfile(diff_path):
+        if not is_baseline:
+            reasons.append(f"diff missing: {diff}")
+    else:
+        diff_text = open(diff_path).read()
+        if sha256_file(diff_path) != candidate.get("candidate_hash"):
+            reasons.append("candidate_hash does not match diff contents (tamper)")
+        derived = diff_touched_paths(diff_text)
+        if derived != declared:
+            reasons.append(f"declared touched_files {sorted(declared)} do not match diff-derived paths "
+                           f"{sorted(derived)} (a candidate cannot hide edits from the manifest)")
+
+    effective = declared | derived
     if mt:
-        stray = [f for f in touched if not _under(f, mt)]
+        stray = sorted(f for f in effective if not _under(f, mt))
         if stray:
             reasons.append(f"touches files outside mutation_target '{mt}': {stray}")
 
     immutable = list(DEFAULT_IMMUTABLE) + list(campaign.get("immutable", []))
-    leaked = [f for f in touched if any(_under(f, p) for p in immutable)]
+    leaked = sorted(f for f in effective if any(_under(f, p) for p in immutable))
     if leaked:
         reasons.append(f"touches immutable (evaluator/gold/casebook/budget/schema) files: {leaked}")
 
@@ -105,16 +140,6 @@ def gate(campaign, candidate, root):
     eb = candidate.get("evidence_bundle")
     if not eb or not os.path.isfile(os.path.join(root, eb)):
         reasons.append(f"evidence bundle missing: {eb}")
-
-    diff = candidate.get("diff")
-    diff_path = os.path.join(root, diff) if diff else None
-    if not diff or not os.path.isfile(diff_path):
-        if not is_baseline:
-            reasons.append(f"diff missing: {diff}")
-    else:
-        actual = sha256_file(diff_path)
-        if actual != candidate.get("candidate_hash"):
-            reasons.append("candidate_hash does not match diff contents (tamper)")
 
     for name, spec in campaign.get("frozen_inputs", {}).items():
         p = os.path.join(root, spec.get("path", ""))
@@ -145,24 +170,37 @@ def _write(root, rel, text):
     return p
 
 
+def _diff_for(paths):
+    """A well-formed multi-file unified diff touching exactly `paths`."""
+    out = []
+    for p in paths:
+        out += [f"--- a/{p}", f"+++ b/{p}", "@@ -1 +1,2 @@", " base", "+variant"]
+    return ("\n".join(out) + "\n") if out else ""
+
+
+CARD = "skills/techniques/task-reframing/SKILL.md"
+
+
 def self_test():
     ok = True
     with tempfile.TemporaryDirectory() as root:
         frozen_rel = "evals/routing/gold/case-x.gold.json"
         _write(root, frozen_rel, '{"case":"x"}\n')
         frozen_hash = sha256_file(os.path.join(root, frozen_rel))
+        bundle = "evals/c/evidence-bundle.md"
+        _write(root, bundle, "# why\n")
 
-        diff_rel = "evals/gepa-shadow/c/candidate.diff"
-        _write(root, diff_rel, "--- a/skills/techniques/task-reframing/SKILL.md\n+++ b\n+variant\n")
-        diff_hash = sha256_file(os.path.join(root, diff_rel))
-        _write(root, "evals/gepa-shadow/c/evidence-bundle.md", "# why\n")
+        def mkdiff(name, paths):
+            rel = f"evals/c/{name}.diff"
+            _write(root, rel, _diff_for(paths))
+            return rel, sha256_file(os.path.join(root, rel))
+
+        card_diff, card_h = mkdiff("card", [CARD])
 
         campaign = {
-            "campaign_id": "camp-1",
-            "created": "2026-06-26",
+            "campaign_id": "camp-1", "created": "2026-06-26",
             "tracks": [{"name": "task-reframing", "mutation_target": "skills/techniques/task-reframing/", "kind": "existing-card-variant"}],
-            "mutable_allowlist": ["skills/techniques/task-reframing/"],
-            "immutable": [],
+            "mutable_allowlist": ["skills/techniques/task-reframing/"], "immutable": [],
             "frozen_inputs": {"routing-gold-x": {"path": frozen_rel, "sha256": frozen_hash}},
             "budgets": {"model_calls": 10, "target_calls": 20, "tokens": None},
             "benchmark_set": ["routing:case-x"],
@@ -170,9 +208,7 @@ def self_test():
         base = {
             "candidate_id": "cand-ok", "campaign_id": "camp-1", "parent": "baseline",
             "track": "task-reframing", "mutation_target": "skills/techniques/task-reframing/",
-            "touched_files": ["skills/techniques/task-reframing/SKILL.md"],
-            "diff": diff_rel, "candidate_hash": diff_hash,
-            "evidence_bundle": "evals/gepa-shadow/c/evidence-bundle.md",
+            "touched_files": [CARD], "diff": card_diff, "candidate_hash": card_h, "evidence_bundle": bundle,
         }
 
         def expect(label, cand, want, camp=campaign):
@@ -185,34 +221,42 @@ def self_test():
 
         expect("clean candidate allows", base, "allow")
 
-        undeclared = dict(base, candidate_id="cand-undeclared",
-                          touched_files=["skills/techniques/task-reframing/SKILL.md", "engine/routing.md"])
-        expect("undeclared file blocks", undeclared, "block")
+        stray_diff, stray_h = mkdiff("stray", [CARD, "engine/routing.md"])
+        expect("undeclared (out-of-target) file blocks",
+               dict(base, candidate_id="cand-stray", touched_files=[CARD, "engine/routing.md"],
+                    diff=stray_diff, candidate_hash=stray_h), "block")
 
-        immutable = dict(base, candidate_id="cand-immutable",
-                         touched_files=["skills/techniques/task-reframing/SKILL.md", "evals/routing/gold/case-x.gold.json"])
-        expect("immutable touch blocks", immutable, "block")
+        imm_diff, imm_h = mkdiff("imm", [CARD, frozen_rel])
+        expect("declared immutable touch blocks",
+               dict(base, candidate_id="cand-immutable", touched_files=[CARD, frozen_rel],
+                    diff=imm_diff, candidate_hash=imm_h), "block")
 
-        budget = dict(base, candidate_id="cand-budget", budget={"model_calls": 999, "target_calls": 20, "tokens": None})
-        expect("budget change blocks", budget, "block")
+        # P0: a candidate whose diff edits the conformance checker while declaring ONLY the card.
+        p0_diff, p0_h = mkdiff("p0", [CARD, "tools/check-conformance.py"])
+        expect("P0: diff edits an immutable checker but declares only the card -> block",
+               dict(base, candidate_id="cand-p0-hidden", touched_files=[CARD],
+                    diff=p0_diff, candidate_hash=p0_h), "block")
 
-        nobundle = dict(base, candidate_id="cand-nobundle", evidence_bundle="evals/gepa-shadow/c/missing.md")
-        expect("missing evidence bundle blocks", nobundle, "block")
+        # touched_files claims a file the diff does not actually touch.
+        expect("declared != diff-derived paths blocks",
+               dict(base, candidate_id="cand-overdeclare", touched_files=[CARD, "engine/routing.md"]), "block")
 
-        tamper = dict(base, candidate_id="cand-tamper", candidate_hash="deadbeef")
-        expect("diff hash tamper blocks", tamper, "block")
+        expect("budget change blocks", dict(base, candidate_id="cand-budget",
+               budget={"model_calls": 999, "target_calls": 20, "tokens": None}), "block")
+        expect("missing evidence bundle blocks", dict(base, candidate_id="cand-nobundle",
+               evidence_bundle="evals/c/missing.md"), "block")
+        expect("diff hash tamper blocks", dict(base, candidate_id="cand-tamper", candidate_hash="deadbeef"), "block")
 
+        empty_diff, empty_h = mkdiff("empty", [])
         baseline = {
             "candidate_id": "cand-baseline", "campaign_id": "camp-1", "parent": "baseline",
             "track": "task-reframing", "mutation_target": "skills/techniques/task-reframing/",
-            "touched_files": [], "diff": diff_rel, "candidate_hash": diff_hash,
-            "evidence_bundle": "evals/gepa-shadow/c/evidence-bundle.md", "is_baseline": True,
+            "touched_files": [], "diff": empty_diff, "candidate_hash": empty_h,
+            "evidence_bundle": bundle, "is_baseline": True,
         }
         expect("no-op baseline allows", baseline, "allow")
-
-        baseline_dirty = dict(baseline, candidate_id="cand-baseline-dirty",
-                              touched_files=["skills/techniques/task-reframing/SKILL.md"])
-        expect("baseline that mutates blocks", baseline_dirty, "block")
+        expect("baseline that mutates blocks", dict(baseline, candidate_id="cand-baseline-dirty",
+               touched_files=[CARD], diff=card_diff, candidate_hash=card_h), "block")
 
         drifted = dict(campaign, frozen_inputs={"routing-gold-x": {"path": frozen_rel, "sha256": "0" * 64}})
         expect("frozen-input drift blocks", base, "block", camp=drifted)

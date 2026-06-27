@@ -2,9 +2,9 @@
 
 **Status:** Phase 10F complete; Phase 10G adapter contract + fake adapter complete; the real-model
 qualification run is **BLOCKED/SKIPPED** (no sufficiently isolated LM backend configured). Simulator
-success is not substituted. See `docs/decisions/0003-autonomy-envelopes.md` and the behavioral README.  
-**Expected duration:** 1–3 focused hours  
-**Depends on:** Phases 8–10, Decision 0002, the autoresearch evaluation RFC  
+success is not substituted. See `docs/decisions/0003-autonomy-envelopes.md` and the behavioral README.\
+**Expected duration:** 1–3 focused hours\
+**Depends on:** Phases 8–10, Decision 0002, the autoresearch evaluation RFC\
 **Does not authorize:** live-target testing, Zone-2 actions, evaluator co-evolution, or automatic Plane-1 promotion
 
 ## Outcome

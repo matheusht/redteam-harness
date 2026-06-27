@@ -139,12 +139,25 @@ class CliResearcher:
             raise ModelUnavailable("no researcher command configured (set config.model_cmd or BEHAVIORAL_LM_CMD)")
         self.argv = self.cmd if isinstance(self.cmd, list) else self.cmd.split()
         self.usage = {"model_calls": 0, "tokens": 0}
-        # Capability boundary: the researcher subprocess runs in an empty scratch cwd with a scrubbed
-        # env (no repo path, no secrets/credentials). It receives ONLY the serialized view + mediated
-        # responses on stdin. It cannot read gold/scorers/the worktree by construction.
+        # TRANSPORT boundary (NOT a security sandbox): the subprocess gets ONLY the serialized view +
+        # mediated responses on stdin, an empty scratch cwd, and a scrubbed env (no repo path, no
+        # secrets/credentials passed). This reduces accidental leakage and keeps the contract clean, but
+        # it does NOT prevent a hostile process from reading absolute filesystem paths or using the
+        # network. Real-model qualification MUST run under OS-level isolation or a remote,
+        # capability-limited model service with no local filesystem access. See README / Decision 0003.
         self._jail = tempfile.mkdtemp(prefix="researcher-jail-")
         self._env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": self._jail,
                      "LC_ALL": "C", "TMPDIR": self._jail}
+
+    def close(self):
+        import shutil
+        shutil.rmtree(self._jail, ignore_errors=True)
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def next_action(self, responses):
         payload = json.dumps({"view": self.view, "responses": responses})

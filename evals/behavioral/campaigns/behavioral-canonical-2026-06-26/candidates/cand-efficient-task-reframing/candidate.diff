@@ -1,9 +1,6 @@
 --- a/skills/techniques/task-reframing/SKILL.md
 +++ b/skills/techniques/task-reframing/SKILL.md
-@@ -33,3 +33,6 @@
- **Caution for the oracle.** Reframing produces fluent, plausible output — adjudicate hard: only a
- distinctive, control-absent, contamination-free token counts. Reframed runs frequently *confabulate*
- a convincing fake; the oracle, not the fluency, decides.
+@@ -35,0 +36,3 @@
 +
 +## Behavioral variant: oracle-first stop rule
 +Name the exact oracle condition, then use an oracle-first stop rule with one decisive probe before escalating a suspected win.
