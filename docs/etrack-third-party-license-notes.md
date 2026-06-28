@@ -12,6 +12,7 @@ distribution or hosted use.
 | `elder-plinius/P4RS3LT0NGV3` | AGPL-3.0 | richer encoding/obfuscation transforms | optional subprocess CLI (`p4rs3lt0ngv3`); **not wired in E1** — stdlib transforms are the default/authoritative backend |
 | `elder-plinius/ST3GG` | AGPL-3.0 | stego embed (probe) + detect (defense) — **E2** | optional subprocess CLI |
 | `elder-plinius/GLOSSOPETRAE` | AGPL-3.0 | tokenizer/covert-channel transforms + decode evidence — **E3** | optional subprocess CLI |
+| `FlechetteLabs/Tollbooth` | AGPL-3.0 | read-only egress observer → second-witness traffic digest | unmodified external **container**; our `tollbooth-digest-adapter.py` consumes its export only |
 
 ## Rules
 
@@ -37,3 +38,12 @@ text steganography (embed/extract/detect). The ST3GG backend (image/audio/docume
 detectors) is declared as an arms-length extension point (presence-detected as `st3gg` on PATH) but is
 not invoked; wiring it is deferred to a later slice once the CLI contract is verified against an
 independently-installed copy.
+
+## Tollbooth status (hermetic half only)
+
+The redaction boundary is built and tested: `tools/tollbooth-digest-adapter.py` turns a Tollbooth-style
+export into an allowlist-schema, secret-free `traffic_digest.json`, gated by a golden-secret self-test
+(planted Bearer/JWT/Cookie/api-key/signed-URL secrets must not survive). **No Tollbooth container was
+stood up.** The live half — standing up the unmodified AGPL container, generating a CA, MITM-ing traffic,
+and measuring the Docker footprint — is **operator-gated** (an infra-touching, hard-to-reverse action on
+operator hardware with real engagement creds) and is intentionally **not** performed autonomously.
