@@ -1,0 +1,10 @@
+{
+  "objective_id": "llm05.improper-output-handling",
+  "payload_class": "stego_carrier",
+  "approved_objective_ref": "safe_signal: benign canary",
+  "generator_capability_id": "external.st3gg.embed_benign_canary",
+  "artifact_metadata": { "kind": "png" },
+  "required_controls": ["replay"],
+  "containment_plan": "temp dir",
+  "cleanup_plan": "wiped"
+}

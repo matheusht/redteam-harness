@@ -317,6 +317,59 @@ def check_capability_must_reject():
                "fixture should be rejected but passed all checks" if not problems else "")
 
 
+PAYLOAD_PROPOSAL_REQUIRED = ["objective_id", "payload_class", "approved_objective_ref",
+                             "generator_capability_id", "artifact_metadata", "required_controls",
+                             "containment_plan", "cleanup_plan", "non_authority_attestation"]
+PAYLOAD_CLASSES = {"text_prompt", "encoded_prompt", "multimodal_artifact", "stego_carrier",
+                   "exploit_poc", "chain_candidate"}
+FORBIDDEN_PROPOSAL_KEYS = ("verdict", "confirmed", "allow", "success")
+
+
+def payload_proposal_problems(obj):
+    """Pure predicate — reasons a payload proposal is malformed (an INERT proposal, never a verdict)."""
+    if not isinstance(obj, dict):
+        return ["not an object"]
+    p = [f"missing {k}" for k in PAYLOAD_PROPOSAL_REQUIRED if k not in obj]
+    p += [f"carries forbidden verdict key {k}" for k in FORBIDDEN_PROPOSAL_KEYS if k in obj]
+    pc = obj.get("payload_class")
+    if pc is not None and pc not in PAYLOAD_CLASSES:
+        p.append(f"payload_class not in enum: {pc}")
+    if "required_controls" in obj and not (isinstance(obj["required_controls"], list) and obj["required_controls"]):
+        p.append("required_controls must be a non-empty list")
+    if "non_authority_attestation" in obj:
+        att = obj["non_authority_attestation"]
+        if not isinstance(att, dict):
+            p.append("non_authority_attestation must be an object")
+        else:
+            for k in ("proposal_only", "executes_nothing", "emits_no_verdict"):
+                if att.get(k) is not True:
+                    p.append(f"non_authority_attestation.{k} must be true")
+    return p
+
+
+def check_payload_proposals():
+    """PG-2: the inert payload-proposal schema gate. Valid example passes; malformed ones must reject."""
+    base = os.path.join(ROOT, "fixtures", "payload-proposals")
+    if not os.path.isdir(base):
+        return
+    print("\n[payload-proposals] inert proposal schema gate (PG-2)")
+    for fn in sorted(os.listdir(base)):
+        fp = os.path.join(base, fn)
+        if not (fn.endswith(".json") and os.path.isfile(fp)):
+            continue
+        problems = payload_proposal_problems(load_json(fp))
+        record(not problems, f"payload-proposals/{fn}: valid proposal",
+               "; ".join(problems) if problems else "")
+    mr = os.path.join(base, "_must_reject")
+    if os.path.isdir(mr):
+        for fn in sorted(os.listdir(mr)):
+            if not fn.endswith(".json"):
+                continue
+            problems = payload_proposal_problems(load_json(os.path.join(mr, fn)))
+            record(bool(problems), f"payload-proposals/_must_reject/{fn}: rejected [{'; '.join(problems) or 'NONE'}]",
+                   "malformed proposal should be rejected but passed" if not problems else "")
+
+
 def check_oracles():
     print("\n[oracles] skills/oracles/")
     base = os.path.join(ROOT, "skills", "oracles")
@@ -538,6 +591,7 @@ def main():
     check_capability_classes()
     check_capability_scope_flags()
     check_capability_must_reject()
+    check_payload_proposals()
     check_oracles()
     check_casebooks(pattern_ids)
     check_secrets()
