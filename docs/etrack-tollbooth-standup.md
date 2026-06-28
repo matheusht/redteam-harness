@@ -52,6 +52,26 @@ a mismatch or unexpected host is a **flag-only sensor signal**, never a verdict.
 - Footprint measured and acceptable; minimal config used if the full stack is heavy.
 - Raw store proven ephemeral (tmpfs/wiped); only the redacted digest + sanitized evidence enter a plane.
 
+## Live stand-up validation (sandbox, 2026-06-27)
+
+A minimal observe-only stand-up was run **once in a sandbox** to validate the pipeline end-to-end. The
+footprint is a sandbox number on tied-up hardware — **NOT representative**; measure on your own box/
+engagement workload.
+
+- Brought up only `proxy` + `backend` (skipped frontend/jupyter/agent); ephemeral persistence via a
+  non-invasive `docker-compose.override.yml` (`TOLLBOOTH_PERSIST_*=false`); smallest refusal model
+  (`Xenova/nli-deberta-v3-xsmall`); Glossopetrae integration off. Original repo files untouched.
+- **Footprint (sandbox, not representative):** proxy ~54 MiB RAM, backend ~392 MiB RAM (~446 MiB
+  runtime); images ~2.5 GB (backend 1.77 GB, proxy 364 MB, mitmproxy base 405 MB); build ~59 s with
+  cached base images. Observe-only (no rules) confirmed; proxy log clean.
+- Routed one **benign** call through the proxy; `GET :2000/api/traffic` returns the export.
+- **Native export shape confirmed:** `{"traffic":[{flow_id,timestamp,is_llm_api,request:{method,host,
+  port,url,path,headers,content},response:{status_code,reason,headers,content}}],"total":N}`.
+  `tools/tollbooth-digest-adapter.py` now **normalizes this native shape** (previously it assumed a flat
+  shape); the live export redacted to a **secret-free** digest (`host/path/status` kept; headers/content
+  dropped). Containers, images, the arms-length clone, and the generated CA were **torn down** afterward
+  and Docker Desktop returned to its prior state.
+
 ## What this unblocks
 
 Once the operator confirms the above, the only remaining wiring is pointing

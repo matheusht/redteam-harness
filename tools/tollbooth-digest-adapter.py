@@ -92,6 +92,33 @@ def scan_secrets(text):
     return hits
 
 
+def _is_native_tollbooth(raw):
+    """The real Tollbooth REST export shape: {"traffic": [...], "total": N} with nested request/response.
+    (Confirmed against a live `GET /api/traffic` from an unmodified Tollbooth container, 2026-06-27.)"""
+    return isinstance(raw, dict) and "traffic" in raw
+
+
+def normalize_export(raw):
+    """Map the native Tollbooth export onto the flat flow shape redact_flow projects. Headers/content
+    (where secrets live) are dropped here by omission — never carried into the digest."""
+    if not _is_native_tollbooth(raw):
+        return raw  # already flat {"flows": [...]}
+    flows = []
+    for f in raw.get("traffic", []):
+        req = f.get("request") or {}
+        resp = f.get("response") or {}
+        flows.append({
+            "timestamp": f.get("timestamp"),
+            "method": req.get("method"),
+            "host": req.get("host"),
+            "path": req.get("path") or req.get("url"),   # _strip_query removes any signed-URL query
+            "status": resp.get("status_code"),
+            "model": f.get("model") if f.get("is_llm_api") else None,
+            "token_counts": (f.get("usage") if f.get("is_llm_api") else None) or {},
+        })
+    return {"flows": flows}
+
+
 def _golden_export():
     """A synthetic Tollbooth export seeded with fake secrets in every dangerous field."""
     return {"flows": [{
@@ -112,6 +139,21 @@ def _golden_export():
     }]}
 
 
+def _golden_native_export():
+    """The real native Tollbooth shape, seeded with fake secrets in nested request headers/content."""
+    return {"total": 1, "traffic": [{
+        "flow_id": "x1", "timestamp": "2026-06-27T00:00:00Z", "is_llm_api": False,
+        "request": {
+            "method": "POST", "host": "api.example.com", "port": 443,
+            "url": "https://api.example.com/v1/messages?X-Amz-Signature=DEADBEEFNATIVE",
+            "path": "/v1/messages",
+            "headers": {"Authorization": "Bearer sk-live-NATIVE1111", "Cookie": "s=eyJhbGciNATIVE"},
+            "content": "{\"key\":\"sk-test-NATIVE2222\"}",
+        },
+        "response": {"status_code": 200, "reason": "OK", "headers": {}, "content": "ok"},
+    }]}
+
+
 def self_test():
     digest = build_digest(_golden_export())          # raises if any secret survives
     blob = json.dumps(digest)
@@ -128,9 +170,21 @@ def self_test():
           f"({len(survived)} survived)")
     print(f"  {'ok  ' if kept_ok else 'FAIL'} allowlist fields retained (host/path-no-query/model/tokens)")
     print(f"  ok   query string stripped from path; headers/bodies dropped")
-    if survived or not kept_ok:
+    # native Tollbooth shape (real /api/traffic export): redaction must hold after normalization
+    native = build_digest(normalize_export(_golden_native_export()))
+    nblob = json.dumps(native)
+    nplanted = ["sk-live-NATIVE1111", "eyJhbGciNATIVE", "sk-test-NATIVE2222", "DEADBEEFNATIVE",
+                "Authorization", "Cookie"]
+    nsurvived = [p for p in nplanted if p in nblob]
+    nkept = native["flows"][0]["host"] == "api.example.com" and native["flows"][0]["path"] == "/v1/messages"
+    print(f"  {'ok  ' if not nsurvived else 'FAIL'} native shape: no planted secret in digest "
+          f"({len(nsurvived)} survived)")
+    print(f"  {'ok  ' if nkept else 'FAIL'} native shape: allowlist fields retained after normalize")
+    if survived or not kept_ok or nsurvived or not nkept:
         if survived:
             print(f"  FAIL survived: {survived}")
+        if nsurvived:
+            print(f"  FAIL native survived: {nsurvived}")
         print("TOLLBOOTH-DIGEST-ADAPTER: FAIL")
         return 1
     print("TOLLBOOTH-DIGEST-ADAPTER: PASS")
@@ -148,7 +202,7 @@ def main():
         return self_test()
     if a.export:
         with open(a.export) as fh:
-            digest = build_digest(json.load(fh))
+            digest = build_digest(normalize_export(json.load(fh)))
         out = json.dumps(digest, indent=2)
         if a.out:
             with open(a.out, "w") as fh:

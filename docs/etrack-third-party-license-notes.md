@@ -61,6 +61,8 @@ sanitized, advisory. `autonomous_gap_closure_count` stays 0.
 The redaction boundary is built and tested: `tools/tollbooth-digest-adapter.py` turns a Tollbooth-style
 export into an allowlist-schema, secret-free `traffic_digest.json`, gated by a golden-secret self-test
 (planted Bearer/JWT/Cookie/api-key/signed-URL secrets must not survive). **No Tollbooth container was
-stood up.** The live half — standing up the unmodified AGPL container, generating a CA, MITM-ing traffic,
-and measuring the Docker footprint — is **operator-gated** (an infra-touching, hard-to-reverse action on
-operator hardware with real engagement creds) and is intentionally **not** performed autonomously.
+stood up.** The live half was **validated once in a sandbox** (operator-authorized): an unmodified `proxy`+`backend`
+observer was built, run observe-only/ephemeral, exercised with a benign call, redacted end-to-end to a
+secret-free digest, then fully torn down (containers/images/clone/CA removed; Docker returned to prior
+state). Footprint + the confirmed native export shape are in `docs/etrack-tollbooth-standup.md`. Real
+engagement footprint must still be measured on operator hardware. Nothing from Tollbooth was vendored.
