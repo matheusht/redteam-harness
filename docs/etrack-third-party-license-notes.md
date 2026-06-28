@@ -44,8 +44,9 @@ independently-installed copy.
 E3 wires **no** external tool. `tools/covert-channel-converter.py` uses only the Python stdlib for
 homoglyph / constructed-script / token-break channels. The GLOSSOPETRAE backend (procedural conlang,
 glyph rendering, richer channels) is declared as an arms-length extension point (presence-detected as
-`glossopetrae` on PATH) but is not invoked. The defensive decode-in-traffic side is deferred to the
-operator-gated Tollbooth live stand-up.
+`glossopetrae` on PATH) but is not invoked. The **decode-evidence core is built** hermetically
+(`tools/covert-channel-evidence.py`, golden-tested); only the live traffic *source* (the operator-gated
+Tollbooth container) is deferred — see `docs/etrack-tollbooth-standup.md`.
 
 ## E4 status
 
