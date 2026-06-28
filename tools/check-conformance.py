@@ -317,7 +317,7 @@ def check_capability_must_reject():
                "fixture should be rejected but passed all checks" if not problems else "")
 
 
-PAYLOAD_PROPOSAL_REQUIRED = ["objective_id", "payload_class", "approved_objective_ref",
+PAYLOAD_PROPOSAL_REQUIRED = ["objective_id", "payload_class", "risk_tier", "approved_objective_ref",
                              "generator_capability_id", "artifact_metadata", "required_controls",
                              "containment_plan", "cleanup_plan", "non_authority_attestation"]
 PAYLOAD_CLASSES = {"text_prompt", "encoded_prompt", "multimodal_artifact", "stego_carrier",

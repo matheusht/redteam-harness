@@ -217,4 +217,3 @@ Stop or redesign if:
 - No harmful-payload corpus.
 - No external oracle/judge capability.
 - No Plane-1 auto-promotion.
-

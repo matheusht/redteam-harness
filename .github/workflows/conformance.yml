@@ -59,3 +59,16 @@ jobs:
         run: python3 tools/run-hermetic-fakemodel.py --self-test
       - name: Evaluator qualification runner (self-test)
         run: python3 tools/run-qualification.py --self-test
+      - name: E-track converters + sensors (self-tests)
+        run: |
+          python3 tools/obfuscation-converter.py --self-test
+          python3 tools/stego-converter.py --self-test
+          python3 tools/covert-channel-converter.py --self-test
+          python3 tools/covert-channel-evidence.py --self-test
+          python3 tools/tollbooth-digest-adapter.py --self-test
+          python3 tools/casebook-retrieval-index.py --self-test
+          python3 tools/encoding-robustness-eval.py --self-test
+      - name: Payload-generator lane (PG-3A self-tests)
+        run: |
+          python3 tools/generate-payload-proposal.py --self-test
+          python3 tools/payload-proposal-hermetic-test.py --self-test
