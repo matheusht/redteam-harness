@@ -77,7 +77,7 @@ def collect_pattern_ids():
     return ids
 
 
-def check_cards(subdir, pattern_ids):
+def check_cards(subdir, pattern_ids, cap_ids):
     print(f"\n[cards] skills/{subdir}/")
     for name, path in list_cards(subdir):
         text = open(path).read()
@@ -99,6 +99,7 @@ def check_cards(subdir, pattern_ids):
                        f"{subdir}/{name}: activation.{tier}")
 
         check_routes_to(name, subdir, fm, pattern_ids)
+        check_optional_capabilities(name, subdir, fm, cap_ids)
 
 
 def check_routes_to(name, subdir, fm, pattern_ids):
@@ -124,6 +125,52 @@ def check_routes_to(name, subdir, fm, pattern_ids):
                    "no such vuln card" if not os.path.isfile(p) else "")
         else:
             record(False, f"{subdir}/{name}: route form {e}", "unknown route form (use stub: / pattern. / vulns/)")
+
+
+def collect_capability_ids():
+    ids = set()
+    path = os.path.join(ROOT, "capabilities", "registry.yaml")
+    if os.path.isfile(path):
+        for m in re.finditer(r"^\s*-\s*id:\s*([A-Za-z0-9._-]+)", open(path).read(), re.MULTILINE):
+            ids.add(m.group(1))
+    return ids
+
+
+def _capability_blocks(text):
+    return [(m.group(1), m.group(2)) for m in re.finditer(
+        r"^\s*-\s*id:\s*([A-Za-z0-9._-]+)\s*\n(.*?)(?=^\s*-\s*id:|\Z)", text, re.MULTILINE | re.DOTALL)]
+
+
+def check_capabilities():
+    """The narrow keyhole: every external capability must be sensor_only and declare its fences."""
+    print("\n[capabilities] external capability registry")
+    path = os.path.join(ROOT, "capabilities", "registry.yaml")
+    if not os.path.isfile(path):
+        return
+    text = open(path).read()
+    blocks = _capability_blocks(text)
+    record(len(blocks) > 0, "capabilities: registry non-empty")
+    for cid, body in blocks:
+        record(re.search(r"^\s*authority:\s*sensor_only\s*$", body, re.MULTILINE) is not None,
+               f"capabilities/{cid}: authority is sensor_only (never oracle/judge)")
+        record(re.search(r"^\s*forbidden_actions:\s*\[", body, re.MULTILINE) is not None,
+               f"capabilities/{cid}: declares forbidden_actions")
+        record(re.search(r"^\s*source:\s*\S+", body, re.MULTILINE) is not None,
+               f"capabilities/{cid}: declares source")
+        record(re.search(r"^\s*license:\s*\S+", body, re.MULTILINE) is not None,
+               f"capabilities/{cid}: declares license")
+    bad = re.findall(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", text, re.MULTILINE)
+    record(not bad, "capabilities: no entry claims oracle/judge authority", f"found {bad}" if bad else "")
+
+
+def check_optional_capabilities(name, subdir, fm, cap_ids):
+    line = re.search(r"^optional_capabilities:\s*(\[[^\]]*\])", fm, re.MULTILINE)
+    if not line:
+        return
+    entries = [e.strip().strip('"').strip("'") for e in line.group(1)[1:-1].split(",") if e.strip()]
+    for e in entries:
+        record(e in cap_ids, f"{subdir}/{name}: optional_capability resolves {e}",
+               "no such capability id" if e not in cap_ids else "")
 
 
 def check_oracles():
@@ -338,9 +385,12 @@ def check_adversarial_candidates():
 
 def main():
     pattern_ids = collect_pattern_ids()
+    cap_ids = collect_capability_ids()
     print(f"known pattern ids: {sorted(pattern_ids)}")
+    print(f"known capability ids: {sorted(cap_ids)}")
     for subdir in ("patterns", "vulns", "techniques"):
-        check_cards(subdir, pattern_ids)
+        check_cards(subdir, pattern_ids, cap_ids)
+    check_capabilities()
     check_oracles()
     check_casebooks(pattern_ids)
     check_secrets()
