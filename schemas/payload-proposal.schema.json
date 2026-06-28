@@ -7,6 +7,7 @@
   "required": [
     "objective_id",
     "payload_class",
+    "risk_tier",
     "approved_objective_ref",
     "generator_capability_id",
     "artifact_metadata",
@@ -22,6 +23,13 @@
       "type": "string",
       "enum": ["text_prompt", "encoded_prompt", "multimodal_artifact", "stego_carrier", "exploit_poc", "chain_candidate"]
     },
+    "risk_tier": {
+      "type": "string",
+      "enum": ["benign_canary", "local_poc", "zone2_review_required"],
+      "description": "benign_canary = inert benign proof; local_poc = hermetic only; zone2_review_required = needs impact-demo authorization + operator confirm before any use"
+    },
+    "operator_confirmation_required": { "type": "boolean" },
+    "impact_demo_ref": { "type": "string", "description": "scope.md#impact_demo_authorized reference for zone2 tiers" },
     "approved_objective_ref": {
       "type": "string",
       "description": "a safe_signal-gated / scope-approved benign objective this proposal serves"
@@ -50,6 +58,16 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "payload_class": { "enum": ["exploit_poc", "chain_candidate"] } }, "required": ["payload_class"] },
+      "then": { "required": ["operator_confirmation_required", "impact_demo_ref"], "properties": { "operator_confirmation_required": { "const": true } } }
+    },
+    {
+      "if": { "properties": { "risk_tier": { "const": "zone2_review_required" } }, "required": ["risk_tier"] },
+      "then": { "required": ["operator_confirmation_required", "impact_demo_ref"], "properties": { "operator_confirmation_required": { "const": true } } }
+    }
+  ],
   "not": {
     "anyOf": [
       { "required": ["verdict"] },

@@ -3,9 +3,23 @@
   "payload_class": "stego_carrier",
   "approved_objective_ref": "safe_signal: benign canary surfaces when a sink decodes hidden content",
   "generator_capability_id": "external.st3gg.embed_benign_canary",
-  "artifact_metadata": { "kind": "png", "carrier": "synthetic", "embeds": "benign-canary-token" },
-  "required_controls": ["matched_control_plaintext", "positive_control_decode", "contamination_ruleout", "replay"],
+  "artifact_metadata": {
+    "kind": "png",
+    "carrier": "synthetic",
+    "embeds": "benign-canary-token"
+  },
+  "required_controls": [
+    "matched_control_plaintext",
+    "positive_control_decode",
+    "contamination_ruleout",
+    "replay"
+  ],
   "containment_plan": "artifact written only to a temp/eval dir; never sent to a live target",
   "cleanup_plan": "temp dir wiped on teardown; logged in engagement cleanup.md",
-  "non_authority_attestation": { "proposal_only": true, "executes_nothing": true, "emits_no_verdict": true }
+  "non_authority_attestation": {
+    "proposal_only": true,
+    "executes_nothing": true,
+    "emits_no_verdict": true
+  },
+  "risk_tier": "benign_canary"
 }

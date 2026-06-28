@@ -3,8 +3,17 @@
   "payload_class": "stego_carrier",
   "approved_objective_ref": "safe_signal: benign canary",
   "generator_capability_id": "external.st3gg.embed_benign_canary",
-  "artifact_metadata": { "kind": "png" },
-  "required_controls": ["replay"],
+  "artifact_metadata": {
+    "kind": "png"
+  },
+  "required_controls": [
+    "replay"
+  ],
   "cleanup_plan": "wiped",
-  "non_authority_attestation": { "proposal_only": true, "executes_nothing": true, "emits_no_verdict": true }
+  "non_authority_attestation": {
+    "proposal_only": true,
+    "executes_nothing": true,
+    "emits_no_verdict": true
+  },
+  "risk_tier": "benign_canary"
 }

@@ -322,6 +322,8 @@ PAYLOAD_PROPOSAL_REQUIRED = ["objective_id", "payload_class", "approved_objectiv
                              "containment_plan", "cleanup_plan", "non_authority_attestation"]
 PAYLOAD_CLASSES = {"text_prompt", "encoded_prompt", "multimodal_artifact", "stego_carrier",
                    "exploit_poc", "chain_candidate"}
+RISK_TIERS = {"benign_canary", "local_poc", "zone2_review_required"}
+ZONE2_PAYLOAD_CLASSES = {"exploit_poc", "chain_candidate"}
 FORBIDDEN_PROPOSAL_KEYS = ("verdict", "confirmed", "allow", "success")
 
 
@@ -344,6 +346,15 @@ def payload_proposal_problems(obj):
             for k in ("proposal_only", "executes_nothing", "emits_no_verdict"):
                 if att.get(k) is not True:
                     p.append(f"non_authority_attestation.{k} must be true")
+    rt = obj.get("risk_tier")
+    if rt is not None and rt not in RISK_TIERS:
+        p.append(f"risk_tier not in enum: {rt}")
+    # zone-2 tiers / exploit classes require operator confirmation + an impact-demo reference, never auto-run
+    if pc in ZONE2_PAYLOAD_CLASSES or rt == "zone2_review_required":
+        if obj.get("operator_confirmation_required") is not True:
+            p.append("zone2 payload_class/risk_tier requires operator_confirmation_required: true")
+        if not (isinstance(obj.get("impact_demo_ref"), str) and obj["impact_demo_ref"].strip()):
+            p.append("zone2 payload_class/risk_tier requires an impact_demo_ref")
     return p
 
 
