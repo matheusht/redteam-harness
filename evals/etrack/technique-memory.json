@@ -1,0 +1,71 @@
+{
+  "schema": "etrack.technique-memory.v1",
+  "advisory": true,
+  "runs": [
+    {
+      "run_id": "seed-001",
+      "target": "hermetic-encoding-fixture",
+      "recorded_via": "hermetic-fixture",
+      "deterministic": true,
+      "advisory": true,
+      "measurements": [
+        {
+          "transform": "base64",
+          "defense_tier": "naive",
+          "control_held": true,
+          "encoded_bypassed": true,
+          "gap": true
+        },
+        {
+          "transform": "homoglyph",
+          "defense_tier": "naive",
+          "control_held": true,
+          "encoded_bypassed": true,
+          "gap": true
+        },
+        {
+          "transform": "token-break",
+          "defense_tier": "naive",
+          "control_held": true,
+          "encoded_bypassed": true,
+          "gap": true
+        },
+        {
+          "transform": "constructed-script",
+          "defense_tier": "naive",
+          "control_held": true,
+          "encoded_bypassed": true,
+          "gap": true
+        },
+        {
+          "transform": "base64",
+          "defense_tier": "normalizing",
+          "control_held": true,
+          "encoded_bypassed": true,
+          "gap": true
+        },
+        {
+          "transform": "homoglyph",
+          "defense_tier": "normalizing",
+          "control_held": true,
+          "encoded_bypassed": false,
+          "gap": false
+        },
+        {
+          "transform": "token-break",
+          "defense_tier": "normalizing",
+          "control_held": true,
+          "encoded_bypassed": false,
+          "gap": false
+        },
+        {
+          "transform": "constructed-script",
+          "defense_tier": "normalizing",
+          "control_held": true,
+          "encoded_bypassed": true,
+          "gap": true
+        }
+      ]
+    }
+  ]
+}

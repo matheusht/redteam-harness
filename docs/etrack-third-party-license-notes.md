@@ -47,6 +47,14 @@ glyph rendering, richer channels) is declared as an arms-length extension point 
 `glossopetrae` on PATH) but is not invoked. The defensive decode-in-traffic side is deferred to the
 operator-gated Tollbooth live stand-up.
 
+## E4 status
+
+E4 wires **no** external tool. `tools/encoding-robustness-eval.py` imports the harness's own stdlib
+converters and runs them against a deterministic hermetic fake target. It is a **fixture** that proves
+the safety-generalization-gap measurement plumbing; it is **not** evidence about real models, optimizes
+nothing automatically, and emits no verdict. `evals/etrack/technique-memory.json` is append-only,
+sanitized, advisory. `autonomous_gap_closure_count` stays 0.
+
 ## Tollbooth status (hermetic half only)
 
 The redaction boundary is built and tested: `tools/tollbooth-digest-adapter.py` turns a Tollbooth-style
