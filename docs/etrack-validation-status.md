@@ -27,7 +27,8 @@ tooling / sensors / fixtures).
 | memory retrieval index | self-test + firewall (read-only, no verdict) | **proven** read-only/no-verdict |
 | E4 robustness eval + technique memory | hermetic fixture self-test | **plumbing proven**; it is a FIXTURE — **NOT** evidence about real models |
 | Capability registry (C1–C3 + hardening) | conformance + **5 sensor/converter gate-bite fixtures** | contract keyhole **proven to fail closed**; **no runtime** (deferred by design) |
-| Payload-generator lane (PG-0/1/2) | classes.yaml + conformance + **4 payload-gen gate-bite fixtures** + payload-proposal schema gate (1 valid / 3 must-reject) | **contract/schema/fixtures only**, proposal_only, gated; **no runtime generator, no external tool, no execution, no harmful corpus** (PG-3 deferred) |
+| Payload-generator lane (PG-0/1/2) | classes.yaml + conformance + **4 payload-gen gate-bite fixtures** + payload-proposal schema gate (1 valid / 4 must-reject incl. risk_tier) | **contract/schema/fixtures only**, proposal_only, gated; **no external tool, no execution, no harmful corpus** |
+| Payload-proposal generator (PG-3A) | `generate-payload-proposal.py` self-test + `payload-proposal-hermetic-test.py` | **benign-only** local generator (no execution, no external tool, refuses exploit/chain kinds, self-validates vs the CI predicate); hermetic test **proves a proposal never acts like a verdict** (same proposal → target-dependent oracle verdict; single run never auto-confirmed). risk_tier hardens exploit/chain behind operator-confirm + impact_demo_ref |
 
 ## Gate-bites proven (capability keyhole)
 
