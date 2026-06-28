@@ -6,6 +6,7 @@ type: technique
 composes_with_any_vuln: true
 operates_only_against: safe_signal-gated objective
 converter: tools/stego-converter.py
+optional_capabilities: [external.st3gg.detect]
 ---
 
 # Steganographic input / hidden-data evasion (hide the ask in the carrier)

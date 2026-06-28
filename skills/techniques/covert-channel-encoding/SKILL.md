@@ -6,6 +6,7 @@ type: technique
 composes_with_any_vuln: true
 operates_only_against: safe_signal-gated objective
 converter: tools/covert-channel-converter.py
+optional_capabilities: [external.gloss.channels, external.p4.transform]
 ---
 
 # Covert-channel encoding (route around the channel the defense watches)

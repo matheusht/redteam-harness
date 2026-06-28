@@ -6,6 +6,7 @@ type: technique
 composes_with_any_vuln: true
 operates_only_against: safe_signal-gated objective
 converter: tools/obfuscation-converter.py
+optional_capabilities: [external.p4.transform]
 ---
 
 # Obfuscation / encoding evasion (change the *surface form*, not the task)
