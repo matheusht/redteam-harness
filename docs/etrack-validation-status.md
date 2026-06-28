@@ -26,7 +26,8 @@ tooling / sensors / fixtures).
 | Tollbooth digest adapter | golden-secret (flat + native) + **live unmodified container** | redaction **proven** (incl. real export); engagement footprint **UNMEASURED** (sandbox only) |
 | memory retrieval index | self-test + firewall (read-only, no verdict) | **proven** read-only/no-verdict |
 | E4 robustness eval + technique memory | hermetic fixture self-test | **plumbing proven**; it is a FIXTURE — **NOT** evidence about real models |
-| Capability registry (C1–C3 + hardening) | conformance + **5 permanent gate-bite fixtures** | contract keyhole **proven to fail closed**; **no runtime** (deferred by design) |
+| Capability registry (C1–C3 + hardening) | conformance + **5 sensor/converter gate-bite fixtures** | contract keyhole **proven to fail closed**; **no runtime** (deferred by design) |
+| Payload-generator lane (PG-0/1/2) | classes.yaml + conformance + **4 payload-gen gate-bite fixtures** + payload-proposal schema gate (1 valid / 3 must-reject) | **contract/schema/fixtures only**, proposal_only, gated; **no runtime generator, no external tool, no execution, no harmful corpus** (PG-3 deferred) |
 
 ## Gate-bites proven (capability keyhole)
 
@@ -38,9 +39,11 @@ tooling / sensors / fixtures).
 | dangerous-action denylist | `agent` placed in `allowed_actions` | FAIL ✓ |
 | allowed/forbidden disjoint | same action in both lists | FAIL ✓ |
 
-Conformance: **161 checks, 0 failing**. All five are permanent fixtures in
-`fixtures/capabilities/_must_reject/` — CI re-asserts each fails for its intended reason, and a meta-gate
-fails if any fixture is ever accidentally made valid.
+Conformance: **192 checks, 0 failing**. The keyhole now has **9** permanent fixtures in
+`fixtures/capabilities/_must_reject/` (5 sensor/converter + 4 payload-generator) plus the
+payload-proposal gate in `fixtures/payload-proposals/` — CI re-asserts each fails for its intended
+reason, and a meta-gate fails if any fixture is ever accidentally made valid. A well-formed
+payload_generator entry and a valid payload proposal both pass (the gates are precise, not blanket).
 
 ## Known limits (do not overstate)
 
