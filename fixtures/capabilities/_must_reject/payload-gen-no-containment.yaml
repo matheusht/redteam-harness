@@ -1,0 +1,14 @@
+# MUST be rejected: payload_generator missing a containment_plan.
+capabilities:
+  - id: external.bad.pg_nocontain
+    class: payload_generator
+    source: TEST
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: proposal_only
+    payload_class: stego_carrier
+    allowed_actions: [propose_artifact]
+    forbidden_actions: [jailbreak_templates, injector]
+    requires: [signed_scope, scope_allows_payload_generation, cleanup_plan, oracle_separation]
+    output: candidate artifact proposal + required controls

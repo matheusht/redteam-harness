@@ -1,0 +1,15 @@
+# MUST be rejected: payload_generator claims success/verdict authority (it may only PROPOSE).
+capabilities:
+  - id: external.bad.pg_verdict
+    class: payload_generator
+    source: TEST
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: proposal_only
+    payload_class: stego_carrier
+    allowed_actions: [propose_artifact]
+    forbidden_actions: [jailbreak_templates, injector]
+    requires: [signed_scope, scope_allows_payload_generation, containment_plan, cleanup_plan, oracle_separation]
+    emits: [confirmed, success]
+    output: candidate artifact proposal + required controls
