@@ -155,9 +155,40 @@ def _cap_list(body, key):
     return [x.strip().strip('"').strip("'") for x in m.group(1).split(",") if x.strip()] if m else []
 
 
+def _get_field(body, key):
+    m = re.search(rf"^\s*{key}:\s*(\S+)", body, re.MULTILINE)
+    return m.group(1).strip() if m else None
+
+
+def _payload_generator_problems(body):
+    """A payload_generator entry: proposal-only, gated, never a judge or executor."""
+    p = []
+    auth = _get_field(body, "authority")
+    if auth != "proposal_only":
+        p.append("payload_generator authority must be proposal_only")
+    if auth in ("oracle", "judge", "verdict", "confirmed", "allow", "success"):
+        p.append(f"payload_generator claims forbidden authority: {auth}")
+    if re.search(r"^\s*default:\s*disabled\s*$", body, re.MULTILINE) is None:
+        p.append("payload_generator not default: disabled")
+    if re.search(r"^\s*forbidden_actions:\s*\[", body, re.MULTILINE) is None:
+        p.append("no forbidden_actions")
+    for gate in ("scope_allows_payload_generation", "containment_plan", "oracle_separation"):
+        if gate not in body:
+            p.append(f"payload_generator missing required gate: {gate}")
+    if _get_field(body, "payload_class") is None and "declared_payload_class" not in body:
+        p.append("payload_generator missing declared payload_class")
+    bad_emit = sorted(set(_cap_list(body, "emits")) & {"confirmed", "allow", "verdict", "success"})
+    if bad_emit:
+        p.append(f"payload_generator emits forbidden verdict tokens: {bad_emit}")
+    return p
+
+
 def capability_entry_problems(body):
-    """Pure predicate — reasons a single registry entry violates the keyhole (empty list = clean).
-    The single source of truth reused by both check_capabilities and the _must_reject corpus."""
+    """Pure predicate — reasons a single registry entry violates its class contract (empty = clean).
+    Class-aware: payload_generator -> proposal-only + gated; everything else -> the sensor_only keyhole.
+    The single source of truth reused by check_capabilities and the _must_reject corpus."""
+    if _get_field(body, "class") == "payload_generator":
+        return _payload_generator_problems(body)
     p = []
     if re.search(r"^\s*authority:\s*sensor_only\s*$", body, re.MULTILINE) is None:
         p.append("authority not sensor_only")
@@ -176,6 +207,34 @@ def capability_entry_problems(body):
     if allowed & forbidden:
         p.append(f"allowed/forbidden overlap: {sorted(allowed & forbidden)}")
     return p
+
+
+def check_capability_classes():
+    """Validate capabilities/classes.yaml — the authority model. payload_generator must be proposal-only,
+    default-disabled, gated, and forbidden from oracle/judge/verdict authority; only `oracle` may judge."""
+    print("\n[capabilities] capability classes (authority model)")
+    path = os.path.join(ROOT, "capabilities", "classes.yaml")
+    if not os.path.isfile(path):
+        return
+    blocks = _capability_blocks(open(path).read())
+    record(len(blocks) > 0, "classes: non-empty")
+    by_id = {cid: body for cid, body in blocks}
+    for cid, body in blocks:
+        record(_get_field(body, "authority") is not None, f"classes/{cid}: declares authority")
+        if cid != "oracle":
+            record(_get_field(body, "authority") not in ("oracle", "judge", "verdict"),
+                   f"classes/{cid}: non-oracle class doesn't claim oracle/judge authority")
+    pg = by_id.get("payload_generator")
+    if pg is not None:
+        record(_get_field(pg, "authority") == "proposal_only",
+               "classes/payload_generator: authority is proposal_only")
+        record(re.search(r"^\s*default:\s*disabled\s*$", pg, re.MULTILINE) is not None,
+               "classes/payload_generator: default disabled")
+        for gate in ("signed_scope", "scope_allows_payload_generation", "declared_payload_class",
+                     "containment_plan", "cleanup_plan", "oracle_separation"):
+            record(gate in pg, f"classes/payload_generator: requires {gate}")
+        for forb in ("oracle", "judge", "verdict", "confirmed", "allow"):
+            record(forb in pg, f"classes/payload_generator: forbids {forb} authority")
 
 
 def check_capabilities():
@@ -202,11 +261,15 @@ def scope_flag_problems(registry_text, template_text):
 
 
 def check_capability_scope_flags():
-    reg = os.path.join(ROOT, "capabilities", "registry.yaml")
     tmpl = os.path.join(ROOT, "engagements", "_TEMPLATE", "scope.md")
-    if not (os.path.isfile(reg) and os.path.isfile(tmpl)):
+    if not os.path.isfile(tmpl):
         return
-    problems = scope_flag_problems(open(reg).read(), open(tmpl).read())
+    src = ""
+    for fn in ("registry.yaml", "classes.yaml"):
+        fp = os.path.join(ROOT, "capabilities", fn)
+        if os.path.isfile(fp):
+            src += open(fp).read() + "\n"
+    problems = scope_flag_problems(src, open(tmpl).read())
     record(not problems, "capabilities: every required scope flag is declared in _TEMPLATE/scope.md",
            "; ".join(problems) if problems else "")
 
@@ -472,6 +535,7 @@ def main():
     for subdir in ("patterns", "vulns", "techniques"):
         check_cards(subdir, pattern_ids, cap_ids)
     check_capabilities()
+    check_capability_classes()
     check_capability_scope_flags()
     check_capability_must_reject()
     check_oracles()

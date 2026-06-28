@@ -11,8 +11,29 @@ toolbox. It reaches them only through a **narrow keyhole**: the constrained capa
 > capability emits a transformed benign canary or evidence. It never emits a verdict, never confirms a
 > finding, never authorizes a candidate. The oracle/broker remain authoritative.
 
-This is conformance-enforced: every registry entry must declare `authority: sensor_only`; no entry may
-claim `oracle`/`judge`/`authoritative`/`verdict` authority (`tools/check-conformance.py`).
+This is conformance-enforced: every sensor/converter registry entry must declare `authority: sensor_only`;
+no entry may claim `oracle`/`judge`/`authoritative`/`verdict` authority (`tools/check-conformance.py`).
+
+## Capability classes (`capabilities/classes.yaml`)
+
+A capability's **class** fixes the maximum authority it may ever hold:
+
+| Class | Authority | Notes |
+| --- | --- | --- |
+| `sensor` | `sensor_only` | observe / decode / summarize / redact |
+| `converter` | `sensor_only` | transform a benign canary or evidence artifact (the existing keyhole) |
+| `payload_generator` | `proposal_only` | **propose** candidate artifacts for an approved objective — never execute, never judge, never emit a verdict |
+| `executor` | `broker_mediated` | execute a payload/action — FUTURE, review-required, **not built** |
+| `oracle` | `broker_oracle_only` | decide truth/success — external tools **forbidden** from this class |
+
+**The `payload_generator` lane (contract-only — PG-0/1/2).** It is a *separate, stricter* lane, not a
+relaxation of the keyhole. A payload generator only **proposes**; the broker/oracle remain authoritative.
+Conformance enforces, for any `class: payload_generator` entry: `authority: proposal_only`,
+`default: disabled`, the required gates (`scope_allows_payload_generation`, `containment_plan`,
+`oracle_separation`, a declared `payload_class`, signed scope), `forbidden_actions` declared, and that it
+**never** claims `oracle`/`judge`/`verdict`/`confirmed`/`allow`/`success` authority. There is **no runtime
+generator, no external tool, no live execution, and no harmful-payload corpus** — PG-3 (a first hermetic
+generator) is deferred and separately gated. See `docs/post-phase14-payload-generation-capability-plan.md`.
 
 ## Flow
 
