@@ -155,6 +155,29 @@ def _cap_list(body, key):
     return [x.strip().strip('"').strip("'") for x in m.group(1).split(",") if x.strip()] if m else []
 
 
+def capability_entry_problems(body):
+    """Pure predicate — reasons a single registry entry violates the keyhole (empty list = clean).
+    The single source of truth reused by both check_capabilities and the _must_reject corpus."""
+    p = []
+    if re.search(r"^\s*authority:\s*sensor_only\s*$", body, re.MULTILINE) is None:
+        p.append("authority not sensor_only")
+    if re.search(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", body, re.MULTILINE):
+        p.append("claims oracle/judge authority")
+    if re.search(r"^\s*forbidden_actions:\s*\[", body, re.MULTILINE) is None:
+        p.append("no forbidden_actions")
+    if re.search(r"^\s*source:\s*\S+", body, re.MULTILINE) is None:
+        p.append("no source")
+    if re.search(r"^\s*license:\s*\S+", body, re.MULTILINE) is None:
+        p.append("no license")
+    allowed = set(_cap_list(body, "allowed_actions"))
+    forbidden = set(_cap_list(body, "forbidden_actions"))
+    if allowed & DANGEROUS_ACTIONS:
+        p.append(f"dangerous in allowed_actions: {sorted(allowed & DANGEROUS_ACTIONS)}")
+    if allowed & forbidden:
+        p.append(f"allowed/forbidden overlap: {sorted(allowed & forbidden)}")
+    return p
+
+
 def check_capabilities():
     """The narrow keyhole: every external capability must be sensor_only and declare its fences."""
     print("\n[capabilities] external capability registry")
@@ -165,47 +188,70 @@ def check_capabilities():
     blocks = _capability_blocks(text)
     record(len(blocks) > 0, "capabilities: registry non-empty")
     for cid, body in blocks:
-        record(re.search(r"^\s*authority:\s*sensor_only\s*$", body, re.MULTILINE) is not None,
-               f"capabilities/{cid}: authority is sensor_only (never oracle/judge)")
-        record(re.search(r"^\s*forbidden_actions:\s*\[", body, re.MULTILINE) is not None,
-               f"capabilities/{cid}: declares forbidden_actions")
-        record(re.search(r"^\s*source:\s*\S+", body, re.MULTILINE) is not None,
-               f"capabilities/{cid}: declares source")
-        record(re.search(r"^\s*license:\s*\S+", body, re.MULTILINE) is not None,
-               f"capabilities/{cid}: declares license")
-        allowed = set(_cap_list(body, "allowed_actions"))
-        forbidden = set(_cap_list(body, "forbidden_actions"))
-        dangerous = sorted(allowed & DANGEROUS_ACTIONS)
-        record(not dangerous, f"capabilities/{cid}: no payload-generator/agent action in allowed_actions",
-               f"dangerous in allowed: {dangerous}" if dangerous else "")
-        overlap = sorted(allowed & forbidden)
-        record(not overlap, f"capabilities/{cid}: allowed_actions and forbidden_actions are disjoint",
-               f"both allowed and forbidden: {overlap}" if overlap else "")
+        problems = capability_entry_problems(body)
+        record(not problems, f"capabilities/{cid}: sensor-only entry within the keyhole",
+               "; ".join(problems) if problems else "")
     bad = re.findall(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", text, re.MULTILINE)
     record(not bad, "capabilities: no entry claims oracle/judge authority", f"found {bad}" if bad else "")
 
 
+def scope_flag_problems(registry_text, template_text):
+    """Pure predicate — scope_allows_* flags a registry requires that the scope template doesn't declare."""
+    flags = sorted(set(re.findall(r"\bscope_allows_[a-z0-9_]+", registry_text)))
+    return [f"undeclared scope flag: {f}" for f in flags if f not in template_text]
+
+
 def check_capability_scope_flags():
-    """Any scope_allows_* flag a capability requires must be defined in the engagement scope template."""
     reg = os.path.join(ROOT, "capabilities", "registry.yaml")
     tmpl = os.path.join(ROOT, "engagements", "_TEMPLATE", "scope.md")
     if not (os.path.isfile(reg) and os.path.isfile(tmpl)):
         return
-    flags = sorted(set(re.findall(r"\bscope_allows_[a-z0-9_]+", open(reg).read())))
-    tmpl_text = open(tmpl).read()
-    for f in flags:
-        record(f in tmpl_text, f"capabilities: scope flag {f} is declared in _TEMPLATE/scope.md",
-               "registry requires a scope flag the engagement template doesn't define" if f not in tmpl_text else "")
+    problems = scope_flag_problems(open(reg).read(), open(tmpl).read())
+    record(not problems, "capabilities: every required scope flag is declared in _TEMPLATE/scope.md",
+           "; ".join(problems) if problems else "")
+
+
+def _card_capability_refs(fm):
+    line = re.search(r"^optional_capabilities:\s*(\[[^\]]*\])", fm, re.MULTILINE)
+    if not line:
+        return []
+    return [e.strip().strip('"').strip("'") for e in line.group(1)[1:-1].split(",") if e.strip()]
+
+
+def card_capability_problems(fm, cap_ids):
+    """Pure predicate — optional_capabilities ids in a card that don't resolve to a registry id."""
+    return [f"unresolved: {e}" for e in _card_capability_refs(fm) if e not in cap_ids]
 
 
 def check_optional_capabilities(name, subdir, fm, cap_ids):
-    line = re.search(r"^optional_capabilities:\s*(\[[^\]]*\])", fm, re.MULTILINE)
-    if not line:
-        return
-    entries = [e.strip().strip('"').strip("'") for e in line.group(1)[1:-1].split(",") if e.strip()]
-    for e in entries:
+    for e in _card_capability_refs(fm):
         record(e in cap_ids, f"{subdir}/{name}: optional_capability resolves {e}",
                "no such capability id" if e not in cap_ids else "")
+
+
+def check_capability_must_reject():
+    """Permanent negative tests: every fixture MUST be rejected by the SAME validation predicates.
+    Converts the manual gate-bites into CI-enforced regressions (mirrors fixtures/findings/_must_reject)."""
+    base = os.path.join(ROOT, "fixtures", "capabilities", "_must_reject")
+    if not os.path.isdir(base):
+        return
+    print("\n[capabilities] _must_reject corpus (the keyhole must fail closed)")
+    cap_ids = collect_capability_ids()
+    tmpl = os.path.join(ROOT, "engagements", "_TEMPLATE", "scope.md")
+    tmpl_text = open(tmpl).read() if os.path.isfile(tmpl) else ""
+    for fn in sorted(os.listdir(base)):
+        fp = os.path.join(base, fn)
+        if not os.path.isfile(fp):
+            continue
+        content = open(fp).read()
+        if fn.endswith(".md"):
+            problems = card_capability_problems(front_matter(content) or "", cap_ids)
+        elif "scope-flag" in fn:
+            problems = scope_flag_problems(content, tmpl_text)
+        else:  # registry-entry yaml
+            problems = [p for _, body in _capability_blocks(content) for p in capability_entry_problems(body)]
+        record(bool(problems), f"_must_reject/{fn}: rejected by the keyhole [{'; '.join(problems) or 'NONE'}]",
+               "fixture should be rejected but passed all checks" if not problems else "")
 
 
 def check_oracles():
@@ -427,6 +473,7 @@ def main():
         check_cards(subdir, pattern_ids, cap_ids)
     check_capabilities()
     check_capability_scope_flags()
+    check_capability_must_reject()
     check_oracles()
     check_casebooks(pattern_ids)
     check_secrets()

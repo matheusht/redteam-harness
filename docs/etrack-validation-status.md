@@ -8,9 +8,9 @@ tooling / sensors / fixtures).
 ## How things were validated
 
 - **Hermetic self-tests** — each tool has `--self-test` exercising round-trip / detection / redaction.
-- **Negative "gate-bites" tests** — for each conformance gate, a deliberate violation was injected and
-  confirmed to FAIL, then reverted (a gate only ever seen pass is not validated). **Currently these are
-  manual/ephemeral, not yet permanent CI fixtures — see Known limits.**
+- **Negative "gate-bites" tests** — for each conformance gate, a deliberate violation must FAIL (a gate
+  only ever seen pass is not validated). These are now **permanent CI fixtures** under
+  `fixtures/capabilities/_must_reject/`, each asserted to fail for its intended reason.
 - **One live integration run** — Tollbooth stood up as an unmodified container, redaction validated on a
   real export, torn down.
 - **One rung-1 model run** — obfuscation-encoding vs a guarded local model (qwen3-8b).
@@ -26,7 +26,7 @@ tooling / sensors / fixtures).
 | Tollbooth digest adapter | golden-secret (flat + native) + **live unmodified container** | redaction **proven** (incl. real export); engagement footprint **UNMEASURED** (sandbox only) |
 | memory retrieval index | self-test + firewall (read-only, no verdict) | **proven** read-only/no-verdict |
 | E4 robustness eval + technique memory | hermetic fixture self-test | **plumbing proven**; it is a FIXTURE — **NOT** evidence about real models |
-| Capability registry (C1–C3 + hardening) | conformance + 4 gate-bites | contract keyhole **proven to bite**; **no runtime** (deferred by design) |
+| Capability registry (C1–C3 + hardening) | conformance + **5 permanent gate-bite fixtures** | contract keyhole **proven to fail closed**; **no runtime** (deferred by design) |
 
 ## Gate-bites proven (capability keyhole)
 
@@ -38,15 +38,18 @@ tooling / sensors / fixtures).
 | dangerous-action denylist | `agent` placed in `allowed_actions` | FAIL ✓ |
 | allowed/forbidden disjoint | same action in both lists | FAIL ✓ |
 
-Conformance: **171 checks, 0 failing**.
+Conformance: **161 checks, 0 failing**. All five are permanent fixtures in
+`fixtures/capabilities/_must_reject/` — CI re-asserts each fails for its intended reason, and a meta-gate
+fails if any fixture is ever accidentally made valid.
 
 ## Known limits (do not overstate)
 
 1. **Contract layer, not runtime.** The capability registry enforces a *structural* keyhole; no capability
    is brokered at runtime (no runtime broker, no AGPL tool installed — both deferred by design).
-2. **Gate-bites are currently manual.** The negative tests above were run interactively (break → FAIL →
-   revert). They are **not yet permanent regression fixtures**, so a future refactor could silently weaken
-   a gate without CI noticing. *(Highest-value next testing — see below.)*
+2. ~~Gate-bites are manual.~~ **CLOSED:** the negative tests are now permanent fixtures in
+   `fixtures/capabilities/_must_reject/`; conformance asserts each fails for its intended reason, and a
+   meta-gate fails if any fixture is accidentally made valid. A future refactor that weakens a gate now
+   trips CI.
 3. **Conformance parses YAML with regex** (stdlib-only, no YAML lib). Robust for the registry's current
    shape; unusual indentation/quoting could in principle slip past. Bulletproofing needs a small YAML
    load in a separate validator (a dependency the checker has deliberately avoided).
@@ -56,10 +59,12 @@ Conformance: **171 checks, 0 failing**.
 5. **Scope flag gates by convention** at orchestration time (the loop is markdown-driven), like the rest
    of the harness's gates — not by executable code.
 
-## Recommended next testing
+## Next testing
 
-Convert the manual gate-bites into **permanent negative-test fixtures** — a `_must_reject` capability
-corpus the conformance checker asserts it rejects (mirroring `fixtures/findings/_must_reject` and the
-false-discovery corpus). This makes the keyhole's "it bites" guarantee CI-enforced forever, not a one-off
-manual check. Everything else is either deferred-by-design (runtime brokering) or needs external resources
-(efficacy at scale, live scope).
+- **DONE:** the `_must_reject` capability corpus — the gate-bites are now CI-enforced fixtures (mirrors
+  `fixtures/findings/_must_reject`). The keyhole's "fails closed" guarantee is now permanent, not a
+  one-off manual check.
+- **Deferred:** YAML-robustness (regex brittleness, Known-limit #3) — only if bulletproofing is wanted;
+  needs a small separate YAML validator (a dependency the checker has avoided).
+- **Blocked on external resources (by design):** runtime brokering (needs a tool installed), efficacy at
+  scale (needs a larger model and/or a signed-scope live target).
