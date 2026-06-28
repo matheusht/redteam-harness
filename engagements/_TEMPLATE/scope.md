@@ -26,6 +26,13 @@ target's own project repo (Plane 3) per engagement.
 - [ ] excessive-agency / unsafe render on owned tooling
 - [ ] other (must define a benign signal): ___
 
+## Adversarial-input transforms (E-track capabilities)
+- **scope_allows_adversarial_input_transforms:** `no`  ← default. If `yes`, the orchestrator may use the
+  external encoding/obfuscation/stego/covert-channel capabilities in `capabilities/registry.yaml`
+  (sensor-only, benign-canary objectives; the oracle stays authoritative). Each capability is also
+  `default: disabled` per card; this flag is the engagement-level enable. GLOSSOPETRAE channels
+  additionally require operator review.
+
 ## Escalation ceiling
 - self → stored/persistent → cross-user: ceiling = `<rung>`
 

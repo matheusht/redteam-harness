@@ -163,6 +163,19 @@ def check_capabilities():
     record(not bad, "capabilities: no entry claims oracle/judge authority", f"found {bad}" if bad else "")
 
 
+def check_capability_scope_flags():
+    """Any scope_allows_* flag a capability requires must be defined in the engagement scope template."""
+    reg = os.path.join(ROOT, "capabilities", "registry.yaml")
+    tmpl = os.path.join(ROOT, "engagements", "_TEMPLATE", "scope.md")
+    if not (os.path.isfile(reg) and os.path.isfile(tmpl)):
+        return
+    flags = sorted(set(re.findall(r"\bscope_allows_[a-z0-9_]+", open(reg).read())))
+    tmpl_text = open(tmpl).read()
+    for f in flags:
+        record(f in tmpl_text, f"capabilities: scope flag {f} is declared in _TEMPLATE/scope.md",
+               "registry requires a scope flag the engagement template doesn't define" if f not in tmpl_text else "")
+
+
 def check_optional_capabilities(name, subdir, fm, cap_ids):
     line = re.search(r"^optional_capabilities:\s*(\[[^\]]*\])", fm, re.MULTILINE)
     if not line:
@@ -391,6 +404,7 @@ def main():
     for subdir in ("patterns", "vulns", "techniques"):
         check_cards(subdir, pattern_ids, cap_ids)
     check_capabilities()
+    check_capability_scope_flags()
     check_oracles()
     check_casebooks(pattern_ids)
     check_secrets()
