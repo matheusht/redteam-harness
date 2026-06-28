@@ -1,0 +1,49 @@
+# E-track external capability registry — the "narrow keyhole".
+#
+# Every external (AGPL) tool is exposed ONLY through a constrained capability here, never as a raw
+# toolbox handed to the model. Invariants (conformance-enforced):
+#   - authority is ALWAYS sensor_only: a capability emits a transformed benign canary or evidence,
+#     NEVER a verdict. The oracle/broker remain authoritative.
+#   - default: disabled; requires safe_signal + scope_allows_adversarial_input_transforms.
+#   - integration: subprocess, arms-length — AGPL source is never vendored/linked into Plane 1/2.
+#   - subprocess invocation is DEFERRED until a tool is installed (presence-detected). This file is the
+#     contract + the conformance-enforced keyhole, not a runtime wiring.
+# Broker rule + routing flow: engine/capabilities.md. License notes: docs/etrack-third-party-license-notes.md.
+capabilities:
+  - id: external.p4.transform
+    source: P4RS3LT0NGV3
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: sensor_only
+    allowed_actions: [list, inspect, encode, decode, auto_decode]
+    forbidden_actions: [agent, promptcraft, anticlassifier, tokenade, fuzzer]
+    requires: [safe_signal, scope_allows_adversarial_input_transforms]
+    output: transformed benign canary OR decode evidence
+    backs: tools/obfuscation-converter.py
+
+  - id: external.gloss.channels
+    source: GLOSSOPETRAE
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: sensor_only
+    allowed_actions: [list_channels, encode_benign, decode_if_possible]
+    forbidden_actions: [semantic_stego_raw, token_exploit_raw, harmful_probe_sets, offense_modules]
+    requires: [safe_signal, scope_allows_adversarial_input_transforms, operator_review]
+    output: covert-channel-encoded benign canary OR decode evidence
+    backs: tools/covert-channel-converter.py
+
+  - id: external.st3gg.detect
+    source: ST3GG
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: sensor_only
+    allowed_actions: [analyze_file, detect_unicode_steg, detect_file_type, summarize_findings]
+    forbidden_actions: [embed_arbitrary_payload, injector, jailbreak_templates, conceal_agent, raw_payload_promotion]
+    requires: [safe_signal, scope_allows_adversarial_input_transforms]
+    output: redacted artifact_digest.json (detection evidence)
+    backs: tools/covert-channel-evidence.py
+    # NB: ST3GG *embedding* (external.st3gg.embed_benign_canary) is intentionally NOT registered —
+    # detection-first. Embedding is a later, review-gated, hermetic-only capability.

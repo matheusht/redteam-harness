@@ -1,0 +1,12 @@
+# MUST be rejected: the same action is both allowed and forbidden.
+capabilities:
+  - id: external.bad.overlap
+    source: BAD
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: sensor_only
+    allowed_actions: [list, decode]
+    forbidden_actions: [decode]
+    requires: [safe_signal, scope_allows_adversarial_input_transforms]
+    output: x

@@ -77,7 +77,7 @@ def collect_pattern_ids():
     return ids
 
 
-def check_cards(subdir, pattern_ids):
+def check_cards(subdir, pattern_ids, cap_ids):
     print(f"\n[cards] skills/{subdir}/")
     for name, path in list_cards(subdir):
         text = open(path).read()
@@ -99,6 +99,7 @@ def check_cards(subdir, pattern_ids):
                        f"{subdir}/{name}: activation.{tier}")
 
         check_routes_to(name, subdir, fm, pattern_ids)
+        check_optional_capabilities(name, subdir, fm, cap_ids)
 
 
 def check_routes_to(name, subdir, fm, pattern_ids):
@@ -124,6 +125,260 @@ def check_routes_to(name, subdir, fm, pattern_ids):
                    "no such vuln card" if not os.path.isfile(p) else "")
         else:
             record(False, f"{subdir}/{name}: route form {e}", "unknown route form (use stub: / pattern. / vulns/)")
+
+
+def collect_capability_ids():
+    ids = set()
+    path = os.path.join(ROOT, "capabilities", "registry.yaml")
+    if os.path.isfile(path):
+        for m in re.finditer(r"^\s*-\s*id:\s*([A-Za-z0-9._-]+)", open(path).read(), re.MULTILINE):
+            ids.add(m.group(1))
+    return ids
+
+
+def _capability_blocks(text):
+    return [(m.group(1), m.group(2)) for m in re.finditer(
+        r"^\s*-\s*id:\s*([A-Za-z0-9._-]+)\s*\n(.*?)(?=^\s*-\s*id:|\Z)", text, re.MULTILINE | re.DOTALL)]
+
+
+# actions that may NEVER appear in a capability's allowed_actions (payload generators / agent modes /
+# raw-offense). The keyhole must exclude these mechanically, not by convention.
+DANGEROUS_ACTIONS = {
+    "agent", "promptcraft", "anticlassifier", "injector", "tokenade", "fuzzer",
+    "embed_arbitrary_payload", "conceal_agent", "jailbreak_templates", "raw_payload_promotion",
+    "semantic_stego_raw", "token_exploit_raw", "harmful_probe_sets", "offense_modules",
+}
+
+
+def _cap_list(body, key):
+    m = re.search(rf"^\s*{key}:\s*\[([^\]]*)\]", body, re.MULTILINE)
+    return [x.strip().strip('"').strip("'") for x in m.group(1).split(",") if x.strip()] if m else []
+
+
+def _get_field(body, key):
+    m = re.search(rf"^\s*{key}:\s*(\S+)", body, re.MULTILINE)
+    return m.group(1).strip() if m else None
+
+
+def _payload_generator_problems(body):
+    """A payload_generator entry: proposal-only, gated, never a judge or executor."""
+    p = []
+    auth = _get_field(body, "authority")
+    if auth != "proposal_only":
+        p.append("payload_generator authority must be proposal_only")
+    if auth in ("oracle", "judge", "verdict", "confirmed", "allow", "success"):
+        p.append(f"payload_generator claims forbidden authority: {auth}")
+    if re.search(r"^\s*default:\s*disabled\s*$", body, re.MULTILINE) is None:
+        p.append("payload_generator not default: disabled")
+    if re.search(r"^\s*forbidden_actions:\s*\[", body, re.MULTILINE) is None:
+        p.append("no forbidden_actions")
+    for gate in ("scope_allows_payload_generation", "containment_plan", "oracle_separation"):
+        if gate not in body:
+            p.append(f"payload_generator missing required gate: {gate}")
+    if _get_field(body, "payload_class") is None and "declared_payload_class" not in body:
+        p.append("payload_generator missing declared payload_class")
+    bad_emit = sorted(set(_cap_list(body, "emits")) & {"confirmed", "allow", "verdict", "success"})
+    if bad_emit:
+        p.append(f"payload_generator emits forbidden verdict tokens: {bad_emit}")
+    return p
+
+
+def capability_entry_problems(body):
+    """Pure predicate — reasons a single registry entry violates its class contract (empty = clean).
+    Class-aware: payload_generator -> proposal-only + gated; everything else -> the sensor_only keyhole.
+    The single source of truth reused by check_capabilities and the _must_reject corpus."""
+    if _get_field(body, "class") == "payload_generator":
+        return _payload_generator_problems(body)
+    p = []
+    if re.search(r"^\s*authority:\s*sensor_only\s*$", body, re.MULTILINE) is None:
+        p.append("authority not sensor_only")
+    if re.search(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", body, re.MULTILINE):
+        p.append("claims oracle/judge authority")
+    if re.search(r"^\s*forbidden_actions:\s*\[", body, re.MULTILINE) is None:
+        p.append("no forbidden_actions")
+    if re.search(r"^\s*source:\s*\S+", body, re.MULTILINE) is None:
+        p.append("no source")
+    if re.search(r"^\s*license:\s*\S+", body, re.MULTILINE) is None:
+        p.append("no license")
+    allowed = set(_cap_list(body, "allowed_actions"))
+    forbidden = set(_cap_list(body, "forbidden_actions"))
+    if allowed & DANGEROUS_ACTIONS:
+        p.append(f"dangerous in allowed_actions: {sorted(allowed & DANGEROUS_ACTIONS)}")
+    if allowed & forbidden:
+        p.append(f"allowed/forbidden overlap: {sorted(allowed & forbidden)}")
+    return p
+
+
+def check_capability_classes():
+    """Validate capabilities/classes.yaml — the authority model. payload_generator must be proposal-only,
+    default-disabled, gated, and forbidden from oracle/judge/verdict authority; only `oracle` may judge."""
+    print("\n[capabilities] capability classes (authority model)")
+    path = os.path.join(ROOT, "capabilities", "classes.yaml")
+    if not os.path.isfile(path):
+        return
+    blocks = _capability_blocks(open(path).read())
+    record(len(blocks) > 0, "classes: non-empty")
+    by_id = {cid: body for cid, body in blocks}
+    for cid, body in blocks:
+        record(_get_field(body, "authority") is not None, f"classes/{cid}: declares authority")
+        if cid != "oracle":
+            record(_get_field(body, "authority") not in ("oracle", "judge", "verdict"),
+                   f"classes/{cid}: non-oracle class doesn't claim oracle/judge authority")
+    pg = by_id.get("payload_generator")
+    if pg is not None:
+        record(_get_field(pg, "authority") == "proposal_only",
+               "classes/payload_generator: authority is proposal_only")
+        record(re.search(r"^\s*default:\s*disabled\s*$", pg, re.MULTILINE) is not None,
+               "classes/payload_generator: default disabled")
+        for gate in ("signed_scope", "scope_allows_payload_generation", "declared_payload_class",
+                     "containment_plan", "cleanup_plan", "oracle_separation"):
+            record(gate in pg, f"classes/payload_generator: requires {gate}")
+        for forb in ("oracle", "judge", "verdict", "confirmed", "allow"):
+            record(forb in pg, f"classes/payload_generator: forbids {forb} authority")
+
+
+def check_capabilities():
+    """The narrow keyhole: every external capability must be sensor_only and declare its fences."""
+    print("\n[capabilities] external capability registry")
+    path = os.path.join(ROOT, "capabilities", "registry.yaml")
+    if not os.path.isfile(path):
+        return
+    text = open(path).read()
+    blocks = _capability_blocks(text)
+    record(len(blocks) > 0, "capabilities: registry non-empty")
+    for cid, body in blocks:
+        problems = capability_entry_problems(body)
+        record(not problems, f"capabilities/{cid}: sensor-only entry within the keyhole",
+               "; ".join(problems) if problems else "")
+    bad = re.findall(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", text, re.MULTILINE)
+    record(not bad, "capabilities: no entry claims oracle/judge authority", f"found {bad}" if bad else "")
+
+
+def scope_flag_problems(registry_text, template_text):
+    """Pure predicate — scope_allows_* flags a registry requires that the scope template doesn't declare."""
+    flags = sorted(set(re.findall(r"\bscope_allows_[a-z0-9_]+", registry_text)))
+    return [f"undeclared scope flag: {f}" for f in flags if f not in template_text]
+
+
+def check_capability_scope_flags():
+    tmpl = os.path.join(ROOT, "engagements", "_TEMPLATE", "scope.md")
+    if not os.path.isfile(tmpl):
+        return
+    src = ""
+    for fn in ("registry.yaml", "classes.yaml"):
+        fp = os.path.join(ROOT, "capabilities", fn)
+        if os.path.isfile(fp):
+            src += open(fp).read() + "\n"
+    problems = scope_flag_problems(src, open(tmpl).read())
+    record(not problems, "capabilities: every required scope flag is declared in _TEMPLATE/scope.md",
+           "; ".join(problems) if problems else "")
+
+
+def _card_capability_refs(fm):
+    line = re.search(r"^optional_capabilities:\s*(\[[^\]]*\])", fm, re.MULTILINE)
+    if not line:
+        return []
+    return [e.strip().strip('"').strip("'") for e in line.group(1)[1:-1].split(",") if e.strip()]
+
+
+def card_capability_problems(fm, cap_ids):
+    """Pure predicate — optional_capabilities ids in a card that don't resolve to a registry id."""
+    return [f"unresolved: {e}" for e in _card_capability_refs(fm) if e not in cap_ids]
+
+
+def check_optional_capabilities(name, subdir, fm, cap_ids):
+    for e in _card_capability_refs(fm):
+        record(e in cap_ids, f"{subdir}/{name}: optional_capability resolves {e}",
+               "no such capability id" if e not in cap_ids else "")
+
+
+def check_capability_must_reject():
+    """Permanent negative tests: every fixture MUST be rejected by the SAME validation predicates.
+    Converts the manual gate-bites into CI-enforced regressions (mirrors fixtures/findings/_must_reject)."""
+    base = os.path.join(ROOT, "fixtures", "capabilities", "_must_reject")
+    if not os.path.isdir(base):
+        return
+    print("\n[capabilities] _must_reject corpus (the keyhole must fail closed)")
+    cap_ids = collect_capability_ids()
+    tmpl = os.path.join(ROOT, "engagements", "_TEMPLATE", "scope.md")
+    tmpl_text = open(tmpl).read() if os.path.isfile(tmpl) else ""
+    for fn in sorted(os.listdir(base)):
+        fp = os.path.join(base, fn)
+        if not os.path.isfile(fp):
+            continue
+        content = open(fp).read()
+        if fn.endswith(".md"):
+            problems = card_capability_problems(front_matter(content) or "", cap_ids)
+        elif "scope-flag" in fn:
+            problems = scope_flag_problems(content, tmpl_text)
+        else:  # registry-entry yaml
+            problems = [p for _, body in _capability_blocks(content) for p in capability_entry_problems(body)]
+        record(bool(problems), f"_must_reject/{fn}: rejected by the keyhole [{'; '.join(problems) or 'NONE'}]",
+               "fixture should be rejected but passed all checks" if not problems else "")
+
+
+PAYLOAD_PROPOSAL_REQUIRED = ["objective_id", "payload_class", "risk_tier", "approved_objective_ref",
+                             "generator_capability_id", "artifact_metadata", "required_controls",
+                             "containment_plan", "cleanup_plan", "non_authority_attestation"]
+PAYLOAD_CLASSES = {"text_prompt", "encoded_prompt", "multimodal_artifact", "stego_carrier",
+                   "exploit_poc", "chain_candidate"}
+RISK_TIERS = {"benign_canary", "local_poc", "zone2_review_required"}
+ZONE2_PAYLOAD_CLASSES = {"exploit_poc", "chain_candidate"}
+FORBIDDEN_PROPOSAL_KEYS = ("verdict", "confirmed", "allow", "success")
+
+
+def payload_proposal_problems(obj):
+    """Pure predicate — reasons a payload proposal is malformed (an INERT proposal, never a verdict)."""
+    if not isinstance(obj, dict):
+        return ["not an object"]
+    p = [f"missing {k}" for k in PAYLOAD_PROPOSAL_REQUIRED if k not in obj]
+    p += [f"carries forbidden verdict key {k}" for k in FORBIDDEN_PROPOSAL_KEYS if k in obj]
+    pc = obj.get("payload_class")
+    if pc is not None and pc not in PAYLOAD_CLASSES:
+        p.append(f"payload_class not in enum: {pc}")
+    if "required_controls" in obj and not (isinstance(obj["required_controls"], list) and obj["required_controls"]):
+        p.append("required_controls must be a non-empty list")
+    if "non_authority_attestation" in obj:
+        att = obj["non_authority_attestation"]
+        if not isinstance(att, dict):
+            p.append("non_authority_attestation must be an object")
+        else:
+            for k in ("proposal_only", "executes_nothing", "emits_no_verdict"):
+                if att.get(k) is not True:
+                    p.append(f"non_authority_attestation.{k} must be true")
+    rt = obj.get("risk_tier")
+    if rt is not None and rt not in RISK_TIERS:
+        p.append(f"risk_tier not in enum: {rt}")
+    # zone-2 tiers / exploit classes require operator confirmation + an impact-demo reference, never auto-run
+    if pc in ZONE2_PAYLOAD_CLASSES or rt == "zone2_review_required":
+        if obj.get("operator_confirmation_required") is not True:
+            p.append("zone2 payload_class/risk_tier requires operator_confirmation_required: true")
+        if not (isinstance(obj.get("impact_demo_ref"), str) and obj["impact_demo_ref"].strip()):
+            p.append("zone2 payload_class/risk_tier requires an impact_demo_ref")
+    return p
+
+
+def check_payload_proposals():
+    """PG-2: the inert payload-proposal schema gate. Valid example passes; malformed ones must reject."""
+    base = os.path.join(ROOT, "fixtures", "payload-proposals")
+    if not os.path.isdir(base):
+        return
+    print("\n[payload-proposals] inert proposal schema gate (PG-2)")
+    for fn in sorted(os.listdir(base)):
+        fp = os.path.join(base, fn)
+        if not (fn.endswith(".json") and os.path.isfile(fp)):
+            continue
+        problems = payload_proposal_problems(load_json(fp))
+        record(not problems, f"payload-proposals/{fn}: valid proposal",
+               "; ".join(problems) if problems else "")
+    mr = os.path.join(base, "_must_reject")
+    if os.path.isdir(mr):
+        for fn in sorted(os.listdir(mr)):
+            if not fn.endswith(".json"):
+                continue
+            problems = payload_proposal_problems(load_json(os.path.join(mr, fn)))
+            record(bool(problems), f"payload-proposals/_must_reject/{fn}: rejected [{'; '.join(problems) or 'NONE'}]",
+                   "malformed proposal should be rejected but passed" if not problems else "")
 
 
 def check_oracles():
@@ -338,9 +593,16 @@ def check_adversarial_candidates():
 
 def main():
     pattern_ids = collect_pattern_ids()
+    cap_ids = collect_capability_ids()
     print(f"known pattern ids: {sorted(pattern_ids)}")
+    print(f"known capability ids: {sorted(cap_ids)}")
     for subdir in ("patterns", "vulns", "techniques"):
-        check_cards(subdir, pattern_ids)
+        check_cards(subdir, pattern_ids, cap_ids)
+    check_capabilities()
+    check_capability_classes()
+    check_capability_scope_flags()
+    check_capability_must_reject()
+    check_payload_proposals()
     check_oracles()
     check_casebooks(pattern_ids)
     check_secrets()

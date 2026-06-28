@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "memory-item.schema.json",
+  "title": "memory_item",
+  "description": "A sanitized, retrievable unit of prior knowledge for the E-track memory layer. Retrieval is a SENSOR (returns priors), never a judge: a memory_item carries no verdict field and may not authorize a candidate, confirm a finding, or mutate Plane 1. It indexes only post-redaction text (casebooks, field notes, public research). See docs/post-phase14-capability-fit-review.md and the E-track plan.",
+  "type": "object",
+  "required": ["id", "source_type", "sanitized_text", "allowed_planes", "redaction_attestation"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "description": "stable id" },
+    "source_type": {
+      "type": "string",
+      "enum": ["casebook", "field_note", "public_research", "engagement_lesson"]
+    },
+    "sanitized_text": { "type": "string", "description": "post-redaction excerpt only; never raw secrets" },
+    "provenance": { "type": "string", "description": "where it came from (abstract handle, not a client name)" },
+    "allowed_planes": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["plane-3", "plane-4"] },
+      "description": "memory is a Plane-3/4 substrate; it may NOT write Plane-1"
+    },
+    "redaction_attestation": {
+      "type": "object",
+      "required": ["redacted"],
+      "additionalProperties": false,
+      "properties": {
+        "redacted": { "type": "boolean" },
+        "by": { "type": "string" },
+        "date": { "type": "string" }
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "linked_casebook_rows": { "type": "array", "items": { "type": "string" } }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["verdict"] },
+      { "required": ["confirmed"] },
+      { "required": ["authorizes"] }
+    ]
+  }
+}

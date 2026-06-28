@@ -1,0 +1,11 @@
+{
+  "objective_id": "llm05.improper-output-handling",
+  "payload_class": "encoded_prompt",
+  "approved_objective_ref": "safe_signal: benign canary",
+  "generator_capability_id": "local.encoded-benign-canary",
+  "artifact_metadata": { "kind": "encoded-benign-canary" },
+  "required_controls": ["replay"],
+  "containment_plan": "temp dir",
+  "cleanup_plan": "wiped",
+  "non_authority_attestation": { "proposal_only": true, "executes_nothing": true, "emits_no_verdict": true }
+}

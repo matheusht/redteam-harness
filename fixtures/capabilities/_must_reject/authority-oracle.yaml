@@ -1,0 +1,12 @@
+# MUST be rejected: a capability may never be a judge (authority: oracle).
+capabilities:
+  - id: external.bad.oracle
+    source: BAD
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: oracle
+    allowed_actions: [list, decode]
+    forbidden_actions: [agent]
+    requires: [safe_signal, scope_allows_adversarial_input_transforms]
+    output: x

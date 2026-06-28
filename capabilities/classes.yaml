@@ -1,0 +1,46 @@
+# Capability CLASSES — the authority model behind capabilities/registry.yaml.
+#
+# A capability's class fixes the maximum authority it may ever hold. The broker/oracle remain
+# authoritative for truth; no external capability may judge. This file adds the `payload_generator`
+# class as a CONTRACT ONLY (PG-0/1/2): no runtime generator, no external tool, no live execution, no
+# harmful-payload corpus. See engine/capabilities.md and docs/post-phase14-payload-generation-capability-plan.md.
+capability_classes:
+  - id: sensor
+    authority: sensor_only
+    purpose: observe / decode / summarize / redact (no transformation of intent)
+
+  - id: converter
+    authority: sensor_only
+    purpose: transform a benign canary or evidence artifact (the existing E-track keyhole)
+
+  - id: payload_generator
+    authority: proposal_only
+    default: disabled
+    purpose: >
+      propose candidate payloads/artifacts for an APPROVED, benign-or-authorized objective. It NEVER
+      executes on a live target, NEVER judges whether it worked, NEVER emits a verdict. Output is a
+      proposal + required controls; the broker/oracle remain authoritative.
+    requires:
+      - signed_scope
+      - scope_allows_payload_generation
+      - declared_payload_class
+      - containment_plan
+      - cleanup_plan
+      - oracle_separation
+    forbidden_authority: [oracle, judge, verdict, confirmed, allow, success]
+    non_authorities:
+      - executes live target actions
+      - emits confirmed / allow / verdict / success
+      - mutates evaluator / scorer / gold / budget / casebook / sealed data
+      - auto-promotes Plane-1
+      - writes raw secrets / auth material / live target ids into Plane 1/2
+      - weakens the sensor_only rule for sensor/converter capabilities
+
+  - id: executor
+    authority: broker_mediated
+    default: disabled
+    purpose: execute a payload/action against a target — FUTURE, review-required, NOT built.
+
+  - id: oracle
+    authority: broker_oracle_only
+    purpose: decide truth/success — external tools are FORBIDDEN from this class.

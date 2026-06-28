@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "payload-proposal.schema.json",
+  "title": "payload_proposal",
+  "description": "An INERT proposal emitted by a payload_generator capability (PG-2: schema only, no runtime adapter). It is a PROPOSAL, never a verdict — it carries no confirmed/allow/verdict/success field, executes nothing, and authorizes nothing; the broker/oracle adjudicate. Every proposal must reference an approved benign objective and carry containment + cleanup plans and a non-authority attestation.",
+  "type": "object",
+  "required": [
+    "objective_id",
+    "payload_class",
+    "risk_tier",
+    "approved_objective_ref",
+    "generator_capability_id",
+    "artifact_metadata",
+    "required_controls",
+    "containment_plan",
+    "cleanup_plan",
+    "non_authority_attestation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "objective_id": { "type": "string" },
+    "payload_class": {
+      "type": "string",
+      "enum": ["text_prompt", "encoded_prompt", "multimodal_artifact", "stego_carrier", "exploit_poc", "chain_candidate"]
+    },
+    "risk_tier": {
+      "type": "string",
+      "enum": ["benign_canary", "local_poc", "zone2_review_required"],
+      "description": "benign_canary = inert benign proof; local_poc = hermetic only; zone2_review_required = needs impact-demo authorization + operator confirm before any use"
+    },
+    "operator_confirmation_required": { "type": "boolean" },
+    "impact_demo_ref": { "type": "string", "description": "scope.md#impact_demo_authorized reference for zone2 tiers" },
+    "approved_objective_ref": {
+      "type": "string",
+      "description": "a safe_signal-gated / scope-approved benign objective this proposal serves"
+    },
+    "generator_capability_id": { "type": "string", "pattern": "^(external|local)\\." },
+    "artifact_metadata": {
+      "type": "object",
+      "description": "description of the PROPOSED artifact (kind, size, carrier) — not raw secrets or live target ids"
+    },
+    "required_controls": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "matched control / positive control / contamination / replay the oracle still requires"
+    },
+    "containment_plan": { "type": "string" },
+    "cleanup_plan": { "type": "string" },
+    "non_authority_attestation": {
+      "type": "object",
+      "required": ["proposal_only", "executes_nothing", "emits_no_verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "proposal_only": { "const": true },
+        "executes_nothing": { "const": true },
+        "emits_no_verdict": { "const": true }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "payload_class": { "enum": ["exploit_poc", "chain_candidate"] } }, "required": ["payload_class"] },
+      "then": { "required": ["operator_confirmation_required", "impact_demo_ref"], "properties": { "operator_confirmation_required": { "const": true } } }
+    },
+    {
+      "if": { "properties": { "risk_tier": { "const": "zone2_review_required" } }, "required": ["risk_tier"] },
+      "then": { "required": ["operator_confirmation_required", "impact_demo_ref"], "properties": { "operator_confirmation_required": { "const": true } } }
+    }
+  ],
+  "not": {
+    "anyOf": [
+      { "required": ["verdict"] },
+      { "required": ["confirmed"] },
+      { "required": ["allow"] },
+      { "required": ["success"] }
+    ]
+  }
+}

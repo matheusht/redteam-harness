@@ -1,0 +1,12 @@
+# MUST be rejected: a payload-generator/agent action appears in allowed_actions.
+capabilities:
+  - id: external.bad.dangerous
+    source: BAD
+    license: AGPL-3.0
+    integration: subprocess
+    default: disabled
+    authority: sensor_only
+    allowed_actions: [list, decode, agent]
+    forbidden_actions: [promptcraft]
+    requires: [safe_signal, scope_allows_adversarial_input_transforms]
+    output: x

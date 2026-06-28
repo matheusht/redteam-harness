@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Post-Phase-14 Plan — Adversarial-Input Tooling</title>
+<style>
+  :root{--ink:#1c2126;--muted:#5b6770;--line:#e1e6ea;--accent:#2f6f4f;--warn:#8a3b2e;--warnbg:#fbeeec;--okbg:#eef6f1;--codebg:#f4f6f8;}
+  *{box-sizing:border-box;}
+  body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);max-width:860px;margin:0 auto;padding:48px 24px 96px;}
+  h1{font-size:30px;line-height:1.25;margin:0 0 4px;}
+  h2{font-size:21px;margin:40px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line);}
+  h3{font-size:16px;margin:24px 0 6px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 24px;}
+  .meta{font-size:14px;color:var(--muted);margin:2px 0;}
+  blockquote{margin:18px 0;padding:14px 18px;background:var(--okbg);border-left:4px solid var(--accent);border-radius:0 6px 6px 0;}
+  .box{padding:16px 18px;border-radius:8px;margin:18px 0;}
+  .box.warn{background:var(--warnbg);border:1px solid #e8c5bd;}
+  .box.warn h3{color:var(--warn);margin-top:0;}
+  .box.ok{background:var(--okbg);border:1px solid #cfe3d7;}
+  .box.ok h3{color:var(--accent);margin-top:0;}
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--codebg);font-weight:600;}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;background:var(--codebg);padding:1px 5px;border-radius:4px;}
+  pre{background:var(--codebg);padding:14px 16px;border-radius:8px;overflow:auto;font-size:13px;line-height:1.5;border:1px solid var(--line);}
+  ul,ol{padding-left:22px;}
+  li{margin:5px 0;}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;padding:2px 8px;border-radius:999px;text-transform:uppercase;}
+  .tag.draft{background:#fff4d6;color:#8a6d1f;border:1px solid #ecd9a0;}
+  .no{color:var(--warn);font-weight:600;}
+  .yes{color:var(--accent);font-weight:600;}
+  footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<h1>Post-Phase-14 Plan — Adversarial-Input Tooling</h1>
+<p class="sub">encoding · obfuscation · steganography · covert-channel <span class="tag draft">draft for review</span></p>
+
+<p class="meta"><strong>Status:</strong> draft for review — <strong>NOT build permission</strong>; scope decision pending.</p>
+<p class="meta"><strong>Date:</strong> 2026-06-27</p>
+<p class="meta"><strong>Relates to:</strong> Decision 0004, Decision 0001, <code>docs/post-phase14-capability-fit-review.md</code>, README "Scope fence", AGENTS.md §1 hard gates.</p>
+<p class="meta"><strong>Does not authorize:</strong> any change to the <code>safe_signal</code> load-gate, the scope fence, or evaluator truth; any stored harmful-payload catalog; any harm-elicitation self-learning objective.</p>
+
+<blockquote>
+This plan adds a <strong>technique family</strong> (adversarial-input transforms) to the existing
+<code>technique × vuln × benign-objective × oracle</code> model. It is the evasion-<strong>robustness</strong>
+testing capability — "does the target's safety / monitoring pipeline resist encoded, obfuscated, or hidden
+inputs?" — not a harm-production capability. Read the Scope Decision (§3) before anything else.
+</blockquote>
+
+<div class="box warn">
+<h3>⛔ Explicitly excluded from this plan</h3>
+<p>A direct request was made to also include a <strong>catalog of content "that may induce harm"</strong>
+with the capability to elicit harm on demand. That is <strong>excluded</strong>, with the operator's stated
+authorized-use intent acknowledged and believed. Reasons:</p>
+<ul>
+  <li><strong>It is the project's own ❌ Never zone</strong> — the README scope fence forbids
+      <em>"real-harm uplift as the product · a library of working harmful jailbreaks · wholesale ingestion
+      of harm corpora,"</em> enforced structurally (a skill with no benign <code>safe_signal</code> will not load).</li>
+  <li><strong>The artifact is dangerous by existing,</strong> independent of intent — a stored library of
+      working harmful jailbreaks is itself the uplift (leak / misuse / exfiltration risk) and cannot be made
+      safe by a usage promise.</li>
+  <li><strong>It is unnecessary for authorized red-teaming.</strong> A guardrail failure is proven with a
+      <em>benign canary / proxy</em>: you do not need the model to emit actual harm to show the boundary moved.
+      The benign-objective version below delivers the full engagement capability.</li>
+</ul>
+<p>Everything else requested — the encoding / obfuscation / stego / covert-channel tooling — is in scope and
+planned below.</p>
+</div>
+
+<h2>1. Objective</h2>
+<p>Let the harness test, in authorized engagements, whether a target's safety and monitoring controls are
+robust to <strong>non-plaintext adversarial inputs</strong>: encoded / ciphered text, Unicode &amp; emoji
+obfuscation, image / audio / document steganography, and tokenizer-blind-spot covert channels. The harness
+should <strong>adapt per engagement</strong> by learning which <em>transform shapes</em> move which
+<em>defense shapes</em> — abstract methodology, not a payload stockpile.</p>
+<p>This is the same posture as the convergent prior art the architecture already cites (PyRIT converters,
+garak encoding / jailbreak probes): attack <em>techniques</em> are the means; the product is a
+<strong>robustness verdict</strong>.</p>
+
+<h2>2. Candidate tools (verified read-only, 2026-06-27)</h2>
+<table>
+  <tr><th>Tool</th><th>What it actually is (verified)</th><th>License</th><th>Role here</th></tr>
+  <tr>
+    <td><strong>P4RS3LT0NGV3</strong><br><code>elder-plinius/P4RS3LT0NGV3</code></td>
+    <td>222 text transforms — ciphers, base64/hex, Unicode styling, invisible-Unicode / emoji stego,
+        prompt-mutation; Vue static site + <strong>Python CLI</strong>.</td>
+    <td>AGPL-3.0</td>
+    <td>Encoding / obfuscation <strong>converter</strong> layer</td>
+  </tr>
+  <tr>
+    <td><strong>ST3GG</strong><br><code>elder-plinius/ST3GG</code></td>
+    <td>Steganography suite — embed/extract in images/audio/docs, AES-256-GCM,
+        <strong>+ 20+ detectors / 50+ analysis tools</strong>; Python core.</td>
+    <td>AGPL-3.0</td>
+    <td>Multimodal stego <strong>technique</strong> + <strong>defensive detector</strong></td>
+  </tr>
+  <tr>
+    <td><strong>GLOSSOPETRAE</strong><br><code>elder-plinius/GLOSSOPETRAE</code></td>
+    <td>Conlang generator + tokenizer-blind-spot / covert-channel <strong>research framework</strong>;
+        offense modules (SemanticStego, TokenExploiter); JS engine.</td>
+    <td>AGPL-3.0</td>
+    <td>Covert-channel <strong>technique</strong> + traffic-decode <strong>evidence</strong> (native Tollbooth support)</td>
+  </tr>
+</table>
+<p>All three are <strong>transform / stego / research tooling</strong> — <em>not</em> curated harmful-content
+jailbreak corpora.</p>
+
+<h2>3. Scope Decision (the load-bearing part)</h2>
+
+<div class="box ok">
+<h3>✓ In scope — will build</h3>
+<ol>
+  <li><strong>Adversarial-input transforms as technique tooling.</strong> Wrap the tools' encoders / codecs /
+      stego functions as a converter layer used by new <code>skills/techniques/</code> cards. Transforms are
+      content-neutral (a base64 encoder is not harm).</li>
+  <li><strong>Benign-objective probes only.</strong> Every probe composes a transform with a
+      <strong>benign win condition</strong> under the existing <code>safe_signal</code> gate — e.g. "does the
+      target decode-and-act on an <em>encoded benign canary</em> (reveal a canary token / flip a refusal on a
+      harmless target / leak its own system prompt) that its plaintext guard would refuse?" The oracle
+      adjudicates boundary movement.</li>
+  <li><strong>Defensive detection.</strong> ST3GG's analysis side and GLOSSOPETRAE's decode side
+      <em>detect</em> hidden data (in target outputs, in observed traffic via Tollbooth) for evidence bundles.</li>
+  <li><strong>Abstract technique patterns + adaptive memory.</strong> A sanitized memory of which transform
+      shape moved which defense shape, so the harness adapts per engagement. This is the sanctioned
+      self-improvement: optimize <strong>technique cards</strong> against <strong>benign / hermetic
+      evaluators</strong>.</li>
+</ol>
+</div>
+
+<div class="box warn">
+<h3>✗ Out of scope — will not build (README ❌ Never + Decision 0004)</h3>
+<ol>
+  <li><span class="no">No stored catalog of working harmful-content jailbreaks</span>; no wholesale ingestion
+      of harm corpora. (Transforms / codecs yes; a harm-payload arsenal no.)</li>
+  <li><span class="no">No self-learning loop whose objective / metric is harm-elicitation success.</span>
+      Reward is benign-canary boundary movement / evasion detection, never harmful-content production.</li>
+  <li><span class="no">No deletion or weakening of the <code>safe_signal</code> load-gate or the scope fence.</span>
+      We <em>extend</em> the technique taxonomy on top of the gate; we do not remove the benign-objective requirement.</li>
+</ol>
+</div>
+
+<h3>Why this keeps full engagement capability</h3>
+<p>Per-engagement adaptability comes from (a) the transform toolbox, (b) abstract technique patterns,
+(c) memory of technique-vs-defense shapes — <span class="yes">all in scope</span>. The two out-of-scope items
+add legal / ethical liability and destroy the project's product (rigor, defensibility, shareability)
+<strong>without</strong> improving authorized-testing capability.</p>
+
+<h2>4. Placement in the architecture</h2>
+<pre>skills/techniques/
+  obfuscation-encoding/      # P4RS3LT0NGV3 transforms — benign-canary objective, oracle-judged
+  multimodal-steganography/  # ST3GG embed (probe) + detect (defense)
+  covert-channel-tokenizer/  # GLOSSOPETRAE tokenizer blind spots / semantic stego
+
+engine/                      # routing: which transform family activates on which recon signal
+tools/                       # arms-length CLI wrappers (AGPL: external, not vendored into Plane 1/2)
+casebooks/ + memory/         # sanitized technique-vs-defense outcomes (no payloads, no secrets)</pre>
+<ul>
+  <li>Each technique card carries <code>activation</code> signals (e.g. "target accepts/echoes base64",
+      "multimodal input surface", "model-swap selector") and routes to a benign vuln objective + oracle.</li>
+  <li><strong>AGPL containment:</strong> wrap each tool's CLI as an external adapter invoked by subprocess;
+      do not vendor or link AGPL code into the portable harness. Same posture as Tollbooth. License review
+      before any distribution.</li>
+  <li><strong>Tollbooth synergy:</strong> GLOSSOPETRAE decode in Tollbooth = surface hidden / covert data in
+      observed traffic → redacted digest → evidence bundle. Defensive use of the integration.</li>
+</ul>
+
+<h2>5. Spike phases (each gated, PR-only, never merged without tests)</h2>
+<ul>
+  <li><strong>E0 — characterize + license.</strong> Confirm contents / CLIs hands-on; record AGPL obligations
+      and the arms-length boundary. No vendoring.</li>
+  <li><strong>E1 — one converter, one card.</strong> P4RS3LT0NGV3 encoder → <code>obfuscation-encoding</code>
+      technique card → benign-canary probe on a hermetic fake-model target. Oracle adjudicates. Proves the
+      transform → technique → benign-objective → verdict loop end-to-end.</li>
+  <li><strong>E2 — stego technique + detector.</strong> ST3GG embed (benign canary in an image) against a
+      hermetic multimodal target; ST3GG detector on the evidence side.</li>
+  <li><strong>E3 — covert channel + evidence.</strong> GLOSSOPETRAE tokenizer / semantic-stego technique;
+      wire decode into the Tollbooth evidence path (if the Tollbooth spike landed).</li>
+  <li><strong>E4 — adaptive technique memory.</strong> Record sanitized technique-vs-defense outcomes; let
+      routing adapt. Optimize technique cards against benign / hermetic evaluators only.</li>
+</ul>
+
+<h2>6. Acceptance criteria (per spike)</h2>
+<ul>
+  <li>Every probe has a benign win condition; <strong>no card loads without <code>safe_signal</code></strong>
+      (existing gate holds).</li>
+  <li>Oracle + controls + replay still required for any <code>confirmed</code>; no LLM / tool output overrides
+      the oracle.</li>
+  <li>Conformance + secret scan green; <strong>no secrets and no harmful-content payloads</strong> in any plane.</li>
+  <li>AGPL boundary respected (external / subprocess; nothing vendored / linked); license note recorded.</li>
+  <li>Memory stores sanitized technique-vs-defense methodology only — firewall test: disabling it changes no verdict.</li>
+</ul>
+
+<h2>7. Kill criteria</h2>
+<ul>
+  <li>A card requires a non-benign objective to be useful → drop it (it's outside the fence).</li>
+  <li>The "memory" trends toward storing reusable harmful payloads → stop; it has become the arsenal.</li>
+  <li>AGPL boundary can't be kept arms-length for a portable harness → don't vendor.</li>
+</ul>
+
+<h2>8. Open items for operator review</h2>
+<ol>
+  <li><strong>Confirm the Scope Decision (§3).</strong> This plan is built on "extend the taxonomy, keep the
+      benign-objective gate." A harmful-payload catalog / harm-elicitation optimizer is out of scope for this
+      plan and for what will be built.</li>
+  <li>Priority of the E-track vs. the AIWG-index / memory / Tollbooth tracks in
+      <code>docs/post-phase14-capability-fit-review.md</code>.</li>
+  <li>Whether the adaptive technique memory rides the same sanitized retrieval substrate as the casebook
+      memory layer (recommended) or a separate store.</li>
+</ol>
+
+<footer>
+<strong>Review-only.</strong> Nothing here is built yet. The in/out scope decision in §3 is the precondition
+for any E-track work. This document is the durable reference for that decision. Companion markdown:
+<code>docs/post-phase14-evasion-obfuscation-tooling-plan.md</code>.
+</footer>
+
+</body>
+</html>
