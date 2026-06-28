@@ -29,3 +29,11 @@ E1 wires **no** external tool. `tools/obfuscation-converter.py` uses only the Py
 (`base64`, `codecs`). The P4RS3LT0NGV3 backend is declared as an arms-length extension point
 (presence-detected on PATH) but is not invoked; wiring it is deferred to a later slice once the CLI
 contract is verified against an independently-installed copy.
+
+## E2 status
+
+E2 wires **no** external tool. `tools/stego-converter.py` uses only the Python stdlib for zero-width
+text steganography (embed/extract/detect). The ST3GG backend (image/audio/document LSB + richer
+detectors) is declared as an arms-length extension point (presence-detected as `st3gg` on PATH) but is
+not invoked; wiring it is deferred to a later slice once the CLI contract is verified against an
+independently-installed copy.
