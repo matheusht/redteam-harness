@@ -34,7 +34,7 @@
       "type": "string",
       "description": "a safe_signal-gated / scope-approved benign objective this proposal serves"
     },
-    "generator_capability_id": { "type": "string", "pattern": "^external\\." },
+    "generator_capability_id": { "type": "string", "pattern": "^(external|local)\\." },
     "artifact_metadata": {
       "type": "object",
       "description": "description of the PROPOSED artifact (kind, size, carrier) — not raw secrets or live target ids"
