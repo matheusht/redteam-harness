@@ -39,6 +39,14 @@ detectors) is declared as an arms-length extension point (presence-detected as `
 not invoked; wiring it is deferred to a later slice once the CLI contract is verified against an
 independently-installed copy.
 
+## E3 status
+
+E3 wires **no** external tool. `tools/covert-channel-converter.py` uses only the Python stdlib for
+homoglyph / constructed-script / token-break channels. The GLOSSOPETRAE backend (procedural conlang,
+glyph rendering, richer channels) is declared as an arms-length extension point (presence-detected as
+`glossopetrae` on PATH) but is not invoked. The defensive decode-in-traffic side is deferred to the
+operator-gated Tollbooth live stand-up.
+
 ## Tollbooth status (hermetic half only)
 
 The redaction boundary is built and tested: `tools/tollbooth-digest-adapter.py` turns a Tollbooth-style
