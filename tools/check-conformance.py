@@ -141,6 +141,20 @@ def _capability_blocks(text):
         r"^\s*-\s*id:\s*([A-Za-z0-9._-]+)\s*\n(.*?)(?=^\s*-\s*id:|\Z)", text, re.MULTILINE | re.DOTALL)]
 
 
+# actions that may NEVER appear in a capability's allowed_actions (payload generators / agent modes /
+# raw-offense). The keyhole must exclude these mechanically, not by convention.
+DANGEROUS_ACTIONS = {
+    "agent", "promptcraft", "anticlassifier", "injector", "tokenade", "fuzzer",
+    "embed_arbitrary_payload", "conceal_agent", "jailbreak_templates", "raw_payload_promotion",
+    "semantic_stego_raw", "token_exploit_raw", "harmful_probe_sets", "offense_modules",
+}
+
+
+def _cap_list(body, key):
+    m = re.search(rf"^\s*{key}:\s*\[([^\]]*)\]", body, re.MULTILINE)
+    return [x.strip().strip('"').strip("'") for x in m.group(1).split(",") if x.strip()] if m else []
+
+
 def check_capabilities():
     """The narrow keyhole: every external capability must be sensor_only and declare its fences."""
     print("\n[capabilities] external capability registry")
@@ -159,6 +173,14 @@ def check_capabilities():
                f"capabilities/{cid}: declares source")
         record(re.search(r"^\s*license:\s*\S+", body, re.MULTILINE) is not None,
                f"capabilities/{cid}: declares license")
+        allowed = set(_cap_list(body, "allowed_actions"))
+        forbidden = set(_cap_list(body, "forbidden_actions"))
+        dangerous = sorted(allowed & DANGEROUS_ACTIONS)
+        record(not dangerous, f"capabilities/{cid}: no payload-generator/agent action in allowed_actions",
+               f"dangerous in allowed: {dangerous}" if dangerous else "")
+        overlap = sorted(allowed & forbidden)
+        record(not overlap, f"capabilities/{cid}: allowed_actions and forbidden_actions are disjoint",
+               f"both allowed and forbidden: {overlap}" if overlap else "")
     bad = re.findall(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", text, re.MULTILINE)
     record(not bad, "capabilities: no entry claims oracle/judge authority", f"found {bad}" if bad else "")
 
