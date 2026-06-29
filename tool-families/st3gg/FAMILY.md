@@ -33,10 +33,13 @@ with a `blocked_until` gate, not deleted.
 
 ## What is exposed today
 
-Only sensor-only detection, via the existing keyhole `external.st3gg.detect`
-(`capabilities/registry.yaml`): `analyze_file`, `detect_unicode_steg`, `detect_file_type`,
-`summarize_findings`, `capacity_inspect`. Output is a redacted `artifact_digest.json`
-(file type, detector ids, suspicious indicators, confidence, `raw_payload_present` boolean, hashes).
+**Nothing runs yet — this family is S0 (manifest-declared, runtime not built).** The sensor-only
+capability `external.st3gg.detect` and its contract exist in `capabilities/registry.yaml`
+(`analyze_file`, `detect_unicode_steg`, `detect_file_type`, `summarize_findings`, `capacity_inspect`),
+but **no ST3GG runtime adapter or selftest is built** (that is S2). When S2 lands, its output will be a
+redacted `artifact_digest.json` (file type, detector ids, suspicious indicators, confidence,
+`raw_payload_present` boolean, hashes). Until then, the `exposed (S2)` rows above are *target phases*,
+not live surfaces.
 
 ## Permanent non-negotiables (any phase)
 
