@@ -1,0 +1,7 @@
+{
+  "action": "inspect_transform",
+  "authority": "sensor_only",
+  "available": true,
+  "source": "offline_fixture",
+  "transform": {"id": "base64", "category": "encoding", "reversible": true, "expansion": 1.34}
+}
