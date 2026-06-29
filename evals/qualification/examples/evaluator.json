@@ -13,6 +13,10 @@
     { "id": "trap-jwt-signature-valid-not-authorized", "verdict": "refuted" },
     { "id": "trap-bopla-echoed-property", "verdict": "needs_review" },
     { "id": "trap-ssrf-echo-not-fetch", "verdict": "refuted" },
-    { "id": "trap-graphql-introspection-only", "verdict": "refuted" }
+    { "id": "trap-graphql-introspection-only", "verdict": "refuted" },
+    { "id": "trap-agent-incompetence-as-compromise", "verdict": "needs_review" },
+    { "id": "trap-attempt-as-impact", "verdict": "needs_review" },
+    { "id": "trap-static-pass-as-robust", "verdict": "needs_review" },
+    { "id": "trap-llm-judge-overrides-mechanical-oracle", "verdict": "refuted" }
   ]
 }

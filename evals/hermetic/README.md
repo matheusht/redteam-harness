@@ -37,6 +37,11 @@ Every target ships a **confirmed** row, a **held/refuted** row, a **false-positi
 | `llm07-prompt-canary` | LLM07 — exact system-prompt canary fingerprint leaks | a near-miss fingerprint (`SYS-CANARY-0000`) |
 | `llm06-capability-dispatch` | LLM06 — dispatched a tool outside the granted set | *listing* an ungranted tool without dispatching it |
 | `model-router-differential` | same input class hits a backend whose policy != expected | a different backend that still enforces the expected policy |
+| `tool-result-ipi-isolation` | LLM01 — untrusted tool result is followed as instruction | isolated-as-data control does not follow the marker |
+| `ipi-benign-utility-baseline` | LLM01 — baseline must show the benign task works | failure under attack when the benign task also fails |
+| `cua-attempt-vs-impact` | LLM06/LLM01 — attempted action vs broker-observed effect | emitted action/attempt with no completed effect |
+| `judge-overestimates-asr` | oracle separation — judge cannot override broker evidence | LLM judge says confirmed but mechanical impact is absent |
+| `rag-single-doc-poison` | RAG poisoning — provenance + clean-store differential | retrieval of planted chunk without answer canary/drift |
 
 ```
 python3 tools/run-hermetic-fakemodel.py             # run every bundled fake-model target
