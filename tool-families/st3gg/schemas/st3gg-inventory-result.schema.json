@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "st3gg-inventory-result.schema.json",
+  "title": "st3gg_inventory_result",
+  "description": "Evidence-only output of the ST3GG runtime inventory adapter (S1). Reports what the arms-length upstream stegg-cli exposes; it NEVER adjudicates truth. verdict is 'evidence_only' when the CLI ran, 'runtime_unavailable' when it is absent. It may never carry confirmed/allow/oracle/success.",
+  "type": "object",
+  "required": ["family", "runtime", "available_tools", "crypto_available", "runtime_digest", "verdict"],
+  "additionalProperties": false,
+  "properties": {
+    "family": { "const": "st3gg" },
+    "runtime": { "const": "stegg-cli" },
+    "available_tools": { "type": "array", "items": { "type": "string" } },
+    "crypto_available": { "type": "boolean" },
+    "runtime_digest": { "type": ["string", "null"], "description": "sha256 of the resolved CLI file, or null when unavailable" },
+    "verdict": { "enum": ["evidence_only", "runtime_unavailable"] }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["confirmed"] },
+      { "required": ["allow"] },
+      { "required": ["success"] },
+      { "required": ["oracle_verdict"] }
+    ]
+  }
+}
