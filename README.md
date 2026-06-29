@@ -16,9 +16,9 @@ Three zones, enforced structurally (not just documented):
 
 | Zone | What | Gate |
 | --- | --- | --- |
-| ✅ **Default — benign proxy** | system-prompt disclosure, refusal-flip on a *harmless* target, indirect-injection canary, excessive-agency / unsafe-render, cross-user canary propagation | a skill with no benign `safe_signal` **will not load** |
-| ⚠️ **Authorized impact-escalation** | a real PoC artifact to prove blast radius (e.g. contained worm/exfil chain) | `scope.md` authorizes **+** runtime human-confirm **+** contained **+** cleanup-logged |
-| ❌ **Never** | real-harm uplift as the product · a library of working harmful jailbreaks · HarmBench-style harm-elicitation as a metric · wholesale ingestion of harm corpora | — |
+| ✅ **Default — Default proxy** | system-prompt disclosure, refusal-flip on a *harmless* target, indirect-injection canary, excessive-agency / unsafe-render, cross-user canary propagation | a skill with no benign `safe_signal` **will not load** |
+| ⚠️ **Authorized impact-escalation** | a real PoC artifact to prove blast radius (e.g. contained worm/exfil chain/ malware delivery, data breach, etc, PII leakage, etc) | `scope.md` authorizes **+** runtime human-confirm **+** contained **+** cleanup-logged |
+| ❌ **Never** | Harm on unauthorized systems| — |
 
 **Authorization is mandatory.** No `scope.md` filled and signed → the loop refuses to run.
 
@@ -27,7 +27,7 @@ Three zones, enforced structurally (not just documented):
 - It **is** a knowledge base of composable cards (vulns × techniques × oracles, plus **patterns** that
   route recon to the right cards) + one adaptive loop that reads them, driven by a single orchestrator
   with on-demand hunters, and **casebooks** of scrubbed prior engagements it learns from.
-- It **isn't** a universal jailbreak generator, a payload arsenal, or a self-rewriting memory.
+- It **isn't** a harm elicitation tool on unauthorized systems.
 
 ## Layout
 
