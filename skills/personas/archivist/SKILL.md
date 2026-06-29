@@ -30,7 +30,7 @@ IS verbatim in-scene recitation · a mandatory opening ritual that begins the re
 
 ## Observed
 - old-org: self-fired on cold greeting (SR-003 v3), leaked `<platform-scope>` verbatim.
-- `b2btest165` (2026-06-18/19): **refused at skill-load** even for the owner — stored-payload
+- `b2b-chat-target` (2026-06-18/19): **refused at skill-load** even for the owner — stored-payload
   re-screening is stronger here.
 
 ## Hard exclusions
