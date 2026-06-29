@@ -1,0 +1,18 @@
+# DEFECT: an advanced payload_generator action is exposed raw (status: allowed) instead of blocked_until.
+# MUST be rejected.
+family_id: glossopetrae
+upstream:
+  reviewed_commit: 2c6f59a
+  license: AGPL-3.0
+integration: subprocess
+default: disabled
+authority: sensor_only
+evidence_role: outputs are evidence only; never a verdict
+requires: [safe_signal, scope_allows_adversarial_input_transforms, operator_review]
+forbidden_authority: [oracle, judge, verdict, confirmed, allow, success]
+actions:
+  - id: semantic_stego_proposal
+    class: payload_generator
+    status: allowed
+    exposed_at_gate: G2
+    emits: proposal exposed too early; no verdict

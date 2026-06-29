@@ -1,0 +1,21 @@
+# DEFECT: a blocked_until advanced action omits its next_gate. MUST be rejected.
+family_id: glossopetrae
+upstream:
+  reviewed_commit: 2c6f59a
+  license: AGPL-3.0
+integration: subprocess
+default: disabled
+authority: sensor_only
+evidence_role: outputs are evidence only; never a verdict
+requires: [safe_signal, scope_allows_adversarial_input_transforms, operator_review]
+forbidden_authority: [oracle, judge, verdict, confirmed, allow, success]
+actions:
+  - id: encode_benign
+    class: converter
+    status: allowed
+    exposed_at_gate: G2
+    emits: encoded benign canary; no verdict
+  - id: semantic_stego_proposal
+    class: payload_generator
+    status: blocked_until
+    emits: contained proposal; no verdict
