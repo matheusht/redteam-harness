@@ -5,3 +5,8 @@
 node_modules/
 __pycache__/
 .venv/
+
+# Plane 3 — live engagement working dirs live WITH the target, never in this portable repo
+# (CLAUDE.md §4.0). Only the scaffolding template is tracked.
+engagements/*/
+!engagements/_TEMPLATE/
