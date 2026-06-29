@@ -1,0 +1,15 @@
+# MUST be rejected: a staged entry with no scope-gate requires[].
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+allowed_actions: [analyze_file]
+blocked_until:
+  - id: network_channel_simulation
+    class: payload_generator
+    risk_tier: high
+    blocked_until: S7-network-multilayer-hermetic-lab
+    redaction: synthetic artifacts only; no external traffic
+    authority: proposal_only
+    evidence_role: hermetic simulation evidence

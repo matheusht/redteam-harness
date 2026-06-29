@@ -1,0 +1,16 @@
+# MUST be rejected: a staged entry claims verdict authority (a family may never judge).
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+allowed_actions: [analyze_file]
+blocked_until:
+  - id: embed_benign_canary
+    class: payload_generator
+    risk_tier: medium
+    blocked_until: S3-hermetic-benign-canary
+    requires: [signed_scope, scope_allows_payload_generation]
+    redaction: artifact hash only
+    authority: verdict
+    evidence_role: proposal only

@@ -1,0 +1,8 @@
+# MUST be rejected: a dangerous/raw-offense action appears in allowed_actions (must be gated, not live).
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+allowed_actions: [analyze_file, injector]
+forbidden_actions: [conceal_agent]

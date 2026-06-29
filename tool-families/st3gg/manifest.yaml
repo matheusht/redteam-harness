@@ -1,0 +1,97 @@
+# Harness-owned manifest for the ST3GG tool family — the authority contract.
+#
+# Detection-first. The manifest, broker, and oracle hold authority; ST3GG NEVER judges (no
+# confirmed / allow / verdict / success). Actions not explicitly listed fail closed.
+# Authority model: capabilities/classes.yaml. Live keyhole entry: capabilities/registry.yaml
+# (external.st3gg.detect). Graduation ladder: docs/tool-family-adapter-architecture.md (M0-M6).
+
+family_id: st3gg
+upstream:
+  repo: https://github.com/elder-plinius/ST3GG
+  reviewed_commit: 35f8b2b
+  license: AGPL-3.0
+integration: subprocess
+
+# Exposed NOW — sensor-only detection. Mirrors capabilities/registry.yaml::external.st3gg.detect.
+capabilities:
+  - id: external.st3gg.detect
+    class: sensor
+    authority: sensor_only
+    backs: capabilities/registry.yaml
+
+allowed_actions: [analyze_file, detect_unicode_steg, detect_file_type, summarize_findings, capacity_inspect]
+forbidden_actions: [embed_arbitrary_payload, injector, jailbreak_templates, conceal_agent, raw_payload_promotion]
+requires: [safe_signal, scope_allows_adversarial_input_transforms]
+
+output_schema: artifact_digest.json
+redaction:
+  - raw payload omitted — emit raw_payload_present boolean + content hash only
+  - decoded text is never written to Plane 1/2 unless it matches a known benign canary
+evidence_role: detection evidence only ("hidden channel suspected") — never impact, never verdict
+
+# Staged surfaces — in scope for eventual adoption, NOT erased. Each is exposed only when its named
+# gate passes. Every entry MUST declare: class, risk_tier, blocked_until, scope-gate requires[],
+# redaction, and non-authority language (authority + evidence_role). Conformance fails closed otherwise.
+blocked_until:
+  - id: embed_benign_canary
+    class: payload_generator
+    risk_tier: medium
+    blocked_until: S3-hermetic-benign-canary
+    requires: [signed_scope, scope_allows_payload_generation, containment_plan, cleanup_plan, oracle_separation]
+    redaction: generated artifact stays in temp/eval dir; only artifact hash is recorded
+    authority: proposal_only
+    evidence_role: benign-carrier proposal — never executed live, never verdict/confirmed/success
+
+  - id: extract_payload_redacted
+    class: sensor
+    risk_tier: high
+    blocked_until: S5-redacted-decode-lane
+    requires: [signed_scope, scope_allows_adversarial_input_transforms, containment_plan, cleanup_plan]
+    redaction: default output is hash or canary-boolean; raw export only under signed scope + containment + cleanup
+    authority: sensor_only
+    evidence_role: redacted decode evidence only — never raw secrets into Plane 1/2
+
+  - id: injector_template_proposal
+    class: payload_generator
+    risk_tier: high
+    blocked_until: S6-injector-conceal-proposal-modules
+    requires: [signed_scope, scope_allows_payload_generation, containment_plan, cleanup_plan, oracle_separation]
+    redaction: no raw live secrets; carrier_type/payload_class/risk_tier declared; artifact temp/eval scoped
+    authority: proposal_only
+    evidence_role: candidate-artifact proposal — never auto-executed, never judged by the family
+
+  - id: conceal_artifact_proposal
+    class: payload_generator
+    risk_tier: high
+    blocked_until: S6-injector-conceal-proposal-modules
+    requires: [signed_scope, scope_allows_payload_generation, containment_plan, cleanup_plan, oracle_separation]
+    redaction: no raw live secrets; artifact temp/eval scoped; cleanup-verified
+    authority: proposal_only
+    evidence_role: candidate-concealment proposal — never auto-executed, never judged by the family
+
+  - id: network_channel_simulation
+    class: payload_generator
+    risk_tier: high
+    blocked_until: S7-network-multilayer-hermetic-lab
+    requires: [signed_scope, scope_allows_payload_generation, containment_plan, cleanup_plan, oracle_separation]
+    redaction: synthetic artifacts only; no external network traffic; deterministic fixtures
+    authority: proposal_only
+    evidence_role: hermetic simulation evidence — embed/detect/decode logged separately, never verdict
+
+  - id: multi_layer_carrier_lab
+    class: payload_generator
+    risk_tier: high
+    blocked_until: S7-network-multilayer-hermetic-lab
+    requires: [signed_scope, scope_allows_payload_generation, containment_plan, cleanup_plan, oracle_separation]
+    redaction: synthetic carriers only; detector and decoder evidence recorded separately
+    authority: proposal_only
+    evidence_role: hermetic lab evidence — never verdict
+
+  - id: brokered_live_embed
+    class: executor
+    risk_tier: critical
+    blocked_until: S9-live-capable-executor-lane
+    requires: [signed_scope, broker_mediation, operator_confirmation, containment_plan, cleanup_plan, oracle_separation]
+    redaction: extracted data redacted at capture; impact-bounded; human confirm for Zone-2/persistent artifacts
+    authority: broker_mediated
+    evidence_role: live action under broker mediation — the family remains non-authoritative
