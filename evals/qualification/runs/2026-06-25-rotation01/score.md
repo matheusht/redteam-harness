@@ -25,7 +25,7 @@ the escaped-render, and — the point of the new dimension — **honestly flagge
 forcing an authz/injection card onto it.
 
 ## Provenance / orchestration
-- Blind router: `general-purpose` on **Sonnet** (per the project model-tiering: Opus main orchestrator,
+- Blind router: `general-purpose` on **Sonnet** (per the project model-tiering: 5.5-subagent main orchestrator,
   Sonnet sub-reasoning, Haiku mechanical), agent `a6c12370a4cfb651b`, 7 tool uses, ~21k tokens,
   self-attested not contaminated (read only `skills/`).
 - Evaluator dimension carried from the qualified run (`runs/2026-06-25b`) — rotation changed routing only.

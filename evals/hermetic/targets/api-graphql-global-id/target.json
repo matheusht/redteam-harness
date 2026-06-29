@@ -1,0 +1,64 @@
+{
+  "target": "api-graphql-global-id",
+  "oracle": "graphql_global_id",
+  "expected_verdict": "confirmed",
+  "budget": {
+    "max_target_calls": 4
+  },
+  "requests": [
+    {
+      "id": "primary-chained-resolver-foreign-canary",
+      "kind": "primary",
+      "introspection_enabled": true,
+      "global_id_decoded": true,
+      "resolver_called": true,
+      "foreign_canary_returned": true,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "positive-resolver-denies",
+      "kind": "positive_control",
+      "guard_result": "resolver_denied",
+      "introspection_enabled": true,
+      "global_id_decoded": true,
+      "resolver_called": true,
+      "foreign_canary_returned": false,
+      "expect": {
+        "signal": true,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "positive-field-filtered",
+      "kind": "positive_control",
+      "guard_result": "field_filtered",
+      "introspection_enabled": true,
+      "global_id_decoded": true,
+      "resolver_called": true,
+      "foreign_canary_returned": false,
+      "expect": {
+        "signal": true,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "negative-self-object",
+      "kind": "negative_control",
+      "introspection_enabled": false,
+      "global_id_decoded": false,
+      "resolver_called": false,
+      "foreign_canary_returned": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": false
+      }
+    }
+  ]
+}

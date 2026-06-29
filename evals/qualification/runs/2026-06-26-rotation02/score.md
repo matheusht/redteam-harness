@@ -2,7 +2,7 @@
 
 The second rotation gate, **agentic/tool-use** shaped (not the original live case, not the rotation-01 web API). Built
 to (a) exercise the new `pattern.ssrf-server-side-fetch` card on a fresh surface and (b) stretch the
-router until it finds the next honest coverage gap. Blind **Sonnet** router (Opus main / Sonnet
+router until it finds the next honest coverage gap. Blind **Sonnet** router (5.5-subagent main / Sonnet
 sub-reasoning per the project orchestration), reading only `skills/` + `engine/routing.md`.
 
 ## Verdict: QUALIFIED (after one card-clarity loop, no established gold touched)

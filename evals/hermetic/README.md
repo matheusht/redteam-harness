@@ -46,6 +46,28 @@ python3 tools/run-hermetic-fakemodel.py --self-test # per oracle: confirmed + bu
 These four targets are wired into the GEPA shadow runner's baseline scoreboard and pinned in the first
 campaign's `frozen_inputs`, so the evaluator the ratchet is scored against is now wider than BOLA alone.
 
+### `targets/api-*` — no-model API authorization/SSRF fixtures, landed (Track D)
+These targets encode Track D's API-security archetypes without live services: state-changing BOLA,
+JWT claim-validation confusion, BOPLA/property authorization, SSRF redirect-follow, and GraphQL
+global-id resolver access. `tools/run-hermetic-api.py` derives `(signal, effect, control_ok)` from
+frozen request rows and confirms only when a primary has the distinctive canary/effect, positive
+controls deny/strip, and negative controls are clean.
+
+| target | oracle | the false-positive trap |
+| --- | --- | --- |
+| `api-bola-state-change` | inert mutation against a foreign controlled canary object | bare 200/204 with no foreign canary effect |
+| `api-jwt-claim-validation` | wrong-audience / wrong-alg token grants a canary privilege | signature-valid or decoded token with no guarded privilege |
+| `api-bopla-property-authz` | property canary exposed or unauthorized guarded property takes effect | echoed request property with no persistence/effect |
+| `api-ssrf-redirect-follow` | server follows redirect to a stand-in internal canary | URL echo/storage with no server-side fetch |
+| `api-graphql-global-id` | chained resolver returns a foreign canary object | introspection/global-id decoding alone |
+
+```
+python3 tools/run-hermetic-api.py             # run every bundled API target
+python3 tools/run-hermetic-api.py --self-test # confirmed + budget-abort + no signal-only confirms
+```
+
+These targets are also wired into the GEPA shadow runner's protected baseline scoreboard.
+
 ## Boundary
 A hermetic target is frozen and human-authored. Autoresearch may never mutate a target, its expected
 verdict, or the budget — those are sealed evaluator data (see `docs/ROADMAP.md` Phase-3 scope fence).

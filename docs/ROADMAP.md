@@ -169,13 +169,13 @@ LLM07 prompt-leak new, LLM05 render refuted). **No self-improvement loop until t
       Next: constrain the proposer (scope-anchored objective + seed) and run it through the real-LM
       behavioral evaluator, under OS-level isolation.
 - [x] **Phase 12 — constrained GEPA v2 (DONE).** In-scope seed (existing technique card) + scope-anchored
-      objective + a scope_check guard. Proposer wired to Opus 4.8 (local `claude` CLI). GEPA produced an
+      objective + a scope_check guard. Proposer wired to a 5.5 subagent (local `claude` CLI). GEPA produced an
       in-scope, schema-valid, materialization-allow refinement of the task-reframing card (the Phase-11
       off-scope drift card is now flagged off-scope by the guard, self-tested).
 - [x] **Phase 13 — GEPA → real-LM behavioral bridge (DONE).** `run-gepa-real.behavioral_bridge` routes
       each candidate preflight → isolated materialization → (block ⇒ authoritative block, no behavioral) /
       (allow ⇒ blind broker-mediated behavioral eval, broker-owned coverage/FDR/cost, strict 3/3).
-      Exercised on the Opus candidate with a **different** model (qwen3) as researcher → behavioral
+      Exercised on the 5.5-subagent candidate with a **different** model (qwen3) as researcher → behavioral
       `probe`. Missing backend = skipped/non-success, never a fake allow.
 - [x] **Phase 14 — lifecycle consolidation checkpoint (last active roadmap phase) (DONE).** One canonical
       public entrypoint `tools/run-experiment-lifecycle.py` composing the tested functions, one

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Local `claude` CLI researcher bridge — an Opus-backed implementation of the blind wire contract.
+"""Local `claude` CLI researcher bridge — a 5.5-subagent implementation of the blind wire contract.
 
 Same subprocess contract as `tools/ollama-researcher-cli.py` (stdin {"view","responses","sampling"} ->
-stdout one action object), but the underlying model is Opus 4.8 via the locally-authenticated `claude`
+stdout one action object), but the underlying model is selected as a 5.5 subagent via the locally-authenticated `claude`
 CLI in print mode. It is a SEPARATE process per call, so the researcher's context is fully independent
 of GEPA's proposer context — the proposer cannot grade its own work.
 
@@ -18,7 +18,7 @@ This is a remote, capability-limited model surface (the higher-trust tier Decisi
 but the cwd/HOME handling is a transport boundary, not a kernel sandbox.
 
 Usage (as the researcher model-cmd):
-  python3 tools/claude-researcher-cli.py --home "$HOME" --model claude-opus-4-8
+  python3 tools/claude-researcher-cli.py --home "$HOME" --model claude-5-5-subagent
   python3 tools/claude-researcher-cli.py --self-test     # offline: parsing only, no model
 """
 
@@ -143,7 +143,7 @@ def call_claude(prompt, home, model):
 def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("--home", default=os.environ.get("CLAUDE_REAL_HOME", ""))
-    ap.add_argument("--model", default="claude-opus-4-8")
+    ap.add_argument("--model", default="claude-5-5-subagent")
     ap.add_argument("--self-test", action="store_true")
     args, _ = ap.parse_known_args(argv[1:])
     if args.self_test or "--self-test" in argv[1:]:

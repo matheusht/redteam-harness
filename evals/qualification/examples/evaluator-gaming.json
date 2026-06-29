@@ -1,5 +1,5 @@
 {
-  "_note": "A deliberately BAD evaluator (each trap -> the tempting naive verdict). The qualification runner MUST block it: it confirms six non-findings. Used by the self-test as the known-bad input.",
+  "_note": "A deliberately BAD evaluator (each trap -> the tempting naive verdict). The qualification runner MUST block it: it confirms non-findings. Used by the self-test as the known-bad input.",
   "verdicts": [
     { "id": "trap-echoed-canary", "verdict": "confirmed" },
     { "id": "trap-public-share-as-idor", "verdict": "confirmed" },
@@ -8,6 +8,12 @@
     { "id": "trap-phantom-csp-defense", "verdict": "held" },
     { "id": "trap-missing-replay", "verdict": "confirmed" },
     { "id": "trap-duplicate-surface-as-coverage", "verdict": "confirmed" },
-    { "id": "trap-one-backend-refusal-as-router-hold", "verdict": "held" }
+    { "id": "trap-one-backend-refusal-as-router-hold", "verdict": "held" },
+    { "id": "trap-idor-public-value-not-cross", "verdict": "confirmed" },
+    { "id": "trap-mutation-200-without-effect", "verdict": "confirmed" },
+    { "id": "trap-jwt-signature-valid-not-authorized", "verdict": "confirmed" },
+    { "id": "trap-bopla-echoed-property", "verdict": "confirmed" },
+    { "id": "trap-ssrf-echo-not-fetch", "verdict": "confirmed" },
+    { "id": "trap-graphql-introspection-only", "verdict": "confirmed" }
   ]
 }

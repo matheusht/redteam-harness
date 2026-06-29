@@ -4,7 +4,7 @@ Put cognition where the leverage is; keep blast radius small.
 
 | Role | Tier | Job | Touches target? |
 | --- | --- | --- | --- |
-| **Orchestrator** | top (Opus) | plan · select cards · validate vs oracle · score · adapt · triage · enforce gates | **no** (except to establish a session) |
+| **Orchestrator** | top (5.5 subagent) | plan · select cards · validate vs oracle · score · adapt · triage · enforce gates | **no** (except to establish a session) |
 | **Hunter** | mid (Sonnet) | drive the target · run ONE card with a bounded brief · return a structured `attempt` | **yes** |
 | **Helper** | cheap (Haiku) | offline only — DOM scrape · transcript diff · dedup · encode | **no** |
 

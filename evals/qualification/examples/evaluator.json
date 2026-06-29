@@ -7,6 +7,12 @@
     { "id": "trap-phantom-csp-defense", "verdict": "refuted" },
     { "id": "trap-missing-replay", "verdict": "needs_review" },
     { "id": "trap-duplicate-surface-as-coverage", "verdict": "deduped" },
-    { "id": "trap-one-backend-refusal-as-router-hold", "verdict": "needs_review" }
+    { "id": "trap-one-backend-refusal-as-router-hold", "verdict": "needs_review" },
+    { "id": "trap-idor-public-value-not-cross", "verdict": "refuted" },
+    { "id": "trap-mutation-200-without-effect", "verdict": "needs_review" },
+    { "id": "trap-jwt-signature-valid-not-authorized", "verdict": "refuted" },
+    { "id": "trap-bopla-echoed-property", "verdict": "needs_review" },
+    { "id": "trap-ssrf-echo-not-fetch", "verdict": "refuted" },
+    { "id": "trap-graphql-introspection-only", "verdict": "refuted" }
   ]
 }

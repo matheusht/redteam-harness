@@ -13,15 +13,17 @@ routes_to: ["vulns/broken-object-level-authz", "vulns/llm06-excessive-agency"]
 
 activation:
   strong:
-    - "a request param or body field that NAMES A SELECTOR of whose data/permissions apply is PRESENT (ownerId, userId, accountId, tenantId, companyId in the body/query) — presence alone is strong; you do NOT need to have already shown it differs from the principal"
+    - "a request field that NAMES A SELECTOR of whose data/permissions apply is PRESENT in the path, query, header, or body (ownerId, userId, accountId, tenantId, companyId, x-user-id, org id) — presence alone is strong; you do NOT need to have already shown it differs from the principal"
     - "the same endpoint behaves differently with the selector present vs absent (present → it scopes the read to that id; absent → it falls back to the caller)"
     - "a sibling/newer version of the same endpoint DOES validate the selector (its mere existence says the team knows it needs validating — see pattern.legacy-route-differential)"
   weak:
-    - "an id that looks like another principal's is visible to the client at all (URL, share link, export, prior response) — a leak-vector that makes the selector reachable"
+    - "an id that looks like another principal's is visible to the client at all (URL path, query string, header value, share link, export, prior response) — a leak-vector that makes the selector reachable"
+    - "integer, sequential, or low-entropy ids appear in routable selectors; enumeration is an activation signal, not a finding"
     - "the field is named generically (id, ref) but resolves a cross-principal resource"
   negative:
     - "the selector is re-resolved server-side against the authenticated principal before use (the guard is present) → defense holds, record as held"
     - "the selector only chooses among the caller's OWN resources (no cross-principal reach)"
+    - "the id is public or ignored, and changing it does not alter which principal's object/effect is returned"
 ---
 
 # Client-supplied selector trusted for authorization
@@ -35,6 +37,10 @@ activation:
 **Idea.** The server lets the client say *whose* data to act on, then acts on it without proving the
 caller is allowed to. The authenticated principal is the source of truth for authorization; the
 moment a request field overrides *whose* permissions apply, ask who validates it.
+
+**ID opacity is not a defense.** UUIDs, hashes, opaque slugs, and signed-looking ids reduce guessing
+but do not prove authorization. Treat low-entropy or enumerable ids as a reachability boost; treat
+opaque ids as still requiring server-side ownership resolution.
 
 ## Suggested probes (you control both accounts; benign canary only)
 - **Point the selector at another principal you control** and send an otherwise-authorized request.
@@ -62,6 +68,8 @@ moment a request field overrides *whose* permissions apply, ask who validates it
   any) is the *route differential*, not the selector itself.
 - A selector that picks among the caller's own items (e.g. which of *my* chats) → no cross-principal
   reach, no BOLA.
+- A public id, profile handle, or share token is reflected or accepted but does not change the
+  cross-principal object/effect → activation may be real, confirmation is refuted.
 
 ## Do not overclaim
 - "It returned 200" proves nothing until the canary shows it returned **someone else's** resource.

@@ -9,8 +9,8 @@ the measured materialization + broker behavioral verdict are authoritative). Run
 
 The deterministic spine of a shadow campaign: it gates every candidate through the contract fence
 (tools/check-campaign.py), runs the gate-passing ones through the FROZEN scorers
-(tools/run-qualification.py + tools/run-hermetic-bola.py), and emits a campaign report. It promotes
-NOTHING — it never writes under skills/ and never applies a candidate's diff.
+(tools/run-qualification.py + hermetic BOLA / fake-model / API targets), and emits a campaign report.
+It promotes NOTHING — it never writes under skills/ and never applies a candidate's diff.
 
   campaign-manifest.json
       |  discover candidates/*/candidate-manifest.json
@@ -61,6 +61,7 @@ CC = _mod("check_campaign", "check-campaign.py")
 RQ = _mod("run_qualification", "run-qualification.py")
 HB = _mod("run_hermetic_bola", "run-hermetic-bola.py")
 HF = _mod("run_hermetic_fakemodel", "run-hermetic-fakemodel.py")
+HA = _mod("run_hermetic_api", "run-hermetic-api.py")
 SC = _mod("score_candidate", "score-candidate.py")
 
 
@@ -104,6 +105,16 @@ def baseline_scoreboard(campaign=None):
             "model_calls": fr["model_calls"],
         })
 
+    api = []
+    for at in HA.bundled_targets():
+        ar = HA.run(at)
+        api.append({
+            "oracle": at["oracle"],
+            "verdict": ar["verdict"],
+            "passed": ar["verdict"] == at.get("expected_verdict") and not ar["mismatches"],
+            "target_calls": ar["target_calls"],
+        })
+
     return {
         "routing_qualified": qual["qualified"],
         "routing": [{"case": r["case"], "passed": r["passed"]} for r in qual["routing"]],
@@ -114,6 +125,7 @@ def baseline_scoreboard(campaign=None):
         "hermetic_bola": {"verdict": herm["verdict"], "passed": herm_ok,
                           "target_calls": herm["target_calls"], "budget": herm["budget"]},
         "hermetic_fakemodel": fakemodel,
+        "hermetic_api": api,
     }
 
 
@@ -122,6 +134,7 @@ def _coverage_keys(sb):
     if sb["hermetic_bola"]["passed"]:
         keys.append("hermetic:bola-legacy-route")
     keys += [f"hermetic:{t['oracle']}" for t in sb.get("hermetic_fakemodel", []) if t["passed"]]
+    keys += [f"hermetic:{t['oracle']}" for t in sb.get("hermetic_api", []) if t["passed"]]
     return sorted(keys)
 
 
@@ -130,13 +143,16 @@ def _protected(sb):
     p["hermetic:bola-legacy-route"] = sb["hermetic_bola"]["passed"]
     for t in sb.get("hermetic_fakemodel", []):
         p[f"hermetic:{t['oracle']}"] = t["passed"]
+    for t in sb.get("hermetic_api", []):
+        p[f"hermetic:{t['oracle']}"] = t["passed"]
     p["false-discovery"] = sb["false_discovery"]["passed"]
     return p
 
 
 def _cost_of(sb):
     fake_calls = sum(t["model_calls"] for t in sb.get("hermetic_fakemodel", []))
-    return {"model_calls": fake_calls, "target_calls": sb["hermetic_bola"]["target_calls"]}
+    api_calls = sum(t["target_calls"] for t in sb.get("hermetic_api", []))
+    return {"model_calls": fake_calls, "target_calls": sb["hermetic_bola"]["target_calls"] + api_calls}
 
 
 def incumbent_eval(sb):
@@ -217,6 +233,9 @@ def render_md(report):
         f"{sb['hermetic_bola']['target_calls']}/{sb['hermetic_bola']['budget']} target calls)",
         "- hermetic fake-model: " + (", ".join(
             f"{t['oracle']}={t['verdict']}{'✓' if t['passed'] else '✗'}" for t in sb.get("hermetic_fakemodel", []))
+            or "—"),
+        "- hermetic API: " + (", ".join(
+            f"{t['oracle']}={t['verdict']}{'✓' if t['passed'] else '✗'}" for t in sb.get("hermetic_api", []))
             or "—"),
         "",
         "## Candidates",
