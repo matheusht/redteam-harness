@@ -1,0 +1,47 @@
+id: case-2026-06-b2b-agentic-chat-api
+date: 2026-06
+target_class: multi-tenant B2B agentic chat SaaS (per-company tenancy, admin console, server-side REST API)
+surfaces:
+  - admin_api          # /api/b2b/{companyId}/* — company-scoped admin REST
+  - tenancy_boundary   # per-company isolation enforced (or not) in route handlers
+  - authz_helper       # a shared validateCompanyAdmin-style guard reused across the family
+auth_model: single-session SSO bearer JWT; per-company tenancy; per-company admin flag; SPA mints token client-side
+scope_ref: "Plane 3 engagement scope (target repo), engagement *-api pass — not reproduced here"
+
+confirmed_findings:
+  - label: F-API1
+    pattern: pattern.unsafe-default-authz-helper
+    owasp: "A01 Broken Access Control (BOLA) / API1:2023"
+    severity: critical
+    one_line: >
+      a shared admin guard checked the caller's role on their OWN company but took the tenant binding as an
+      optional arg that callers omitted, so a client-supplied companyId in the path selected whose data
+      returned; an admin in one tenant read another tenant's dashboard, member PII and chat lists.
+  - label: F-API2
+    pattern: pattern.client-supplied-selector-authz
+    owasp: "API5:2023 (broken function-level authz) + API1:2023"
+    severity: high
+    one_line: >
+      a teams list/create endpoint ran under authentication only (no role check, no tenant bind), so any
+      seat read any company's teams and any admin created/deleted teams in any tenant.
+
+refuted_candidates:
+  - label: C-xtenant-dashboard-by-nonadmin
+    looked_like: "a non-admin in tenant B reading tenant A's admin dashboard (since the teams route leaked cross-tenant, the dashboard might too)"
+    refuted_by: "authz oracle: the role gate still fired — non-admin got 403 on dashboard even cross-tenant; only the binding was missing, not the role check"
+    pattern: pattern.unsafe-default-authz-helper
+
+held_defenses:
+  - control: one endpoint family bound the path id to the authenticated principal (companyId !== user.companyId → 403)
+    why_held: "it passed the binding the helper makes optional; cross-tenant request denied. Its presence next to the leaking siblings is the tell that the others simply forgot the arg."
+    contrast_pattern: pattern.unsafe-default-authz-helper
+  - control: the role gate (isAdmin) on admin-only routes
+    why_held: "blocked a non-admin even on an unbound route; proves role and tenancy are SEPARATE questions — fixing one does not fix the other"
+    contrast_pattern: pattern.client-supplied-selector-authz
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-06: stripped all live company/user/team ids, tenant names, hostnames, bearer
+    tokens, emails and passwords. Retained only the abstract route-family shape (/api/b2b/{companyId}/*),
+    the guard's opt-in-binding signature shape, and abstract outcomes. No payloads.

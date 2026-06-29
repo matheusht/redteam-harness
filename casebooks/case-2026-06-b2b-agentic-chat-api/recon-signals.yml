@@ -1,0 +1,37 @@
+case: case-2026-06-b2b-agentic-chat-api
+signals:
+  - observation: "admin console routes are gated client-side off a role field from an identity endpoint; no /api/b2b/* request fires for a non-admin seat in the UI"
+    where: SPA route guard + admin_api
+    activates: [pattern.ui-only-policy-enforcement, pattern.unsafe-default-authz-helper]
+    strength: strong
+    note: "client-side-only gate means server-side authz of the whole admin API is UNVERIFIED by the UI — the central hypothesis to test from source"
+
+  - observation: "a company/tenant id appears as a path segment in a whole route family (/api/b2b/{companyId}/...)"
+    where: admin_api path
+    activates: [pattern.client-supplied-selector-authz, pattern.unsafe-default-authz-helper]
+    strength: strong
+    note: "selector present in the path across many routes — presence alone is strong; check who binds it"
+
+  - observation: "a shared guard is called as validateX(request.user) — principal passed, resource/tenant id NOT passed — and its signature exposes the binding as an optional argument"
+    where: authz_helper signature + call sites
+    activates: [pattern.unsafe-default-authz-helper]
+    strength: strong
+    note: "the opt-in safety arg IS the tell; grep call sites and classify by whether the bind is passed"
+
+  - observation: "the same guard is called WITH the binding on a few routes and WITHOUT it on most siblings for the same resource"
+    where: authz_helper call sites
+    activates: [pattern.legacy-route-differential, pattern.unsafe-default-authz-helper]
+    strength: strong
+    note: "the binding sibling is the positive control proving the bind belongs on the others"
+
+  - observation: "a sibling route in the same family runs under authentication middleware only — no role guard call at all"
+    where: admin_api (teams list/create)
+    activates: [pattern.client-supplied-selector-authz, pattern.legacy-route-differential]
+    strength: strong
+    note: "worse than the opt-in case: no authz whatsoever beyond authn → any seat, any tenant"
+
+  - observation: "one endpoint family compares the path id to the principal's own tenant and returns 403 on mismatch"
+    where: admin_api (company-settings)
+    activates: [pattern.unsafe-default-authz-helper]
+    strength: negative
+    note: "defense held here — record as the contrast control, not a finding"
