@@ -1,0 +1,23 @@
+# Valid GLOSSOPETRAE family manifest (compact) — MUST pass check_tool_families.
+family_id: glossopetrae
+upstream:
+  repo: https://github.com/elder-plinius/GLOSSOPETRAE
+  reviewed_commit: 2c6f59a
+  license: AGPL-3.0
+integration: subprocess
+default: disabled
+authority: sensor_only
+evidence_role: outputs are broker/oracle-consumable evidence/proposals only; never a verdict
+requires: [safe_signal, scope_allows_adversarial_input_transforms, operator_review]
+forbidden_authority: [oracle, judge, verdict, confirmed, allow, success]
+actions:
+  - id: encode_benign
+    class: converter
+    status: allowed
+    exposed_at_gate: G2
+    emits: covert-channel-encoded benign canary; no verdict
+  - id: semantic_stego_proposal
+    class: payload_generator
+    status: blocked_until
+    next_gate: G6
+    emits: contained proposal + required controls; never executed; no verdict
