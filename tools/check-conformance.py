@@ -367,6 +367,9 @@ def tool_family_manifest_problems(text):
         p.append("missing upstream.license")
     if re.search(r"^integration:\s*\S+", text, re.MULTILINE) is None:
         p.append("missing integration")
+    top_auth = re.search(r"^authority:\s*(\S+)", text, re.MULTILINE)
+    if top_auth and top_auth.group(1).strip() in TF_FORBIDDEN_AUTHORITY:
+        p.append(f"top-level authority claims forbidden role: {top_auth.group(1).strip()}")
     allowed = set(_cap_list(text, "allowed_actions"))
     if not allowed:
         p.append("missing allowed_actions")
@@ -379,9 +382,10 @@ def tool_family_manifest_problems(text):
 
 
 # Families whose manifest follows THIS contract shape (flat allowed_actions[] + a blocked_until: section
-# of `- id:` blocks). Other families (glossopetrae, p4rs3lt0ngv3) are authored in parallel with their own
-# layouts and are validated by their own phase; generalize this once the cross-family schema converges.
-TOOL_FAMILY_CONTRACT_OWNED = {"st3gg"}
+# of `- id:` blocks). p4rs3lt0ngv3 adopts this shared contract (its converter/catalog outputs get
+# additional schema validation in its own selftest.py). glossopetrae remains on its own phase until the
+# cross-family schema converges.
+TOOL_FAMILY_CONTRACT_OWNED = {"st3gg", "p4rs3lt0ngv3"}
 
 
 def check_tool_family_manifests():
