@@ -20,6 +20,9 @@ capabilities:
     backs: capabilities/registry.yaml
 
 allowed_actions: [analyze_file, detect_unicode_steg, detect_file_type, summarize_findings, capacity_inspect]
+# forbidden_actions = denied as RAW allowed actions. These advanced surfaces are not banned forever; they
+# stage in under `blocked_until:` with their own gates. The conformance checker keys on this exact key
+# name (do not rename), and rejects any of these appearing in allowed_actions.
 forbidden_actions: [embed_arbitrary_payload, injector, jailbreak_templates, conceal_agent, raw_payload_promotion]
 requires: [safe_signal, scope_allows_adversarial_input_transforms]
 
