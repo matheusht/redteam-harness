@@ -383,8 +383,16 @@ def tool_family_manifest_problems(text):
 
 # Families whose manifest follows THIS contract shape (flat allowed_actions[] + a blocked_until: section
 # of `- id:` blocks). p4rs3lt0ngv3 adopts this shared contract (its converter/catalog outputs get
-# additional schema validation in its own selftest.py). glossopetrae remains on its own phase until the
-# cross-family schema converges.
+# additional schema validation in its own selftest.py).
+#
+# glossopetrae is intentionally EXCLUDED (documented temporary exclusion). It lives in the `-gloss`
+# worktree on a different, more-evolved contract: a single `actions:` list (per-action class + status)
+# with top-level evidence_role / forbidden_authority / output_schema, validated by its OWN checker
+# variant that REQUIRES `authority: sensor_only` and additionally scans adapter-evidence JSON for verdict
+# keys. The two manifest shapes are not interchangeable, so converging them is a deliberate design merge
+# (pick ONE contract shape), NOT done in this reconciliation slice. When merged, the unified checker MUST
+# preserve BOTH guards: this branch's full TF_FORBIDDEN_AUTHORITY top-level reject AND GLOSS's
+# require-sensor_only + evidence_role + forbidden_authority + adapter-evidence-JSON scan.
 TOOL_FAMILY_CONTRACT_OWNED = {"st3gg", "p4rs3lt0ngv3"}
 
 
