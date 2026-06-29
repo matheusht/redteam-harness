@@ -1,0 +1,15 @@
+# MUST be rejected: a staged entry with no risk_tier.
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+allowed_actions: [analyze_file]
+blocked_until:
+  - id: extract_payload_redacted
+    class: sensor
+    blocked_until: S5-redacted-decode-lane
+    requires: [signed_scope, containment_plan]
+    redaction: hash or canary boolean only
+    authority: sensor_only
+    evidence_role: redacted decode evidence

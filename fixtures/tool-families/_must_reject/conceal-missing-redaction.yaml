@@ -1,0 +1,15 @@
+# MUST be rejected: a conceal proposal entry with no redaction rule.
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+allowed_actions: [analyze_file]
+blocked_until:
+  - id: conceal_artifact_proposal
+    class: payload_generator
+    risk_tier: high
+    blocked_until: S6-injector-conceal-proposal-modules
+    requires: [signed_scope, scope_allows_payload_generation]
+    authority: proposal_only
+    evidence_role: proposal only — never verdict

@@ -1,0 +1,16 @@
+# MUST be rejected: an injector proposal entry without its blocked_until gate.
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+allowed_actions: [analyze_file]
+forbidden_actions: [injector]
+blocked_until:
+  - id: injector_template_proposal
+    class: payload_generator
+    risk_tier: high
+    requires: [signed_scope, scope_allows_payload_generation]
+    redaction: no raw live secrets
+    authority: proposal_only
+    evidence_role: proposal only — never verdict

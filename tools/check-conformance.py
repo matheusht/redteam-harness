@@ -317,6 +317,121 @@ def check_capability_must_reject():
                "fixture should be rejected but passed all checks" if not problems else "")
 
 
+# --- tool-family manifests (docs/tool-family-adapter-architecture.md) ---------------------------
+# A family manifest owns the authority contract for an external toolkit. Detection is exposed; every
+# advanced surface (embed/extract/injector/conceal/network/multi-layer/executor) stays in scope but is
+# listed under blocked_until with its gate. The manifest fails closed: an action not explicitly allowed,
+# or a staged entry missing its gates, must be rejected.
+
+TF_FORBIDDEN_AUTHORITY = {"oracle", "judge", "authoritative", "verdict", "confirmed", "allow", "success"}
+
+
+def _yaml_section(text, key):
+    """Indented block under a top-level `key:` (until the next col-0 line or EOF)."""
+    m = re.search(rf"^{key}:\s*\n(.*?)(?=^\S|\Z)", text, re.MULTILINE | re.DOTALL)
+    return m.group(1) if m else ""
+
+
+def tool_family_blocked_entry_problems(body):
+    """Pure predicate — reasons a single blocked_until entry is unsafe (empty = clean). Each staged
+    surface (incl. injector/template/conceal) must declare its gate, risk, scope gates, redaction, and
+    non-authority language, or it does not get to sit in the manifest."""
+    p = []
+    if _get_field(body, "blocked_until") is None:
+        p.append("missing blocked_until gate")
+    if _get_field(body, "risk_tier") is None:
+        p.append("missing risk_tier")
+    if not _cap_list(body, "requires"):
+        p.append("missing scope-gate requires[]")
+    if re.search(r"^\s*redaction:\s*\S+", body, re.MULTILINE) is None:
+        p.append("missing redaction rule")
+    auth = _get_field(body, "authority")
+    if auth is None:
+        p.append("missing non-authority language (authority)")
+    elif auth in TF_FORBIDDEN_AUTHORITY:
+        p.append(f"claims forbidden authority: {auth}")
+    if re.search(r"^\s*evidence_role:\s*\S+", body, re.MULTILINE) is None:
+        p.append("missing evidence_role")
+    return p
+
+
+def tool_family_manifest_problems(text):
+    """Pure predicate — reasons a family manifest violates the contract (empty = clean). Single source
+    of truth reused by check_tool_family_manifests and the _must_reject corpus."""
+    p = []
+    if re.search(r"^family_id:\s*\S+", text, re.MULTILINE) is None:
+        p.append("missing family_id")
+    if re.search(r"^\s*reviewed_commit:\s*\S+", text, re.MULTILINE) is None:
+        p.append("missing upstream.reviewed_commit")
+    if re.search(r"^\s*license:\s*\S+", text, re.MULTILINE) is None:
+        p.append("missing upstream.license")
+    if re.search(r"^integration:\s*\S+", text, re.MULTILINE) is None:
+        p.append("missing integration")
+    top_auth = re.search(r"^authority:\s*(\S+)", text, re.MULTILINE)
+    if top_auth and top_auth.group(1).strip() in TF_FORBIDDEN_AUTHORITY:
+        p.append(f"top-level authority claims forbidden role: {top_auth.group(1).strip()}")
+    allowed = set(_cap_list(text, "allowed_actions"))
+    if not allowed:
+        p.append("missing allowed_actions")
+    if allowed & DANGEROUS_ACTIONS:
+        p.append(f"dangerous in allowed_actions: {sorted(allowed & DANGEROUS_ACTIONS)}")
+    for cid, body in _capability_blocks(_yaml_section(text, "blocked_until")):
+        for prob in tool_family_blocked_entry_problems(body):
+            p.append(f"blocked_until/{cid}: {prob}")
+    return p
+
+
+# Families whose manifest follows THIS contract shape (flat allowed_actions[] + a blocked_until: section
+# of `- id:` blocks). p4rs3lt0ngv3 adopts this shared contract (its converter/catalog outputs get
+# additional schema validation in its own selftest.py).
+#
+# glossopetrae is intentionally EXCLUDED (documented temporary exclusion). It lives in the `-gloss`
+# worktree on a different, more-evolved contract: a single `actions:` list (per-action class + status)
+# with top-level evidence_role / forbidden_authority / output_schema, validated by its OWN checker
+# variant that REQUIRES `authority: sensor_only` and additionally scans adapter-evidence JSON for verdict
+# keys. The two manifest shapes are not interchangeable, so converging them is a deliberate design merge
+# (pick ONE contract shape), NOT done in this reconciliation slice. When merged, the unified checker MUST
+# preserve BOTH guards: this branch's full TF_FORBIDDEN_AUTHORITY top-level reject AND GLOSS's
+# require-sensor_only + evidence_role + forbidden_authority + adapter-evidence-JSON scan.
+TOOL_FAMILY_CONTRACT_OWNED = {"st3gg", "p4rs3lt0ngv3"}
+
+
+def check_tool_family_manifests():
+    """Family manifests: detection-first, machine-checkable, staged authority. Fail closed."""
+    base = os.path.join(ROOT, "tool-families")
+    if not os.path.isdir(base):
+        return
+    print("\n[tool-families] family manifests (manifest holds authority; advanced surfaces gated)")
+    for fam in sorted(os.listdir(base)):
+        if fam not in TOOL_FAMILY_CONTRACT_OWNED:
+            continue
+        mpath = os.path.join(base, fam, "manifest.yaml")
+        if os.path.isfile(mpath):
+            problems = tool_family_manifest_problems(open(mpath).read())
+            record(not problems, f"tool-families/{fam}/manifest.yaml: detection-first + staged authority",
+                   "; ".join(problems) if problems else "")
+        apath = os.path.join(base, fam, "AGENT.md")
+        if os.path.isfile(apath):
+            atext = open(apath).read().lower()
+            record("plane 1/2" in atext and "raw" in atext,
+                   f"tool-families/{fam}/AGENT.md: states raw payloads not stored in Plane 1/2")
+
+
+def check_tool_family_must_reject():
+    """Permanent negatives: a malformed family manifest MUST be rejected by the same predicate."""
+    base = os.path.join(ROOT, "fixtures", "tool-families", "_must_reject")
+    if not os.path.isdir(base):
+        return
+    print("\n[tool-families] _must_reject corpus (the manifest must fail closed)")
+    for fn in sorted(os.listdir(base)):
+        fp = os.path.join(base, fn)
+        if not os.path.isfile(fp):
+            continue
+        problems = tool_family_manifest_problems(open(fp).read())
+        record(bool(problems), f"_must_reject/{fn}: rejected [{'; '.join(problems) or 'NONE'}]",
+               "fixture should be rejected but passed all checks" if not problems else "")
+
+
 PAYLOAD_PROPOSAL_REQUIRED = ["objective_id", "payload_class", "risk_tier", "approved_objective_ref",
                              "generator_capability_id", "artifact_metadata", "required_controls",
                              "containment_plan", "cleanup_plan", "non_authority_attestation"]
@@ -602,6 +717,8 @@ def main():
     check_capability_classes()
     check_capability_scope_flags()
     check_capability_must_reject()
+    check_tool_family_manifests()
+    check_tool_family_must_reject()
     check_payload_proposals()
     check_oracles()
     check_casebooks(pattern_ids)

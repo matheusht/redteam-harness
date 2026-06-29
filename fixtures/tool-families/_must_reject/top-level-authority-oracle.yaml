@@ -1,0 +1,8 @@
+# MUST be rejected: a family manifest may never declare itself an oracle/judge/verdict at the top level.
+family_id: bad
+upstream:
+  reviewed_commit: deadbeef
+  license: AGPL-3.0
+integration: subprocess
+authority: oracle
+allowed_actions: [analyze_file]
