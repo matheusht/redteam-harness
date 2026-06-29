@@ -1,0 +1,6 @@
+{
+  "action": "inspect_transform",
+  "available": true,
+  "source": "offline_fixture",
+  "transform": {"id": "hex", "category": "encoding", "reversible": true, "expansion": 2.0}
+}

@@ -1,0 +1,10 @@
+{
+  "action": "list_transforms",
+  "authority": "sensor_only",
+  "available": true,
+  "source": "offline_fixture",
+  "transforms": [
+    {"id": "base64", "category": "encoding", "reversible": true},
+    {"id": "promptcraft", "category": "technical", "reversible": false}
+  ]
+}

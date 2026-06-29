@@ -1,0 +1,6 @@
+{
+  "action": "inspect_transform",
+  "authority": "sensor_only",
+  "available": true,
+  "source": "offline_fixture"
+}

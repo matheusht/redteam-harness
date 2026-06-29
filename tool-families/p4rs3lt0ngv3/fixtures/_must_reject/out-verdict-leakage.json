@@ -1,0 +1,8 @@
+{
+  "action": "list_transforms",
+  "authority": "sensor_only",
+  "available": true,
+  "source": "offline_fixture",
+  "verdict": "confirmed",
+  "transforms": [{"id": "base64", "category": "encoding", "reversible": true}]
+}

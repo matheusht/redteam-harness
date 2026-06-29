@@ -1,0 +1,107 @@
+# P4RS3LT0NGV3 family manifest — the machine-checkable contract.
+# Authority lives HERE (and in broker/oracle), not in the upstream app. Fail closed: an action not in
+# allowed_actions is denied. Conformance (tools/check-conformance.py :: tool_family_manifest_problems)
+# rejects any blocked_until entry that lacks its gate / risk_tier / scope gates (requires) / redaction /
+# evidence_role / non-authority language, and rejects any dangerous module in allowed_actions.
+family_id: p4rs3lt0ngv3
+upstream:
+  repo: https://github.com/elder-plinius/P4RS3LT0NGV3
+  reviewed_commit: a6cb7c9
+  license: AGPL-3.0
+integration: external_checkout      # subprocess to a user-installed checkout; arms-length, no vendoring
+default: disabled
+authority: sensor_only              # family ceiling — never oracle
+fail_closed: true                   # unlisted action => denied
+requires: [safe_signal, scope_allows_adversarial_input_transforms]
+backs_capability: external.p4.transform
+redaction: [raw_decoded_payload, live_target_id, secret, auth_material]
+evidence_role: >
+  sensor/converter only — catalog entries, transformed benign canaries, or advisory decode evidence.
+  Broker records the run; oracle adjudicates. No action emits a verdict.
+
+# Exposed now (P1 catalog + P3 benign converter). Sensor/converter only; benign canaries only.
+# Output schema + fixtures: fixtures/SCHEMA.md, fixtures/*.json; enforced by selftest.py.
+allowed_actions: [list_transforms, inspect_transform, encode_benign, decode_if_possible, auto_decode_evidence, transform_roundtrip]
+
+# In scope, NOT exposed. Each entry must carry: blocked_until gate, risk_tier, requires[] scope gates,
+# redaction, evidence_role, and non-authority `authority`. Conformance rejects entries missing any.
+blocked_until:
+  - id: rank_transforms_for_defense_shape
+    blocked_until: M3_hermetic_adapter
+    class: sensor
+    risk_tier: advisory
+    authority: sensor_only
+    requires: [safe_signal, scope_allows_adversarial_input_transforms, hermetic_targets]
+    redaction: [raw_decoded_payload]
+    evidence_role: advisory routing memory; cannot change oracle verdicts; disabling it changes no finding
+    non_authority: advisory only; never a verdict
+
+  - id: chain_benign_transforms
+    blocked_until: M3_hermetic_adapter
+    class: converter
+    risk_tier: local_poc
+    authority: sensor_only
+    requires: [safe_signal, scope_allows_adversarial_input_transforms, reversible_only, bounded_chain]
+    redaction: [raw_decoded_payload]
+    evidence_role: bounded reversible chain of benign canaries; broker runs it, oracle adjudicates
+    non_authority: never executed live; never a verdict
+
+  - id: bounded_random_chain
+    blocked_until: M4_brokered_dry_run
+    class: converter
+    risk_tier: local_poc
+    authority: sensor_only
+    requires: [safe_signal, scope_allows_adversarial_input_transforms, seeded, bounded_chain, reversible_only]
+    redaction: [raw_decoded_payload]
+    evidence_role: seeded/bounded chain proposal; deterministic replay; broker/oracle authoritative
+    non_authority: never executed live; never a verdict
+
+  - id: planner_advice
+    blocked_until: M4_brokered_dry_run
+    class: sensor
+    risk_tier: advisory
+    authority: sensor_only
+    requires: [safe_signal, scope_allows_adversarial_input_transforms, deterministic_baseline_available]
+    redaction: [raw_decoded_payload]
+    evidence_role: advisory selector; deterministic baseline remains the control
+    non_authority: cannot access gold/evaluator/sealed; cannot execute; never a verdict
+
+  - id: promptcraft_proposal
+    blocked_until: M4_brokered_dry_run
+    class: payload_generator
+    risk_tier: local_poc
+    authority: proposal_only
+    requires: [signed_scope, scope_allows_payload_generation, declared_payload_class, containment_plan, cleanup_plan, oracle_separation]
+    redaction: [raw_decoded_payload, secret]
+    evidence_role: proposal artifact for a signed objective; broker/oracle authoritative
+    non_authority: executes nothing; emits no verdict
+
+  - id: anticlassifier_proposal
+    blocked_until: M4_brokered_dry_run
+    class: payload_generator
+    risk_tier: local_poc
+    authority: proposal_only
+    requires: [signed_scope, scope_allows_payload_generation, declared_payload_class, containment_plan, cleanup_plan, oracle_separation]
+    redaction: [raw_decoded_payload, secret]
+    evidence_role: proposal artifact for a signed objective; broker/oracle authoritative
+    non_authority: executes nothing; emits no verdict
+
+  - id: tokenade_proposal
+    blocked_until: M4_brokered_dry_run
+    class: payload_generator
+    risk_tier: local_poc
+    authority: proposal_only
+    requires: [signed_scope, scope_allows_payload_generation, declared_payload_class, containment_plan, cleanup_plan, oracle_separation]
+    redaction: [raw_decoded_payload, secret]
+    evidence_role: proposal artifact for a signed objective; broker/oracle authoritative
+    non_authority: executes nothing; emits no verdict
+
+  - id: fuzzer_plan_proposal
+    blocked_until: M4_brokered_dry_run
+    class: payload_generator
+    risk_tier: local_poc
+    authority: proposal_only
+    requires: [signed_scope, scope_allows_payload_generation, declared_payload_class, containment_plan, cleanup_plan, oracle_separation]
+    redaction: [raw_decoded_payload, secret]
+    evidence_role: seeded/deterministic plan proposal; cannot choose its oracle/budget; broker/oracle authoritative
+    non_authority: executes nothing; emits no verdict

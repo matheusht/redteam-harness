@@ -37,6 +37,12 @@ operator's intuition.
 Autoresearch keep-if-better ratchet + anti-cheat gate (immutable evaluator, holdouts,
 replay-before-accept) riding a frozen eval slice; UCB; pack/multi-account concurrency.
 
+## Decision records
+Durable product choices live in `docs/decisions/`. Start with
+`docs/decisions/0001-casebooks-patterns-routing.md` for the casebook / pattern-card /
+recon-routing layer that bridges engagement evidence into reusable harness knowledge without
+turning Plane 1 into raw target memory.
+
 ## Provenance
 Merged from: the engineer's plan (structural base), a research-convergence brainstorm, a
 governance/evaluation deep-review (records, oracle layers, controls, contamination, anti-reward-

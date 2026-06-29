@@ -1,0 +1,14 @@
+{
+  "action": "transform_roundtrip",
+  "authority": "sensor_only",
+  "available": true,
+  "source": "local_hermetic",
+  "roundtrip": {
+    "plaintext": "benign-canary-001",
+    "transform": "base64",
+    "transformed": "YmVuaWduLWNhbmFyeS0wMDE=",
+    "decoded": "benign-canary-001",
+    "roundtrip_ok": true,
+    "negative_control": {"ran": true, "reproduced_canary": false, "control_holds": true}
+  }
+}
