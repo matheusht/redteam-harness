@@ -94,6 +94,12 @@ def assess(runs, phase3_verdict, claimed_new_coverage, expected_budget, expected
     cost_variance = {"runs": costs, "min": min(costs), "max": max(costs),
                      "spread": max(costs) - min(costs),
                      "mean": round(sum(costs) / len(costs), 2)}
+    verdicts = [r.get("verdict") for r in runs if r.get("verdict") is not None]
+    verdict_variance = {
+        "runs": verdicts,
+        "stable": len(set(verdicts)) <= 1 if verdicts else True,
+        "advisory_only": True,
+    }
 
     stable = policy_ok and protected_stable and coverage_stable
 
@@ -114,6 +120,7 @@ def assess(runs, phase3_verdict, claimed_new_coverage, expected_budget, expected
         "protected_stable": protected_stable,
         "coverage_stable": coverage_stable,
         "cost_variance": cost_variance,
+        "verdict_variance": verdict_variance,
         "runs": len(runs),
         "reasons": reasons,
     }
@@ -171,16 +178,18 @@ def generate_for_campaign(campaign_path):
         with open(os.path.join(rdir, "replay-summary.json"), "w") as fh:
             json.dump(out, fh, indent=2); fh.write("\n")
         summary_rows.append({"candidate_id": cid, "final_verdict": result["verdict"],
-                             "stable": result["stable"], "cost_spread": result["cost_variance"]["spread"]})
+                             "stable": result["stable"], "cost_spread": result["cost_variance"]["spread"],
+                             "verdict_stable": result["verdict_variance"]["stable"]})
 
     md = ["# Replay report — " + campaign["campaign_id"], "",
           "Primary + two fresh-session replays per allowed candidate, identical benchmark version and "
           "budget. The replay gate downgrades non-reproducible `allow`s to `probe`; it never upgrades.",
           f"\nBenchmark version: `{version}`  ·  budget: `{json.dumps(budget)}`", "",
-          "| candidate | final verdict | replay-stable | cost spread |", "| --- | --- | --- | --- |"]
+          "| candidate | final verdict | replay-stable | verdict stable | cost spread |",
+          "| --- | --- | --- | --- | --- |"]
     for r in summary_rows:
         md.append(f"| {r['candidate_id']} | {r['final_verdict'].upper()} | "
-                  f"{r.get('stable', '—')} | {r.get('cost_spread', '—')} |")
+                  f"{r.get('stable', '—')} | {r.get('verdict_stable', '—')} | {r.get('cost_spread', '—')} |")
     md += ["", "_Shadow mode: deterministic benchmark, so replays are identical reproductions and cost "
            "spread is 0. Non-determinism would downgrade an `allow` to `probe` (see replay-candidate --self-test)._", ""]
     with open(os.path.join(camp_dir, "replay-report.md"), "w") as fh:
@@ -229,6 +238,15 @@ def self_test():
         print("[self-test] cost variance spread miscomputed")
     else:
         print("[self-test] cost variance recorded: ok")
+    vv = assess([run(0, coverage=("k1",), cost=(1, 1), ver=version, bud=budget) | {"verdict": "allow"},
+                 run(1, coverage=("k1",), cost=(1, 1), ver=version, bud=budget) | {"verdict": "probe"},
+                 run(2, coverage=("k1",), cost=(1, 1), ver=version, bud=budget) | {"verdict": "allow"}],
+                "probe", [], budget, version)
+    if vv["verdict"] != "probe" or vv["verdict_variance"]["stable"] is not False:
+        ok = False
+        print("[self-test] verdict variance should be advisory and stable=false without changing probe semantics")
+    else:
+        print("[self-test] verdict variance recorded as advisory-only: ok")
 
     print("\nSELF-TEST:", "PASS" if ok else "FAIL")
     return 0 if ok else 1

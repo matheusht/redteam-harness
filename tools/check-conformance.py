@@ -706,6 +706,21 @@ def check_adversarial_candidates():
     record(not leaks, "adversarial: every immutable-touching candidate is blocked", f"leaky: {leaks}" if leaks else "")
 
 
+def check_runtime_gaming():
+    print("\n[runtime-gaming] Track-B broker-authority fixtures")
+    fp = os.path.join(ROOT, "fixtures", "runtime-gaming", "corpus.json")
+    if not os.path.isfile(fp):
+        return
+    entries = load_json(fp).get("entries", [])
+    record(len(entries) >= 4, "runtime-gaming: corpus has the required trap family",
+           "expected fabricated-controls, visible-overfit, nonexistent-event, hidden-gold traps")
+    for e in entries:
+        d = e.get("expected_disposition")
+        record(d in ("block", "probe"), f"runtime-gaming/{e.get('id', '?')}: disposition is non-allow", f"got {d}")
+        record("why" in e and "observation" in e and "attack_class" in e,
+               f"runtime-gaming/{e.get('id', '?')}: well-formed")
+
+
 def main():
     pattern_ids = collect_pattern_ids()
     cap_ids = collect_capability_ids()
@@ -726,6 +741,7 @@ def main():
     check_finding_fixtures()
     check_false_discovery_corpus()
     check_adversarial_candidates()
+    check_runtime_gaming()
 
     print(f"\n{CHECKS} checks, {len(FAILS)} failing")
     if FAILS:

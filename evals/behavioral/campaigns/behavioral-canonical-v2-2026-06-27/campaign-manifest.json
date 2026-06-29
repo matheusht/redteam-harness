@@ -39,16 +39,28 @@
     },
     "gate:check-campaign": {
       "path": "tools/check-campaign.py",
-      "sha256": "b0d0cef778358917322dd4248979e481f7bd241c9c3d23a4950cb497bce6005c"
+      "sha256": "3ced0b0e7ece3d0c61b0f81bad216aebe7735078e90311ab675c1374095a6e1a"
     },
     "checker:check-conformance": {
       "path": "tools/check-conformance.py",
-      "sha256": "ef4b0c0c3cd94f626cbc33614033aac901075067a4b2ad56996f316da2ca6655"
+      "sha256": "03588f9a8e96aef517931cc47874bb4ebc913372d18e99602cb5276761049b51"
     },
     "adapter:researcher_adapter": {
       "path": "tools/researcher_adapter.py",
       "sha256": "c683aa9f77f185ee8d8a2bad676e0b05be33456822e90aafde7ac92cd1015379"
+    },
+    "feedback:broker-feedback": {
+      "path": "tools/broker-feedback.py",
+      "sha256": "3a2b941adda920c33b95048e57af562d2e288e4b5ab75356c238dc80ab892ff3"
     }
+  },
+  "autoresearch_splits": {
+    "reflection_train": [
+      "episodes:task-reframing"
+    ],
+    "held_eval": [
+      "episodes:decomposition"
+    ]
   },
   "budgets": {
     "model_calls": 60,

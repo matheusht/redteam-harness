@@ -15,6 +15,7 @@ A candidate is BLOCKED if any of these hold:
   - its diff hash does not match the diff file (candidate tamper);
   - its evidence bundle is missing;
   - it is a baseline but is not a no-op (a control must touch nothing).
+  - an autoresearch train/held split is malformed or held/train frozen inputs drift.
 
 A no-op baseline (is_baseline=true, touched_files empty) is ALLOWED — it is the retained control.
 
@@ -143,6 +144,7 @@ def git_patch_analysis(diff_path, root):
 def gate(campaign, candidate, root):
     """Return (verdict, reasons). verdict is 'allow' or 'block'."""
     reasons = []
+    reasons.extend(split_contract_problems(campaign))
 
     if candidate.get("campaign_id") != campaign.get("campaign_id"):
         reasons.append(f"campaign_id mismatch: candidate {candidate.get('campaign_id')} != {campaign.get('campaign_id')}")
@@ -192,7 +194,8 @@ def gate(campaign, candidate, root):
         if stray:
             reasons.append(f"touches files outside mutation_target '{mt}': {stray}")
 
-    immutable = list(DEFAULT_IMMUTABLE) + list(campaign.get("immutable", []))
+    frozen_paths = [spec.get("path") for spec in campaign.get("frozen_inputs", {}).values() if spec.get("path")]
+    immutable = list(DEFAULT_IMMUTABLE) + list(campaign.get("immutable", [])) + frozen_paths
     leaked = sorted(f for f in effective if any(_under(f, p) for p in immutable))
     if leaked:
         reasons.append(f"touches immutable (evaluator/gold/casebook/budget/schema) files: {leaked}")
@@ -213,6 +216,39 @@ def gate(campaign, candidate, root):
             reasons.append(f"frozen input '{name}' drifted ({spec.get('path')})")
 
     return ("block" if reasons else "allow"), reasons
+
+
+def split_contract_problems(campaign):
+    """Validate optional Track-B autoresearch split metadata.
+
+    Shape:
+      "autoresearch_splits": {
+        "reflection_train": ["episodes:task-reframing"],
+        "held_eval": ["episodes:decomposition"]
+      }
+
+    Split ids reference `frozen_inputs` keys, not file paths, so hash pinning remains single-sourced.
+    """
+    split = campaign.get("autoresearch_splits")
+    if split is None:
+        return []
+    problems = []
+    train = split.get("reflection_train")
+    held = split.get("held_eval")
+    frozen = set(campaign.get("frozen_inputs", {}).keys())
+    if not isinstance(train, list) or not train:
+        problems.append("autoresearch_splits.reflection_train must be a non-empty list of frozen_input keys")
+        train = []
+    if not isinstance(held, list) or not held:
+        problems.append("autoresearch_splits.held_eval must be a non-empty list of frozen_input keys")
+        held = []
+    missing = sorted((set(train) | set(held)) - frozen)
+    if missing:
+        problems.append(f"autoresearch_splits reference unknown frozen_inputs: {missing}")
+    overlap = sorted(set(train) & set(held))
+    if overlap:
+        problems.append(f"autoresearch_splits train/held overlap: {overlap}")
+    return problems
 
 
 def report(campaign, candidate, root):
@@ -267,9 +303,17 @@ def self_test():
             "tracks": [{"name": "task-reframing", "mutation_target": "skills/techniques/task-reframing/", "kind": "existing-card-variant"}],
             "mutable_allowlist": ["skills/techniques/task-reframing/"], "immutable": [],
             "frozen_inputs": {"routing-gold-x": {"path": frozen_rel, "sha256": frozen_hash}},
+            "autoresearch_splits": {"reflection_train": ["routing-gold-x"], "held_eval": []},
             "budgets": {"model_calls": 10, "target_calls": 20, "tokens": None},
             "benchmark_set": ["routing:case-x"],
         }
+        campaign["autoresearch_splits"] = {
+            "reflection_train": ["routing-gold-x"],
+            "held_eval": ["held-x"],
+        }
+        held_rel = "evals/behavioral/episodes/held-x.json"
+        _write(root, held_rel, '{"episode":"held"}\n')
+        campaign["frozen_inputs"]["held-x"] = {"path": held_rel, "sha256": sha256_file(os.path.join(root, held_rel))}
         base = {
             "candidate_id": "cand-ok", "campaign_id": "camp-1", "parent": "baseline",
             "track": "task-reframing", "mutation_target": "skills/techniques/task-reframing/",
@@ -325,6 +369,14 @@ def self_test():
 
         drifted = dict(campaign, frozen_inputs={"routing-gold-x": {"path": frozen_rel, "sha256": "0" * 64}})
         expect("frozen-input drift blocks", base, "block", camp=drifted)
+
+        bad_split = dict(campaign, autoresearch_splits={"reflection_train": ["routing-gold-x"], "held_eval": ["routing-gold-x"]})
+        expect("train/held overlap blocks", base, "block", camp=bad_split)
+
+        held_touch_diff, held_touch_h = mkdiff("held-touch", [CARD, held_rel])
+        expect("candidate touching held frozen input blocks",
+               dict(base, candidate_id="cand-held-touch", touched_files=[CARD, held_rel],
+                    diff=held_touch_diff, candidate_hash=held_touch_h), "block")
 
         # P0 (round 2): Git patch forms that a header-only parser misses.
         def mkraw(name, text):

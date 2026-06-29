@@ -55,6 +55,7 @@ CC = _mod("check_campaign", "check-campaign.py")
 APE = _mod("apply_candidate_eval", "apply-candidate-eval.py")
 RG = _mod("run_gepa_shadow", "run-gepa-shadow.py")
 ADA = _mod("researcher_adapter", "researcher_adapter.py")
+BF = _mod("broker_feedback", "broker-feedback.py")
 
 FORBIDDEN_IN_VIEW = ["signal_available", "contaminated", "gold_verdict", "win_requires",
                      "correct_verdict", "observation_key", "class", "candidate_id", "incumbent"]
@@ -221,6 +222,13 @@ def run_card_session(card_text, episode_set, budget, backend, config, seed, even
         if events_sink is not None:
             for e in adj["events"]:
                 events_sink.append({**meta, "session_seed": seed, "episode_id": ep["id"], **e})
+            events_sink.append({**meta, "session_seed": seed, "episode_id": ep["id"],
+                                "type": "adjudication",
+                                "broker_confirmed": adj["broker_confirmed"],
+                                "oracle_confirmed": adj["oracle_confirmed"],
+                                "fdr_invalid": adj["fdr_invalid"],
+                                "controls_executed": adj["controls_executed"],
+                                "target_calls": adj["target_calls"]})
     nonpos = [e for e in episode_set["episodes"] if e["class"] != "positive"]
     return {"coverage": sorted(coverage), "fdr_invalids": sorted(fdr_ids),
             "fdr_rate": round(len(fdr_ids) / max(1, len(nonpos)), 3),
@@ -370,7 +378,7 @@ def new_run_dir(campaign_path, backend, status_hint):
 
 
 def write_immutable(run_dir, manifest, report, events):
-    for name in ("run-manifest.json", "report.json", "report.md", "events.jsonl"):
+    for name in ("run-manifest.json", "report.json", "report.md", "events.jsonl", "broker-feedback.json"):
         if os.path.exists(os.path.join(run_dir, name)):
             raise RuntimeError(f"refusing to overwrite immutable artifact: {run_dir}/{name}")
     with open(os.path.join(run_dir, "run-manifest.json"), "w") as fh:
@@ -382,6 +390,8 @@ def write_immutable(run_dir, manifest, report, events):
     with open(os.path.join(run_dir, "events.jsonl"), "w") as fh:
         for e in events:
             fh.write(json.dumps(e) + "\n")
+    with open(os.path.join(run_dir, "broker-feedback.json"), "w") as fh:
+        json.dump(BF.build_feedback(report, events), fh, indent=2); fh.write("\n")
 
 
 def render_md(report, manifest):
@@ -405,7 +415,9 @@ def render_md(report, manifest):
             lines.append(f"| {r['candidate_id']} | {r['technique']} | {len(ic['coverage'])} | {len(cc['coverage'])} | "
                          f"{len(r['coverage_delta'])} | {len(cc['fdr_invalids'])} | {ci}→{cj} | "
                          f"{'yes' if r['incumbent_stable'] and r['candidate_stable'] else 'NO'} | {r['behavioral_verdict'].upper()} |")
-    lines += ["", "**Metric boundary.** routing qualification is a measured protected capability (not "
+    lines += ["", "**Broker feedback.** `broker-feedback.json` is assembled from `events.jsonl` plus "
+              "mechanical adjudication only. Researcher narration and judge text carry no authority.",
+              "", "**Metric boundary.** routing qualification is a measured protected capability (not "
               "coverage); coverage = oracle-confirmed episodes; FDR is a hard veto; evidence is "
               "broker-derived. Promotion stays PR-only and is never authorized by a simulator/fake run.", ""]
     return "\n".join(lines)
@@ -414,7 +426,8 @@ def render_md(report, manifest):
 def tool_hashes():
     return {name: sha256_file(os.path.join(TOOLS, name)) for name in
             ("run-behavioral-eval.py", "score-candidate.py", "check-campaign.py",
-             "apply-candidate-eval.py", "researcher_adapter.py", "fake-researcher-cli.py")}
+             "apply-candidate-eval.py", "researcher_adapter.py", "fake-researcher-cli.py",
+             "broker-feedback.py")}
 
 
 def run_cli(campaign_path, backend="fake", only_candidate=None, model_cmd=None):
@@ -599,6 +612,11 @@ def self_test():
         ok = False; print("[self-test] confirming contamination with no controls must be an FDR invalid")
     else:
         print("[self-test] broker ignores model claims (invented controls → no coverage; confirmed contamination → FDR): ok")
+    fb = BF.build_feedback({"candidates": []}, b.events)
+    if fb["positive_feedback"] or not fb["invalid_researcher_claims"]:
+        ok = False; print("[self-test] broker feedback must ignore invented controls and record invalid claim")
+    else:
+        print("[self-test] broker-feedback artifact is broker-derived, not researcher-narrated: ok")
 
     # task prompt injection: malicious instructions in the TASK must not change behavior (the researcher
     # keys on the CARD, and the broker owns truth).
