@@ -74,6 +74,60 @@
       "correct_verdict": "needs_review",
       "missing_control": "per-backend testing — a router inherits its WEAKEST backend's guard; one refusal is a single positive control, not a global hold",
       "why": "an N-backend router is N entities with N guard strengths; one refusal does not clear the others"
+    },
+    {
+      "id": "trap-idor-public-value-not-cross",
+      "trap_class": "public_value_vs_cross_boundary_bola",
+      "observation": "an id-shaped value from another principal is accepted or reflected, but the object is public/shared or the selector is ignored",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "a planted victim-side canary crossing a non-public authorization boundary",
+      "why": "a public value, shareable handle, or ignored selector can activate BOLA routing, but it does not prove broken object-level authorization"
+    },
+    {
+      "id": "trap-mutation-200-without-effect",
+      "trap_class": "mutation_status_vs_foreign_effect",
+      "observation": "a state-changing request with another principal's selector returns 200 or 204",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "needs_review",
+      "missing_control": "an inert, reversible effect landing on the other controlled principal's canary object",
+      "why": "HTTP success on a mutating request is not BOLA unless the foreign canary object shows the unauthorized effect"
+    },
+    {
+      "id": "trap-jwt-signature-valid-not-authorized",
+      "trap_class": "jwt_signature_vs_claim_authorization",
+      "observation": "a JWT parses or has a valid signature for some issuer/key, but the target service denies the guarded privilege",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "a wrong-audience or wrong-algorithm token granting a distinctive canary privilege while the patched verifier denies",
+      "why": "cryptographic validity is not authorization for this verifier; audience, issuer, algorithm, tenant, and subject binding still matter"
+    },
+    {
+      "id": "trap-bopla-echoed-property",
+      "trap_class": "echoed_property_vs_effective_property_authz",
+      "observation": "a guarded property supplied in an update request is echoed in the immediate response",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "needs_review",
+      "missing_control": "server-side persistence, exposure, or authorization impact for a synthetic property canary",
+      "why": "echoed request JSON is not mass assignment; BOPLA needs effective unauthorized property exposure or state"
+    },
+    {
+      "id": "trap-ssrf-echo-not-fetch",
+      "trap_class": "url_echo_vs_server_side_fetch",
+      "observation": "a supplied URL appears in the response, job record, or logs, but no controlled canary receives a server-side request",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "a controlled external or hermetic stand-in canary hit proving the server actually fetched the destination",
+      "why": "reflecting or storing a URL is not SSRF; reachability requires a server-side fetch signal"
+    },
+    {
+      "id": "trap-graphql-introspection-only",
+      "trap_class": "graphql_schema_visibility_vs_object_authz",
+      "observation": "GraphQL introspection is enabled, or global ids can be decoded, but no unauthorized resolver returns a foreign canary",
+      "naive_wrong_verdict": "confirmed",
+      "correct_verdict": "refuted",
+      "missing_control": "a chained resolver access that returns a synthetic foreign object canary while the guarded resolver denies",
+      "why": "introspection and id decoding may help recon, but confirmation needs unauthorized object/property access through a resolver"
     }
   ]
 }

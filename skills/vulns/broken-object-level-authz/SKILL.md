@@ -4,7 +4,8 @@ name: Broken Object-Level Authorization
 description: >
   Prove an app serves one principal's object to another by trusting a client-supplied identifier
   (object / owner / tenant id) without re-resolving authorization from the authenticated caller.
-  The BOLA/IDOR objective — confirmed only with a benign planted canary that crossed a boundary.
+  The BOLA/IDOR objective — confirmed only with a benign planted canary or inert canary effect that
+  crossed a boundary.
 type: vuln
 owasp: "A01 Broken Access Control (BOLA) / API1:2023"
 atlas: "—"
@@ -12,23 +13,28 @@ patterns: [pattern.client-supplied-selector-authz, pattern.legacy-route-differen
 
 activation:
   strong:
-    - "a request carries an object/owner/tenant/account id the caller could change (path, query, or body)"
+    - "a request carries an object/owner/tenant/account id the caller could change (path, query, header, or body)"
+    - "a mutating request carries a client-supplied selector and can produce an inert, reversible effect on a resource owned by another controlled principal"
     - "versioned or sibling routes for the same resource where one validates the id and one may not"
     - "ids of other principals are reachable (share links, exports, sequential/guessable ids, prior responses)"
   weak:
     - "generic id fields (id, ref, key) that resolve a resource without an obvious ownership check"
+    - "integer/sequential ids are enumerable; this helps route the card but does not itself prove access"
   negative:
     - "ownership is resolved from the authenticated session, not from any request field → likely held"
     - "the id only selects among the caller's own objects"
+    - "changing the id yields only a generic success/200 with no victim canary read and no inert effect on the victim canary object"
 
 safe_signal:
   proxy: >
     a benign, distinctive canary that YOU planted in a resource owned by ANOTHER principal you control
-    is returned to a caller who should not have access — proving the object/owner/tenant boundary was
-    crossed. The signal is the planted canary, never real third-party data.
+    is returned to a caller who should not have access, OR an inert/reversible effect YOU planted for
+    testing lands on that other controlled principal's canary object — proving the object/owner/tenant
+    boundary was crossed. The signal is the planted canary or inert effect, never real third-party data.
   never: >
     do not read, store, or exfiltrate real third-party data; use only planted canaries in OWNED test
-    accounts; cross-tenant reach requires scope.md authorization AND an operator confirm before any artifact.
+    accounts; do not perform destructive, persistent, or business-impacting mutations; cross-tenant reach
+    and any non-inert mutation require scope.md authorization AND an operator confirm before any artifact.
 
 impact_escalation:
   enabled_by: scope.md#impact_demo_authorized
@@ -41,6 +47,7 @@ severity_rubric: { cross_tenant_read: critical, cross_user_same_tenant: high, sa
 procedure:
   - "MAP THE SELECTOR: identify every request field that names an object/owner/tenant. For each, ask who validates it server-side (route the shape via pattern.client-supplied-selector-authz)."
   - "PLANT A CANARY: in a resource owned by a SECOND principal you control, place a distinctive benign marker. Never use a real third party."
+  - "FOR MUTATIONS: use only an inert, reversible canary effect (for example a harmless test flag on a synthetic object). A bare 200/204 is only `needs_review` until the foreign canary object shows the effect."
   - "NEGATIVE CONTROLS (must decline): same request with the selector (a) absent and (b) = self. Neither may return the other principal's object. Record kind=negative_control."
   - "DIFFERENTIAL POSITIVE CONTROL: if a validating sibling route exists, send the same id there — it SHOULD 403. That proves the guard can exist and isolates the unguarded route (pattern.legacy-route-differential)."
   - "ATTACK: set the selector to the second principal's id on the suspect route. A confirm requires the response to carry the PLANTED canary, not your own data and not a generic 404."
@@ -53,9 +60,11 @@ emits: [attempt, finding]
 
 ## What "confirmed" looks like here
 A caller receives an object they do not own, proven by the **planted canary** crossing a named
-boundary (object / owner / tenant), where the **matched negative control declined** and a validating
-sibling (if any) returned 403, reproduced once in a fresh session with contamination ruled out. A 200
-full of the caller's *own* data is not BOLA. A 404 on the cross-principal id is the secure outcome.
+boundary (object / owner / tenant), or an inert canary mutation lands on a foreign controlled object,
+where the **matched negative control declined** and a validating sibling (if any) returned 403,
+reproduced once in a fresh session with contamination ruled out. A 200 full of the caller's *own* data
+or a mutation 200 with no foreign canary effect is not BOLA. A 404 on the cross-principal id is the
+secure outcome.
 
 ## Boundaries (escalate in order; each rung gated on the prior + scope.md)
 1. **same user, other object** — your own account, a resource id you shouldn't reach → medium.
@@ -75,4 +84,6 @@ Without all three, it's `needs_review`, never `confirmed`.
 
 ## Do not overclaim
 - "It returned 200" proves nothing until the canary shows it returned **someone else's** object.
+- "The mutation returned 200/204" proves nothing until the foreign controlled canary object shows the
+  inert effect.
 - Name the exact boundary crossed in one sentence, or it isn't confirmed.

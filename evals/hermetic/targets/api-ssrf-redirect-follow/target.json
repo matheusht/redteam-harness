@@ -1,0 +1,64 @@
+{
+  "target": "api-ssrf-redirect-follow",
+  "oracle": "ssrf_redirect_follow",
+  "expected_verdict": "confirmed",
+  "budget": {
+    "max_target_calls": 4
+  },
+  "requests": [
+    {
+      "id": "primary-redirect-reaches-stand-in",
+      "kind": "primary",
+      "url_reflected": false,
+      "server_fetch_attempted": true,
+      "followed_redirect": true,
+      "fetch_reached_stand_in_canary": true,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "positive-redirect-blocked",
+      "kind": "positive_control",
+      "guard_result": "redirect_blocked",
+      "url_reflected": false,
+      "server_fetch_attempted": true,
+      "followed_redirect": false,
+      "fetch_reached_stand_in_canary": false,
+      "expect": {
+        "signal": true,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "positive-allowlist-denied",
+      "kind": "positive_control",
+      "guard_result": "allowlist_denied",
+      "url_reflected": false,
+      "server_fetch_attempted": false,
+      "followed_redirect": false,
+      "fetch_reached_stand_in_canary": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "negative-fixed-url-no-client-destination",
+      "kind": "negative_control",
+      "url_reflected": false,
+      "server_fetch_attempted": false,
+      "followed_redirect": false,
+      "fetch_reached_stand_in_canary": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "target": "api-bola-state-change",
+  "oracle": "api_bola_state_change",
+  "expected_verdict": "confirmed",
+  "budget": {
+    "max_target_calls": 5
+  },
+  "requests": [
+    {
+      "id": "primary-victim-inert-mutation",
+      "kind": "primary",
+      "route": "PATCH /v1/objects/{id}/test-flag",
+      "selector": "victim",
+      "status": 200,
+      "foreign_canary_effect": true,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "positive-v2-guard-denies",
+      "kind": "positive_control",
+      "route": "PATCH /v2/objects/{id}/test-flag",
+      "selector": "victim",
+      "status": 403,
+      "foreign_canary_effect": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "negative-self-selector",
+      "kind": "negative_control",
+      "route": "PATCH /v1/objects/{id}/test-flag",
+      "selector": "self",
+      "status": 200,
+      "foreign_canary_effect": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "negative-no-selector",
+      "kind": "negative_control",
+      "route": "PATCH /v1/objects/{id}/test-flag",
+      "selector": "none",
+      "status": 404,
+      "foreign_canary_effect": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": false
+      }
+    }
+  ]
+}

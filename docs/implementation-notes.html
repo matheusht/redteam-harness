@@ -586,7 +586,7 @@
         authoritative but is now <b>never promotable</b> (only a real-LM behavioral allow may be); the
         bridge records its backend and the bundle gates on it. Self-tested both directions.</li>
       <li><b>Parity.</b> Re-assembling the Phase 12-13 campaign through the lifecycle reproduced every
-        authoritative verdict exactly (baseline→probe, gold-touch→block@materialization, Opus
+        authoritative verdict exactly (baseline→probe, gold-touch→block@materialization, 5.5-subagent
         candidate→probe@behavioral). <code>autonomous_gap_closure_count</code> stays <b>0</b>. Post-14
         items (sealed evaluator, controller, AIWG-like workflow index, Tollbooth, Carbonyl, Fortémi, live
         GEPA, evaluator coevolution) remain a <b>review backlog</b>, not build permission.</li>
@@ -602,7 +602,7 @@
         corruption / malware / credential content), a real <b>in-scope seed</b> (the existing
         <code>task-reframing</code> card, not an empty new-card seed), and a keyword <code>scope_check</code>
         guard (the Phase-11 drift card — double-free / gadget / CVE — is flagged off-scope; a self-test
-        pins it). The proposer is <b>Opus 4.8 via the local <code>claude</code> CLI</b> (each reflection a
+        pins it). The proposer is <b>a 5.5 subagent via the local <code>claude</code> CLI</b> (each reflection a
         separate <code>claude -p</code> process, tools disallowed). Result: GEPA produced an
         <b>in-scope, schema-valid, non-empty</b> refinement (single-component discipline; the card's
         domain "matched control" explicitly mapped onto the broker's negative_control; replay-validated
@@ -615,7 +615,7 @@
         (reusing <code>run-behavioral-eval.run_cli</code> over a sub-campaign — broker events own
         coverage/FDR/cost, FDR is a hard veto, strict 3/3 replay). A missing real-LM backend records a
         skipped/non-success run and yields no claim.</li>
-      <li><b>The bridge was exercised on a real GEPA candidate.</b> The Opus-proposed in-scope card → real-LM
+      <li><b>The bridge was exercised on a real GEPA candidate.</b> The 5.5-subagent-proposed in-scope card → real-LM
         behavioral <b>probe</b> (cov 1=1, FDR 0, 3/3 stable; “no new distinct coverage, cost reduction
         &lt;10%”) — behaviorally <b>neutral, not a fake win</b>. The no-op baseline → probe; the gold-touch
         control → block at materialization. Each candidate writes a <code>bridge-result.json</code>
@@ -624,9 +624,9 @@
         <code>events.jsonl</code>, and diff. The promotion bundle leads with the authoritative verdict and
         its stage (<code>materialization</code> &gt; <code>scope</code> &gt; <code>behavioral</code> &gt;
         <code>shadow</code>).</li>
-      <li><b>Cross-model separation (no self-grading).</b> The proposer is Opus; the blind broker-mediated
+      <li><b>Cross-model separation (no self-grading).</b> The proposer is a 5.5 subagent; the blind broker-mediated
         researcher is a <b>different</b> model (ollama qwen3:8b) in separate processes, so the proposer
-        cannot grade its own candidate. An Opus researcher (<code>tools/claude-researcher-cli.py</code>,
+        cannot grade its own candidate. A 5.5 subagent researcher (<code>tools/claude-researcher-cli.py</code>,
         which works standalone) is the higher-trust option but is currently <b>blocked under the behavioral
         evaluator's jailed adapter</b>: the <code>claude</code> CLI needs a richer environment than the
         jail's scrubbed env, and un-jailing it would change the frozen <code>researcher_adapter.py</code>

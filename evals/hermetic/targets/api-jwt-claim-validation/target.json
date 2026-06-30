@@ -1,0 +1,85 @@
+{
+  "target": "api-jwt-claim-validation",
+  "oracle": "jwt_claim_validation",
+  "expected_verdict": "confirmed",
+  "budget": {
+    "max_target_calls": 5
+  },
+  "requests": [
+    {
+      "id": "primary-wrong-audience-accepted",
+      "kind": "primary",
+      "aud": "service-a",
+      "expected_aud": "service-b",
+      "alg": "RS256",
+      "expected_alg": "RS256",
+      "accepted": true,
+      "privilege_canary_granted": true,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "primary-wrong-algorithm-accepted",
+      "kind": "primary",
+      "aud": "service-b",
+      "expected_aud": "service-b",
+      "alg": "none",
+      "expected_alg": "RS256",
+      "accepted": true,
+      "privilege_canary_granted": true,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "positive-patched-wrong-audience-denied",
+      "kind": "positive_control",
+      "aud": "service-a",
+      "expected_aud": "service-b",
+      "alg": "RS256",
+      "expected_alg": "RS256",
+      "accepted": false,
+      "privilege_canary_granted": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "positive-patched-wrong-algorithm-denied",
+      "kind": "positive_control",
+      "aud": "service-b",
+      "expected_aud": "service-b",
+      "alg": "none",
+      "expected_alg": "RS256",
+      "accepted": false,
+      "privilege_canary_granted": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "negative-correct-audience-no-cross-privilege",
+      "kind": "negative_control",
+      "aud": "service-b",
+      "expected_aud": "service-b",
+      "alg": "RS256",
+      "expected_alg": "RS256",
+      "accepted": true,
+      "privilege_canary_granted": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": false
+      }
+    }
+  ]
+}

@@ -267,8 +267,8 @@ class DeterministicBackend:
         }
 
 
-def _claude_reflection_lm(model="claude-opus-4-8"):
-    """A GEPA LanguageModel callable backed by the local `claude` CLI (Opus). Each call is a fresh
+def _claude_reflection_lm(model="claude-5-5-subagent"):
+    """A GEPA LanguageModel callable backed by the local `claude` CLI (5.5 subagent). Each call is a fresh
     `claude -p` process — the proposer's context is fully separate from the blind researcher's, so the
     proposer cannot grade its own candidate. Process boundary (mirrors the researcher path): tools are
     disallowed and the call runs in an EMPTY cwd so no repository/project file is loaded. The real env is
@@ -336,14 +336,14 @@ class GepaOptimizeAnythingBackend:
         # "ollama/qwen3:8b") — a local, capability-limited backend over loopback, no credentials. The name
         # is a model identifier, not a secret; it is recorded for provenance. With no LM configured GEPA
         # falls back to its own default (which typically needs an API key); choose_backend then surfaces it.
-        # GEPA_REFLECTION_LM selects the proposer LM: "claude-cli[:model]" uses the local Opus `claude`
+        # GEPA_REFLECTION_LM selects the proposer LM: "claude-cli[:model]" uses the local 5.5-subagent `claude`
         # CLI (a separate process per call, separate context from the researcher); any other value is a
         # litellm model name (e.g. "ollama/qwen3:8b").
         reflection_lm_name = os.environ.get("GEPA_REFLECTION_LM")
         cfg_kwargs = {"engine": EngineConfig(max_metric_calls=max_metric_calls)}
         if reflection_lm_name:
             if reflection_lm_name.startswith("claude-cli"):
-                model = reflection_lm_name.split(":", 1)[1] if ":" in reflection_lm_name else "claude-opus-4-8"
+                model = reflection_lm_name.split(":", 1)[1] if ":" in reflection_lm_name else "claude-5-5-subagent"
                 lm = _claude_reflection_lm(model)
             else:
                 lm = oa.make_litellm_lm(reflection_lm_name)

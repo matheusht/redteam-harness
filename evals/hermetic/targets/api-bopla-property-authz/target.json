@@ -1,0 +1,87 @@
+{
+  "target": "api-bopla-property-authz",
+  "oracle": "bopla_property_authz",
+  "expected_verdict": "confirmed",
+  "budget": {
+    "max_target_calls": 5
+  },
+  "requests": [
+    {
+      "id": "primary-read-overfetch",
+      "kind": "primary",
+      "operation": "read",
+      "guarded_property_present": true,
+      "exposed_property_canary": true,
+      "echoed_guarded_property": false,
+      "persisted_guarded_property": false,
+      "effective_property_impact": false,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "primary-write-mass-assignment",
+      "kind": "primary",
+      "operation": "write",
+      "guarded_property_present": false,
+      "exposed_property_canary": false,
+      "echoed_guarded_property": true,
+      "persisted_guarded_property": true,
+      "effective_property_impact": true,
+      "expect": {
+        "signal": true,
+        "effect": true,
+        "control_ok": false
+      }
+    },
+    {
+      "id": "positive-serializer-strips",
+      "kind": "positive_control",
+      "operation": "read",
+      "guard_result": "stripped",
+      "guarded_property_present": false,
+      "exposed_property_canary": false,
+      "echoed_guarded_property": false,
+      "persisted_guarded_property": false,
+      "effective_property_impact": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "positive-write-guard-coerces",
+      "kind": "positive_control",
+      "operation": "write",
+      "guard_result": "coerced",
+      "guarded_property_present": false,
+      "exposed_property_canary": false,
+      "echoed_guarded_property": false,
+      "persisted_guarded_property": false,
+      "effective_property_impact": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": true
+      }
+    },
+    {
+      "id": "negative-allowed-property-only",
+      "kind": "negative_control",
+      "operation": "write",
+      "guarded_property_present": false,
+      "exposed_property_canary": false,
+      "echoed_guarded_property": false,
+      "persisted_guarded_property": false,
+      "effective_property_impact": false,
+      "expect": {
+        "signal": false,
+        "effect": false,
+        "control_ok": false
+      }
+    }
+  ]
+}
