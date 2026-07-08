@@ -32,11 +32,11 @@ names it explicitly. This is the strongest new-pattern candidate this campaign p
 quote-anchoring, an event-handler denylist, an entity-encoding assumption, a character-class
 off-by-one). None of the 23 were confirmable by reflection alone — several of these apps ship their
 own execution oracle (a headless-browser validator that must observe a real `alert/confirm/prompt`
-fire with exact message text), which is precisely the discipline `pattern.transitive-sanitizer-
-reliance` already encodes. The generalizable takeaway: **any app-level filter is "probably
-incomplete, not proof of safety,"** and the volume here (23 independently-authored variants) is a
-strong empirical argument for treating "the app has a filter" as a weak activation and "the payload
-executed" as the only strong confirm.
+fire with exact message text), which is precisely the discipline
+`pattern.transitive-sanitizer-reliance` already encodes. The generalizable takeaway: **any
+app-level filter is "probably incomplete, not proof of safety,"** and the volume here (23
+independently-authored variants) is a strong empirical argument for treating "the app has a
+filter" as a weak activation and "the payload executed" as the only strong confirm.
 
 ## Confirmed injection and confirmed escalation are separately falsifiable claims
 The SSTI cluster produced ten confirmed RCE/file-read escalations across four template engines — and
