@@ -58,7 +58,11 @@ reads markdown; deterministic — the orchestrator, not the model, picks the car
    positive-control candidates, not findings.
 4. **Loop** (`engine/loop.md`) — ladder + winners, bounded chunks, oracle every result,
    loop-until-coverage-or-dry. A refusal is an input to the next rung; the terminal verdict is
-   "coverage/dry", never "the model finally complied".
+   "coverage/dry", never "the model finally complied". When evidence (a confirmed finding, a `strong`
+   signal, or an operator prior) says a vuln is *present*, switch to **persistence mode**
+   (`engine/persistence.md`): bound the space, treat a held vector as a wrong turn not a dry verdict,
+   grade leads top-to-bottom through the funnel, backtrack / redo recon rather than tunnel-vision, and
+   keep the rigor bar and gates unchanged.
 5. **Adjudicate & record** — emit `attempt` always, `finding` only on oracle `confirmed`, `pattern`
    only on manual scrubbed promotion.
 6. **Review, triage, clean up** — operator review; run the cleanup ledger; redact secrets always.

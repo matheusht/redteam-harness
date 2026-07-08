@@ -10,3 +10,6 @@ __pycache__/
 # (CLAUDE.md §4.0). Only the scaffolding template is tracked.
 engagements/*/
 !engagements/_TEMPLATE/
+
+.playwright-mcp
+graphify-out/
