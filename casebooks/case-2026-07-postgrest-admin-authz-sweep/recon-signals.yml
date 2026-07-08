@@ -1,0 +1,65 @@
+case: case-2026-07-postgrest-admin-authz-sweep
+
+# The routing brain's seed data: what recon SAW -> which pattern card it should activate.
+# Field/RPC-name shapes kept as routing teeth where generic; no live ids, keys, hostnames, or brand
+# strings. "candidate:*" activations name a new pattern shape with no card yet (see promotion-notes.md).
+signals:
+  - observation: "the public SPA bundle exposes a Supabase/PostgREST client talking DIRECTLY to the backend (no server-side proxy layer for data reads); CSP allowlists the app's own API/DB gateways plus a raw managed-Supabase domain"
+    where: "public JS / response headers"
+    activates: ["pattern.ui-only-policy-enforcement", "pattern.client-supplied-selector-authz"]
+    strength: weak
+    note: "static surface map only. Use authenticated traffic to confirm which routes are reachable and whether server-side policy/RLS actually holds."
+
+  - observation: "the client invokes RPCs with an explicit client-supplied subject-id parameter (a p_user_id-style argument), and issues direct table reads with a client-chosen owner/tenant filter"
+    where: "public JS / authed network capture"
+    activates: ["pattern.client-supplied-selector-authz", "vulns/broken-object-level-authz"]
+    strength: strong
+    note: "presence of the selector is strong activation on its own. Safe probe = drop or change the filter / call the RPC with a foreign id; review-gated, own-account-only until authorized."
+
+  - observation: "a large homogeneous family of admin-prefixed RPCs is present in the client bundle and reachable on the same public PostgREST endpoint, while admin/role status is resolved and displayed client-side via a whoami-style call"
+    where: "public JS / authed passive capture"
+    activates: ["pattern.ui-only-policy-enforcement", "candidate:rpc-family-guard-contrast"]
+    strength: strong
+    note: "client-side role display is not evidence of a server-side check. Enumerate the FULL RPC catalog via the authed schema/OpenAPI doc, then call every member of the family from a non-admin session and diff the denial signature — the member that doesn't match the family's common refusal is the lead."
+
+  - observation: "several sensitive tables/schemas deny anonymous reads with a database-level permission error, while a couple of financial-adjacent tables return an empty result (not a permission error) to the same anon key"
+    where: "anon REST baseline"
+    activates: ["pattern.client-supplied-selector-authz"]
+    strength: weak
+    note: "empty 200s to anon are not findings by themselves, but are a permissive-grant smell worth re-checking authenticated (same-tenant vs. foreign-tenant visibility) before treating as a lead."
+
+  - observation: "a storage bucket is referenced for user-uploaded financial receipts, with client-side upload plus a multi-day signed URL, and the resulting path/url is then passed into a mutating RPC"
+    where: "public JS / storage client calls"
+    activates: ["pattern.client-supplied-selector-authz", "pattern.ui-only-policy-enforcement"]
+    strength: strong
+    note: "not testable this engagement (storage/realtime gateway was in infra outage throughout). Re-test upload-ownership and signed-URL path scoping once available — do not assume held from bundle inspection alone."
+
+  - observation: "the backend's response appeared to vary depending on client-suppliable request headers naming a subscription tier and an app environment"
+    where: "response header diffing, first pass via a browser-driven client"
+    activates: ["pattern.ui-only-policy-enforcement"]
+    strength: weak
+    note: "looked like a forgeable-trust-header lead; treat presence alone as weak until replayed with a non-browser client to rule out a CORS/browser confound. See refuted_candidates for the outcome."
+
+  - observation: "one identity factor on the signup flow is auto-confirmed while the primary factor's auto-confirm stays off, and a protected signup function sits in front of (and is meant to fully replace) the native signup endpoint"
+    where: "auth settings baseline / edge function"
+    activates: ["pattern.ui-only-policy-enforcement", "pattern.legacy-route-differential"]
+    strength: weak
+    note: "check whether the native path is truly blocked server-side (not just unlinked in the UI) and whether the fronting function actually gates account creation (a real anti-automation control) rather than only the client."
+
+  - observation: "a subscription/entitlement check exists as its own advisory RPC, separate from the RPCs that serve the paid dataset; the data-serving RPCs take no entitlement parameter and are not observed to call the entitlement RPC internally"
+    where: "authed network capture"
+    activates: ["candidate:decoupled-entitlement-gate", "pattern.ui-only-policy-enforcement"]
+    strength: strong
+    note: "classic check-then-render split. A paid-account observation of full data is NOT sufficient to confirm bypass — only a call from a genuinely non-entitled session proves it. Stays needs_review without that account."
+
+  - observation: "the client-side admin route guard held (redirect for non-admin) and no admin-labeled RPC was organically issued anywhere during passive authenticated use"
+    where: "authed passive capture"
+    activates: ["pattern.ui-only-policy-enforcement"]
+    strength: negative
+    note: "client-side guard holding is not evidence the server enforces anything — carry as a to-be-tested positive-control candidate, not a finding, until the RPCs are called directly."
+
+  - observation: "the sibling members of the admin RPC family uniformly raised a database-level permission error for a non-admin session, across two independent testing passes"
+    where: "authed active probe"
+    activates: ["candidate:rpc-family-guard-contrast"]
+    strength: negative
+    note: "the uniformity across ~30 siblings is exactly what makes a single outlier legible as a bug rather than a design choice — record as the positive control for the family-contrast oracle, and as the counterexample the outlier should have matched."

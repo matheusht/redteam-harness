@@ -1,0 +1,240 @@
+case: case-2026-07-oss-supply-chain-tooling
+
+# The routing brain's seed data: what recon SAW -> which pattern card it should activate.
+# Field names / mechanism shapes kept as routing teeth; no values, ids, keys, or hostnames.
+# "candidate:*" activations name a NEW pattern shape with no card yet (see promotion-notes.md).
+# "vuln.*" activations name a card that was BUILT during this engagement from a deep-research pass,
+# then exercised/reinforced by a real finding in the same session.
+signals:
+  - observation: >
+      a developer-facing allow/deny/approval map is looked up by a server-controlled key (a tool name
+      supplied by an untrusted-but-connected upstream server) using a plain property access with no
+      own-key guard
+    where: "mcp_tool_approval_policy"
+    activates: ["vuln.prototype-pollution"]
+    strength: strong
+    note: >
+      any attacker-controlled string used as an object key without hasOwnProperty/own-key checking is
+      guilty until shown otherwise, especially when the fallback value is combined with `??` — a
+      prototype-chain hit is non-nullish and defeats a nullish-coalescing fallback silently.
+
+  - observation: >
+      the same untrusted-controlled-name-as-object-key shape appears again one layer earlier, in the
+      discovery/construction of the record being indexed into (bracket assignment building a plain
+      object from server-supplied names, not just the later lookup)
+    where: "mcp_tool_discovery"
+    activates: ["vuln.prototype-pollution"]
+    strength: strong
+    note: >
+      when one prototype-pollution shape is found, check every OTHER place along the same data's
+      journey that also does an untrusted-key object operation — construction and lookup are
+      independent bugs sharing one root cause (plain-object semantics on attacker-controlled keys),
+      and finding one does not mean the other doesn't also exist. This is how the second, more
+      root-cause primitive was found: stepping back to re-narrow candidate sinks on the SAME asset
+      rather than moving to the next target.
+
+  - observation: >
+      a dispatcher `switch`es on a status object's `.type` field with no `default` case, and an
+      upstream step can produce a status object with an unrecognized or missing `.type`
+    where: "mcp_tool_approval_policy"
+    activates: ["vuln.prototype-pollution"]
+    strength: weak
+    note: >
+      a missing-default switch that falls through to the "proceed" branch is a distinct, generalizable
+      shape from the prototype-pollution trigger itself — it's the reason the bypass has full impact
+      rather than just a wrong-typed status. Worth its own routing note if this shape recurs
+      independent of prototype pollution: "unrecognized authorization-status value silently defaults
+      to allow, not deny."
+
+  - observation: >
+      a public merge/combine utility for externally sourced provider data assigns into an accumulator
+      object with a bare truthy/falsy guard (`if (!acc[key])`), not an own-key check, before doing an
+      `Object.assign` onto whatever that lookup returned
+    where: "flag_provider_data_merge"
+    activates: ["vuln.prototype-pollution"]
+    strength: strong
+    note: >
+      the trigger requires a REAL, JSON.parse-derived own key literally named `__proto__` on the
+      untrusted input — this is a different, and for this exact bug the ONLY relevant, primitive from
+      a bracket-assignment `obj[name] = x` where `name` is a variable holding the string `__proto__`
+      (that instead invokes the inherited setter and reassigns one object's own prototype pointer, a
+      narrower, related shape). Distinguishing these two at triage time matters: check how the
+      untrusted object was BUILT (JSON.parse vs. reduce+bracket-assignment) before concluding a given
+      adapter/producer does or doesn't feed the vulnerable shape.
+
+  - observation: >
+      a downstream authorization-adjacent check reads a per-request, attacker-influenceable-key
+      property off an object with a plain `!== undefined` test, not an own-key check
+    where: "flag_override_evaluation"
+    activates: ["vuln.prototype-pollution"]
+    strength: strong
+    note: >
+      this is what turns generic, diffuse prototype pollution into a CONCRETE, targeted gadget —
+      always look for the one downstream read that turns "the prototype is polluted" into "and here
+      is the one attacker-chosen outcome that changes." Confirm the gadget through the real, exported
+      API end to end, not just the pollution step in isolation.
+
+  - observation: >
+      a text sanitizer for untrusted, display-bound metadata runs a FIXED SEQUENCE of regex passes
+      exactly once, each mutating the string in place, rather than looping to a fixed point
+    where: "skill_metadata_terminal_sanitizer"
+    activates: ["candidate:sanitizer-fixed-pass-order-reconstitution"]
+    strength: strong
+    note: >
+      any multi-pass string-stripping sanitizer where an EARLIER pass's non-match can be caused by a
+      byte a LATER pass removes is a reconstitution risk: craft an obstructing spacer byte that (a)
+      defeats every early, specific-pattern pass, then (b) gets stripped by a later, generic catch-all
+      pass, leaving the two originally-separated fragments adjacent and matching a pattern that was
+      never re-checked. Oracle discipline: confirm through the REAL published binary/library, not an
+      isolated regex replica, before calling it done — a fixed-point loop or a single early
+      strip-everything-except-printable pass are the two generalizable fixes.
+
+  - observation: >
+      a recursive directory-copy during install follows symlinks (dereference-on-copy) with no check
+      that the resolved target stays within the directory being installed
+    where: "skill_install_pipeline"
+    activates: ["candidate:symlink-dereference-no-target-boundary-check"]
+    strength: strong
+    note: >
+      `dereference: true`-style copy flags are commonly added to fix a real, narrower bug (symlinks
+      pointing WITHIN the same source tree breaking after cleanup) — but the fix is easy to ship
+      without a boundary re-check on the resolved target, because the original bug report never
+      needed one. When you see a dereference-copy fix, always ask "resolved to WHERE, exactly" as a
+      separate question from "does it fix the reported case."
+
+  - observation: >
+      the SAME unguarded dereference-copy pattern (same missing check, different function/file)
+      recurs a second time elsewhere in the same codebase, reached by a DIFFERENT command than the
+      one already found vulnerable
+    where: "skill_install_pipeline"
+    activates: ["candidate:symlink-dereference-no-target-boundary-check"]
+    strength: strong
+    note: >
+      once you find one instance of an anti-pattern, grep the WHOLE codebase for the same call shape
+      before closing the finding — an earlier pass on this exact codebase concluded the second
+      command's code path was safe, but had only checked one of its two internal helper functions;
+      an independent regrade pass, instructed to re-derive everything from primary sources rather than
+      trust the prior conclusion, found the second, unguarded occurrence. This is the single sharpest
+      lesson of the engagement: a "checked, looks safe" note is a hypothesis, not a verdict, until a
+      second pair of eyes re-derives it from source.
+
+  - observation: >
+      a generated, agent-facing prompt names a directory populated by installing/staging untrusted,
+      attacker-influenced content, and instructs an agent to read files from it, with no confirmation
+      gate covering the general case (only a narrow, allowlisted-source-specific gate)
+    where: "skill_use_agent_prompt_generation"
+    activates: ["candidate:symlink-dereference-no-target-boundary-check"]
+    strength: strong
+    note: >
+      this is the escalation multiplier for a silent-disclosure primitive: a file-read bug becomes an
+      automatic, agent-mediated EXFILTRATION bug the moment a downstream agent is instructed, by
+      generated prompt text, to read and surface content from the same directory the bug poisoned.
+      Confirm the escalation without launching a real agent if possible — printing the generated
+      prompt and confirming both its wording and the secret's presence on disk proves the mechanism
+      without needing a live agent session.
+
+  - observation: >
+      a sandboxed runtime deliberately overrides its own `Math.random` (or equivalent RNG entry point)
+      to a seeded, deterministic generator, and the SAME override feeds generation of a
+      security-relevant bearer token or capability identifier, not just replay/ordering state
+    where: "workflow_hook_webhook_token_generation / workflow_vm_deterministic_rng"
+    activates: ["vuln.workflow-step-injection"]
+    strength: strong
+    note: >
+      a mechanism built for one property (replay-determinism / uniqueness) silently inherits into
+      anything that consumes the same entry point, including things whose OWN docs claim a different
+      property (cryptographic unpredictability) for that value. When a runtime overrides its own
+      randomness source for legitimate reasons, always ask what else draws from that same source
+      before trusting any of its outputs as unpredictable.
+
+  - observation: >
+      every stated component of a token-generation seed is independently either publicly known, a
+      non-secret platform environment variable, or generated by the calling client and then echoed
+      back to that same client in a response header
+    where: "workflow_hook_webhook_token_generation"
+    activates: ["vuln.workflow-step-injection"]
+    strength: strong
+    note: >
+      "the seed looks complex" is not the same claim as "the seed is a secret an outside party can't
+      reconstruct" — trace every literal component of a seed string back to its source before treating
+      seed complexity as equivalent to unpredictability. A maintainer's own code comment stating a
+      seed's intended purpose (uniqueness, not secrecy) is strong corroborating evidence when it
+      contradicts a separate, more casual security claim made elsewhere (e.g. in user-facing docs).
+
+  - observation: >
+      step-correlation identifiers use the identical deterministic RNG as an already-confirmed
+      predictable bearer token, but the thing they gate is dispatched through an internal message
+      queue, not a public HTTP endpoint that accepts a bare id plus a claimed outcome
+    where: "workflow_step_completion_dispatch"
+    activates: ["vuln.workflow-step-injection"]
+    strength: negative
+    note: >
+      predictability of an identifier is necessary but not sufficient for a forgery finding — always
+      check whether a PUBLIC, unauthenticated-by-design surface actually accepts that identifier as
+      its only credential. Here it doesn't; the predictable id alone doesn't cross a real access-
+      control boundary for this specific consequence, even though it does for the token case next to it.
+
+  - observation: >
+      a self-hosted backend implementation writes literal empty-string tenant-scoping fields with an
+      explicit "TODO: get from context" comment on entity creation
+    where: "workflow_multitenant_backend_storage"
+    activates: ["vuln.workflow-step-injection"]
+    strength: weak
+    note: >
+      a TODO-stub field is a strong-LOOKING signal but requires tracing every READ of the field, not
+      just its write, before concluding it's an access-control gap — here, nothing in this backend
+      reads it, and the real hosted production backend has no equivalent code at all (closed-source,
+      unauditable from this repo). Downgrade an unread-column observation to needs_review rather than
+      a confirmed finding; don't inflate a write-only stub into a proven bypass.
+
+  - observation: >
+      a public GitHub issue on a small, widely-depended-on utility claims a ReDoS/DoS reproduction
+      against the exact currently-published version, with a specific timing claim
+    where: "utility_duration_parser"
+    activates: ["vulns/known-cve-exploitation"]
+    strength: negative
+    note: >
+      a public issue's claimed reproduction is a LEAD, not a confirmed vulnerability — always
+      independently re-run the exact claimed input against the exact currently-published package
+      before treating it as real; issues can be stale, wrong, or already fixed by a guard the issue's
+      own suggested fix duplicates.
+
+  - observation: >
+      a route-rule engine merges matched rules from two different path representations (raw and
+      canonical) with a fix that explicitly cites its own historical CVE in the commit, merged very
+      recently relative to when this audit started
+    where: "static_route_rule_engine"
+    activates: ["legacy-route-differential", "path-traversal-lfi"]
+    strength: negative
+    note: >
+      recency of a fix is itself a signal to verify the fix generalizes (don't stop at the literal
+      reported case) rather than a reason to skip the asset — but once verified against the actual
+      regex/implementation, not just the accompanying comment, a comprehensive same-day hardening pass
+      naming its own CVE is a strong tell to deprioritize further budget on that asset's named focus
+      areas specifically.
+
+  - observation: >
+      an install CLI's "accept any git URL" fallback appears to permit exotic git transport schemes
+      that are a classic RCE vector when the URL is attacker-controlled
+    where: "skill_install_pipeline"
+    activates: ["os-command-injection"]
+    strength: negative
+    note: >
+      before treating an apparent transport/scheme-acceptance gap as a finding, check whether the
+      underlying dependency (here, git itself) already refuses the dangerous transport by its OWN
+      hardened default — an authoritative negative from the dependency is stronger and cheaper than
+      building a harness to prove the same thing.
+
+  - observation: >
+      a well-known/discovery endpoint's access-token verification and an override-cookie mechanism use
+      real authenticated encryption with purpose-tagging, on a repository that already has one prior,
+      unrelated published advisory against a DIFFERENT function in the same access-verification file
+    where: "flag_discovery_endpoint_auth"
+    activates: ["vuln.prototype-pollution"]
+    strength: negative
+    note: >
+      a repo with one real, disclosed prior CVE on a given surface is not automatically still weak
+      there — that surface is frequently the BEST-hardened code in the repo precisely because of the
+      prior incident. Don't skip re-checking it, but calibrate expectations: look at what's ADJACENT
+      to the old fix (a different function, a different data flow feeding the same sink) rather than
+      re-litigating the exact thing that already got patched.

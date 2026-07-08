@@ -1,0 +1,138 @@
+case: case-2026-07-jvm-gateway-telemetry-oss
+
+# The routing brain's seed data: what recon SAW -> which pattern card it should activate.
+# Field names / mechanism shapes kept as routing teeth; no values, ids, keys, or file:line.
+# "candidate:*" activations name a NEW pattern shape with no card yet (see promotion-notes.md).
+# NOTE (no-disclosure program): the F1-adjacent entries below are already pattern-shape-abstracted;
+# no exact class/method names or citations appear anywhere in this file, per case.yml sanitization.
+signals:
+  - observation: >
+      an edge gateway terminates a newer HTTP protocol version and downgrades/proxies to an older
+      one via a well-known third-party codec library — the exact topology a real, disclosed,
+      high-bounty vulnerability attributed to this same project was previously found in
+    where: "http2_http1_downgrade_boundary"
+    activates: ["httpabuse.http-protocol-abuse"]
+    strength: strong
+    note: >
+      Stage 0: enumerate every point where an inbound frame/header is converted between protocol
+      versions or forwarded to an origin; check the current pinned transport-codec version against
+      the classes implicated in the real precedent, then look for a NEW, undisclosed instance of the
+      same bug class rather than re-finding the patched one.
+
+  - observation: >
+      a pinned transitive dependency version sits inside a disclosed CVE's advisory-stated
+      vulnerable range
+    where: "dependency_cve_surface"
+    activates: ["cve.known-vulnerable-component"]
+    strength: weak
+    note: >
+      version match alone is never sufficient — grep every call site of the specific configuration
+      surface the CVE requires (e.g. a polymorphic-typing allow-list) before treating range-match as
+      a candidate. Two of three in-scope repos were already above the fixed version and needed no
+      further work; the third needed the reachability check, which came back negative.
+
+  - observation: >
+      a filter-chain-style request-processing pipeline exposes a public, documented API for a filter
+      to reject/block a request, but the pipeline stage that actually performs request-forwarding to
+      the backend origin (and, separately, the stage that returns the response to the caller) does
+      not check that same flag — it checks a different, undocumented flag instead
+    where: "filter_chain_pipeline / request_forwarding_stage"
+    activates: ["candidate:filter-chain-doc-mismatch-authz-bypass"]
+    strength: strong
+    note: >
+      confirmed empirically with the project's own real classes (not an emulator), with a negative
+      control using the correct flag to prove the divergence is specific. No existing pattern card
+      covers "documented API doesn't do what its own doc comment says" at the filter-chain-stage
+      level — closest existing card (object-level authz) doesn't fit; this is a framework-level
+      filter-bypass, not an object-selector gap. See case.yml F1. Independent regrade corrected the
+      framing from "default-deployment bypass" to "footgun for third-party filter authors" and capped
+      severity accordingly — record the corrected framing as load-bearing, not the first-pass one.
+
+  - observation: >
+      a stack-language expression interpreter and a separate group-by/cardinality-expansion path both
+      have real, checked-in-source numeric bounds (not just documented limits)
+    where: "query_dsl_evaluation"
+    activates: ["candidate:unbounded-regex-introspection-dos"]
+    strength: negative
+    note: >
+      held — both bounds gate real code paths. Kept as the counterexample for the DoS/resource-
+      exhaustion shape that DID turn up elsewhere in this engagement (the regex-introspection
+      endpoint), showing the same codebase can get this right in one place and not another.
+
+  - observation: >
+      an opt-in (disabled-by-default) introspection/debug endpoint compiles client-supplied strings
+      directly as regular expressions with no length, complexity, or timeout bound, then evaluates
+      them against every entry in a live in-process registry
+    where: "opt_in_regex_introspection_endpoint"
+    activates: ["candidate:unbounded-regex-introspection-dos"]
+    strength: strong
+    note: >
+      real, mechanism-confirmed unbounded-CPU sink from source alone — no PoC needed to be sure of
+      the mechanism. Still not submittable: this program's policy excludes DoS/resource-exhaustion
+      classes regardless of proof quality. Route the mechanism anyway; reward-eligibility is a
+      program-policy filter applied AFTER routing/confirmation, not a reason to skip confirming it.
+
+  - observation: >
+      an outbound-HTTP-capable class sits inside a streaming/subscription API that superficially
+      resembles a webhook/callback registration surface
+    where: "outbound_fetch_candidate_paths"
+    activates: ["pattern.ssrf-server-side-fetch"]
+    strength: negative
+    note: >
+      held — the candidate destination values are deploy-time config only, and the subscription
+      payload itself carries an expression string, not a callback/destination URL. Weak on purpose:
+      "makes outbound HTTP calls somewhere in the module" is not itself a server-side-fetch primitive
+      without a client-controlled destination.
+
+  - observation: >
+      an HTTP API surface has literally no internal authentication/authorization mechanism to
+      evaluate at all
+    where: "http_api_authz_layer"
+    activates: ["bola.broken-object-level-authz"]
+    strength: negative
+    note: >
+      distinguish this from a check that exists but enforces incorrectly (the F1 shape above) — here
+      there is no check to fail. Architecturally plausible as "expects an external fronting gateway,"
+      matching comparable open-source telemetry backends, but not confirmable from this project's own
+      docs — recorded as a reasoned assumption, not a proven-safe verdict.
+
+  - observation: >
+      a module/class name in a client instrumentation library strongly implies a security-relevant
+      capability (a sandboxing boundary, a bytecode-instrumentation agent, template-style string
+      substitution) that its actual implementation does not provide
+    where: "metrics_tag_client_path"
+    activates: []
+    strength: negative
+    note: >
+      module/class-NAME mismatch trap, seen repeatedly this engagement across unrelated modules: a
+      "sandbox"-named class was a deprecated legacy wrapper, not a security boundary; a
+      "placeholders"-named feature was same-process deferred-value resolution, not string-template
+      substitution; an "agent"-named entry point never actually transforms bytecode despite accepting
+      the instrumentation handle. No card exists for this because it isn't a vulnerability shape — it
+      is a routing-hygiene lesson: verify what a name-implied capability actually DOES in the
+      implementation before spending Stage-0 budget hypothesizing about it.
+
+  - observation: >
+      a research-grounded vulnerability lead cites a specific source file by permalink, with strong
+      disclosed precedent for the vulnerability class it implies
+    where: "cross-cutting / pre-Stage-0 research grounding"
+    activates: ["cve.known-vulnerable-component"]
+    strength: weak
+    note: >
+      a citation is a claim about a permalink, not a claim about applicability to the exact commit/
+      branch actually in scope for a multi-branch project. Always re-verify the cited file exists at
+      the pinned commit/tag before routing Stage 0 budget onto it — this exact trap fired once this
+      engagement and would have misdirected the entire primary-target search had it gone unchecked.
+
+  - observation: >
+      a fully-built, tested defensive/sanitizing class exists in the codebase with zero production
+      call sites referencing it anywhere
+    where: "metrics_tag_client_path"
+    activates: []
+    strength: negative
+    note: >
+      orphaned defensive code is neither a finding (nothing calls it, so there is no live gap through
+      it) nor proof the codebase is safe by design (something else has to be shown to actually gate
+      the same input). Trace the real call graph of the input path before concluding either way — the
+      same diff-the-sibling discipline used for a confirmed authz shape in a prior engagement applies
+      here to ruling something OUT.

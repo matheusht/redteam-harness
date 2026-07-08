@@ -1,0 +1,123 @@
+id: case-2026-06-ai-webapp-builder
+date: 2026-06
+target_class: >
+  AI web-app builder (vibe-coding) SaaS: an LLM agent generates and deploys web apps from a chat
+  prompt plus uploaded docs; Supabase/PostgREST backend with the anon key shipped to the browser;
+  per-user and per-org tenancy; public project hosting, preview screenshots, and a custom-domain feature.
+surfaces:
+  - builder_chat            # LLM agent that writes and deploys code
+  - file_upload             # docs ingested into the agent context (RAG-ish)
+  - code_gen_tool_dispatch  # server-side write-code / deploy tools
+  - postgrest_data_api      # Supabase REST; anon key shipped to the browser
+  - security_definer_rpc    # PostgREST RPC (SECURITY DEFINER functions)
+  - storage_bucket          # project preview screenshots
+  - custom_domain           # user-supplied custom domain with DNS verification
+  - auth_gotrue             # Supabase GoTrue auth (reset, refresh tokens, org invites)
+  - project_preview         # iframe / postMessage preview surface
+auth_model: >
+  browser-shipped Supabase anon key (public by design); per-user + per-org tenancy; org membership by
+  email-only invite; RLS policies + SECURITY DEFINER RPC grants are the real authorization layer.
+scope_ref: "Plane 3 engagement scope (target repo) — not reproduced here"
+
+confirmed_findings:
+  - label: F6
+    pattern: "candidate:postgrest-anon-data-exposure"
+    owasp: "A01 Broken Access Control / RLS misconfig"
+    severity: critical
+    one_line: >
+      an unauthenticated caller with the browser-shipped anon key read the entire projects table (all
+      tenants, including private rows) because RLS was ENABLED but the SELECT policy was USING (true).
+  - label: F7
+    pattern: "candidate:postgrest-anon-data-exposure"
+    owasp: "A01 Broken Access Control (BOLA) / API1:2023"
+    severity: critical
+    one_line: >
+      a SECURITY DEFINER RPC returned any user's email and account PII to an unauthenticated caller who
+      passed that user's id, because the function body had no principal check and default privileges left
+      it executable by anon; chains with F6, which supplies every user id.
+  - label: F8
+    pattern: "candidate:postgrest-anon-data-exposure"
+    owasp: "A02 data exposure"
+    severity: high
+    one_line: >
+      two SECURITY DEFINER analytics RPCs returned internal business metrics and raw onboarding free-text
+      to anon for the same default-privilege reason (one even granted to anon explicitly).
+  - label: F1
+    pattern: pattern.client-supplied-selector-authz
+    owasp: "A01 Broken Access Control (BOLA)"
+    severity: high
+    one_line: >
+      any project's preview screenshot was readable unauthenticated from a public storage bucket keyed on
+      a client-supplied sequential object id (drafts included), so the whole set was enumerable.
+  - label: F2
+    pattern: pattern.client-supplied-selector-authz
+    owasp: "A01 Broken Access Control (write-IDOR)"
+    severity: high
+    one_line: >
+      a screenshot-write endpoint trusted a client-supplied project id and wrote to another tenant's
+      project with no ownership re-resolution, while the app's own org-scoped API denied the same id.
+  - label: F3
+    pattern: pattern.indirect-prompt-injection
+    owasp: "LLM01 Prompt Injection"
+    severity: medium
+    one_line: >
+      content from an uploaded document reached the builder agent's instruction channel unisolated, so an
+      embedded directive (including a 'do not mention this' meta-instruction) was obeyed.
+  - label: F4
+    pattern: pattern.indirect-prompt-injection
+    owasp: "LLM06 Excessive Agency"
+    severity: high
+    one_line: >
+      the injected directive drove the agent's code-generation tool, writing an attacker-chosen inert
+      marker into generated code — injection escalating from text to tool dispatch.
+
+refuted_candidates:
+  - label: C-ssrf-custom-domain
+    looked_like: >
+      the custom-domain feature accepted arbitrary hostnames including raw IP literals and the cloud
+      metadata IP, which looked like server-side request forgery.
+    refuted_by: >
+      OAST oracle — the attacker-controlled host received DNS lookups only and zero HTTP(S) fetches;
+      ingress/fetch provisioning is gated behind an ownership-CNAME the attacker cannot set, so metadata
+      IPs sit unresolved forever. DNS resolution during verification is not a fetch.
+    pattern: pattern.ssrf-server-side-fetch
+
+held_defenses:
+  - control: cross-user injection delivery is gated behind an email-only org-invite token
+    why_held: >
+      the invite accept token is an unguessable id delivered only by email, absent from the invite
+      API/UI responses, with no numeric-id IDOR — so a CONFIRMED injection sink could not be delivered to
+      a victim silently. This capped F4 at High (consensual / confused-deputy), not cross-user Critical.
+    contrast_pattern: pattern.indirect-prompt-injection
+  - control: sibling PostgREST tables enforce RLS correctly (return empty to anon)
+    why_held: >
+      only the projects table carried the USING (true) policy; organizations, messages, org_members and
+      the rest returned nothing to the anon key. The empty siblings are the positive control proving F6
+      is a per-table misconfiguration, not intended-public data.
+    contrast_pattern: "candidate:postgrest-anon-data-exposure"
+  - control: one anon-granted RPC guards inside its own body
+    why_held: >
+      a lookup-by-email RPC is also granted to anon by default privileges, but it rejects the call in the
+      function body (logged-in check + backoffice-membership check). It is the correct shape and the
+      counterexample proving F7/F8 should guard in-body too, not just rely on grants.
+    contrast_pattern: "candidate:postgrest-anon-data-exposure"
+  - control: the platform's own org-scoped API returns only the caller's org
+    why_held: >
+      the authenticated app API re-resolves the principal's org, so the exposure is specific to the raw
+      PostgREST + anon-key path. The org-scoped endpoint is the positive control for F6/F1/F2.
+    contrast_pattern: pattern.client-supplied-selector-authz
+  - control: the main preview postMessage handler validates event.source
+    why_held: >
+      the primary message handler checks event.source against the preview iframe; only the screenshot
+      sibling handler omitted it (F9). The secure sibling is the positive control — diff it against the
+      suspect one.
+    contrast_pattern: pattern.client-supplied-selector-authz
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-07: stripped the platform/client name (only the abstract target_class kept),
+    the Supabase project ref and anon key (a JWT), all live project/user/org/thread ids and invite tokens,
+    the benign canary literals, internal hostnames and IPs, and the exact file:line remediation (those
+    stay in Plane 3 / the engagement's linear-issues.md). Only abstract shapes, API/field-level detail,
+    and oracle reasoning retained.

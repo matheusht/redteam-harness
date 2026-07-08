@@ -1,0 +1,131 @@
+{
+  "case": "case-2026-06-ai-webapp-builder",
+  "rows": [
+    {
+      "candidate": "F6",
+      "pattern": "candidate:postgrest-anon-data-exposure",
+      "signal": "the anon key alone returned a full-table row count and foreign rows (author id not ours, private visibility) from the projects table",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "an unauthenticated caller read every tenant's projects, including private ones, because RLS was on but the SELECT policy was USING (true).",
+      "controls": {
+        "negative": "sibling tables (organizations, messages, org_members) returned empty to the same anon key",
+        "positive": "the app's own authenticated org-scoped API returned only our org for the same data — the correct counterpart",
+        "canary": "n/a (read of pre-existing foreign data; recorded only boundary outcomes, never private content)",
+        "replay": "deterministic across a fresh anon session"
+      }
+    },
+    {
+      "candidate": "F7",
+      "pattern": "candidate:postgrest-anon-data-exposure",
+      "signal": "an anon call to a SECURITY DEFINER RPC with a user id (harvested via F6) returned that user's email and account PII",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the function had no in-body principal check and remained anon-executable via Supabase default privileges, so any user's PII was retrievable unauthenticated.",
+      "controls": {
+        "negative": "n/a for anon-openness; the chain enabler F6 supplied the ids",
+        "positive": "a sibling anon-granted RPC that guards in-body (logged-in + backoffice check) rejected the same anon call — proving the safe shape exists and this one omits it",
+        "canary": "n/a (PII read; email redacted, no mass harvest performed)",
+        "replay": "deterministic; and reconciled against source — a diff showed REVOKE ... FROM PUBLIC, but that does not strip the explicit anon grant, so the live 200 was correct"
+      }
+    },
+    {
+      "candidate": "F8",
+      "pattern": "candidate:postgrest-anon-data-exposure",
+      "signal": "anon calls to two analytics RPCs returned internal business metrics and raw onboarding free-text",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "both SECURITY DEFINER functions are anon-executable (one granted to anon explicitly) with no in-body guard.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "same held sibling as F7 (in-body-guarded RPC) is the correct-shape control",
+        "canary": "n/a",
+        "replay": "deterministic across a fresh anon session"
+      }
+    },
+    {
+      "candidate": "F1",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "an unauthenticated request to a public storage bucket, keyed on a foreign sequential object id, returned the image (drafts included)",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "any project's screenshot was readable with no auth because the bucket is public and keyed on an enumerable client-supplied id.",
+      "controls": {
+        "negative": "an out-of-range object id returned not_found (so 200 on real ids is meaningful, not a catch-all)",
+        "positive": "the authenticated app API is org-scoped for the same objects — the guarded counterpart",
+        "canary": "n/a",
+        "replay": "deterministic; foreign ids consistently served"
+      }
+    },
+    {
+      "candidate": "F2",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "as tenant A, a screenshot-write with tenant B's project id in the body landed in B's project",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the write endpoint trusted a client-supplied project id with no ownership re-resolution, so A wrote into B's project.",
+      "controls": {
+        "negative": "A writing to A's own project succeeded (baseline)",
+        "positive": "A is 403 from B's org on every other app API endpoint — isolates the gap to this handler",
+        "canary": "a benign distinctive marker image (literal scrubbed); write reverted afterwards",
+        "replay": "reproduced with a second owned account; cross-tenant write operator-confirmed then reverted"
+      }
+    },
+    {
+      "candidate": "F3",
+      "pattern": "pattern.indirect-prompt-injection",
+      "signal": "a directive embedded in an uploaded document was obeyed by the builder agent, including a 'do not mention this note' meta-instruction",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "uploaded file content reached the agent's instruction channel unisolated, so it was treated as authoritative instruction rather than data.",
+      "controls": {
+        "negative": "a clean document with the same build prompt produced no marker",
+        "positive": "the directive's effect was specific and reproducible, not a generic model quirk",
+        "canary": "benign inert directive/marker (literal scrubbed)",
+        "replay": "reproduced in a fresh project"
+      }
+    },
+    {
+      "candidate": "F4",
+      "pattern": "pattern.indirect-prompt-injection",
+      "signal": "the injected directive caused the agent's code-generation tool to write an attacker-chosen inert marker into the generated code, with the build prompt asking for an unrelated app",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the injection escalated from text to tool dispatch (LLM06) — the write-code action executed on injected content, not a chat echo.",
+      "controls": {
+        "negative": "clean doc, same prompt -> no marker in the generated code",
+        "positive": "the marker landed at a deterministic position in the generated file — a tool effect, not reflection",
+        "canary": "inert code-comment marker (literal scrubbed); all in owned throwaway projects, no publish/deploy/egress",
+        "replay": "reproduced at the same position in a second fresh project"
+      }
+    },
+    {
+      "candidate": "F4-xuser",
+      "pattern": "pattern.indirect-prompt-injection",
+      "signal": "attempt to deliver A-authored injected content to B's agent via the only A->B channel (org invite)",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "the injection sink re-confirmed, but the org-invite accept token is unguessable and email-only, so B could not be reached silently — delivery, not execution, is the missing link.",
+      "controls": {
+        "negative": "duplicate / templates / visibility channels all blocked A->B; only the org invite worked and it is email-gated",
+        "positive": "the invite token is absent from the invite API/UI responses and shows no numeric-id IDOR (adjacent ids 404) — the delivery gate is a real held control",
+        "canary": "fresh inert marker (scrubbed); membership never created, invite cancelled, payload removed",
+        "replay": "n/a — blocked at delivery; operator closed as low-value (severity capped at High, not cross-user Critical)"
+      }
+    },
+    {
+      "candidate": "C-ssrf-custom-domain",
+      "pattern": "pattern.ssrf-server-side-fetch",
+      "signal": "an attacker-controlled OAST host submitted as a custom domain received callbacks",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "the callbacks were DNS lookups only with zero HTTP(S) fetch; provisioning is gated behind an ownership-CNAME the attacker cannot set, so there is no fetch primitive and the metadata-IP acceptance is cosmetic.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "the OAST listener was validated to capture HTTP (it logs both DNS and HTTP) — the absence of an HTTP hit is real, not a dead listener; the backend status payload showed pending_dns / ingress-not-created",
+        "canary": "OAST callback host (scrubbed) — DNS fired, HTTP never did",
+        "replay": "consistent across ~90s of monitoring; custom domain removed afterwards"
+      }
+    }
+  ]
+}

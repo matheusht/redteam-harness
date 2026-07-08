@@ -1,0 +1,193 @@
+case: case-2026-07-oss-supply-chain-tooling
+
+# signal -> hypothesis -> predicted finding -> oracle plan -> outcome.
+# Light by design: the reasoning trail the routing brain should reproduce.
+hypotheses:
+  - id: H-F1
+    from_signal: "a metadata sanitizer strips terminal escapes in a fixed pass order, once"
+    pattern: "candidate:sanitizer-fixed-pass-order-reconstitution"
+    hypothesis: >
+      an obstructing byte between an escape introducer and its follow-on character defeats early,
+      specific-pattern passes, then the byte itself is removed by a later catch-all pass, reconstituting
+      a complete escape sequence the sanitizer never re-checks
+    oracle_plan:
+      - "isolated round: replicate the sanitizer's exact regex passes and confirm the byte-level bug in general"
+      - "real-pipeline round: run the project's own real parse/display code path inside a throwaway test in a real clone"
+      - "verification-of-the-verification: fresh install of the REAL published package, spawn the REAL CLI binary as a user would, inspect real stdout bytes with no internal-function import"
+      - "negative controls: same payload with no spacer byte (must be caught), and a fully benign skill (must show nothing)"
+    outcome: confirmed
+    note: >
+      three independent rounds, the last with zero internal imports. Later escalated in two further
+      rounds (per operator persistence directive) to a misleading-concealed-text variant and a
+      complete, correctly-terminated clipboard-write variant, by independently obstructing two
+      separate obstruction points (introducer AND terminator) rather than just one. See
+      oracle-matrix.json F1.
+
+  - id: H-F2
+    from_signal: "install-time recursive copy dereferences symlinks with no target-boundary check"
+    pattern: "candidate:symlink-dereference-no-target-boundary-check"
+    hypothesis: >
+      a symlink inside a malicious install source, pointing outside that source's own directory, has
+      its real external target silently copied into the installed output as regular file content
+    oracle_plan:
+      - "build a malicious source with a single-file symlink and a directory symlink, both pointing to a benign temp location the harness itself controls"
+      - "spawn the REAL published CLI binary exactly as a user would install from that source"
+      - "confirm via lstat that the installed paths are real files, not still-live symlinks, and confirm the content survives deletion of the original source (proves a real copy, not a live-symlink read)"
+      - "negative control: a fully benign source with no symlinks installs cleanly"
+      - "escalation: check for a SECOND occurrence of the same unguarded pattern elsewhere in the codebase, reached by a different command"
+    outcome: confirmed
+    note: >
+      confirmed for both file and directory cases, under both install modes. The escalation step is
+      the sharpest lesson in this casebook: an independent, no-prior-context regrade agent found a
+      second, genuinely unguarded occurrence of the same pattern that the ORIGINAL investigation had
+      wrongly ruled out (it only checked one of two relevant internal functions). The regrade's claim
+      was independently re-verified against primary source before being accepted, then confirmed with
+      a new PoC case, before correcting the prior "checked, safe" conclusion in place (not silently
+      overwritten). See oracle-matrix.json F2.
+
+  - id: H-F3
+    from_signal: "a provider-data merge utility assigns into an accumulator with a truthy guard, not an own-key check"
+    pattern: "vuln.prototype-pollution"
+    hypothesis: >
+      a provider payload with a real, JSON.parse-derived `__proto__` own key pollutes the live,
+      global Object.prototype, and a downstream override-evaluation check that reads a
+      request-scoped key with a plain undefined-test (not an own-key check) turns that into a
+      concrete, targeted forgery gadget
+    oracle_plan:
+      - "reachability: intercept only the network boundary (not the merge/adapter logic itself) to simulate a malicious upstream provider response, call the REAL unmodified merge function and adapter"
+      - "confirm a brand-new, unrelated object created afterward inherits the polluted property (proves process-wide reach, not object-local)"
+      - "negative control: same flow with no __proto__ key present produces no pollution"
+      - "gadget: use the REAL exported evaluation API to show a targeted flag is forced for a request carrying ANY valid override cookie, even for a different flag"
+      - "bound: confirm a request with no override cookie at all is unaffected"
+      - "reachability completeness: check every OTHER bundled provider adapter for whether it feeds the same vulnerable shape or a different (bracket-assignment/setter) shape instead"
+    outcome: confirmed
+    note: >
+      confirmed and escalated to the concrete gadget in the same session; an independent regrade
+      agent traced further into the decryption/validation path than the original investigation
+      (finding no additional allowlist blocking the gadget) and recommended severity be revised from
+      critical to high because the escalation requires provider-side privilege (PR:L) plus a
+      precondition (the victim's own request must carry some override cookie) — both applied. A full
+      adapter sweep (not a partial sample) confirmed exactly one bundled adapter feeds the vulnerable
+      shape; the defect itself lives in the shared merge utility, not any one adapter. See
+      oracle-matrix.json F3.
+
+  - id: H-F4
+    from_signal: "an approval map is looked up by a server-controlled tool name with no own-key guard"
+    pattern: "vuln.prototype-pollution"
+    hypothesis: >
+      a tool named after an Object.prototype member resolves the lookup to a live built-in function
+      instead of the configured safe default, and a downstream dispatcher invokes that function as if
+      it were a real approval callback, then executes the tool because the resulting bogus status
+      matches nothing in a switch with no default case
+    oracle_plan:
+      - "reproduce end to end using the REAL published packages and the project's own public execution path (not a hand-built harness), with a deterministic mocked model so no real LLM call is needed"
+      - "confirm zero approval-request events are emitted and the tool executes with its own call input"
+      - "negative controls: an ordinary tool name (must pause for approval), and an explicit developer-authored rule for the colliding name (must also pause)"
+      - "verify-source: independently check the installed, real package source for the vulnerable lookup, the fake-callback invocation, and the missing-default dispatch, not just trust the black-box result"
+      - "breadth: check all commonly-colliding Object.prototype names for whether they trip the same failure"
+    outcome: confirmed
+    note: >
+      confirmed with all seven commonly-colliding names tripping the same fallback failure (systemic,
+      not a one-name quirk). Submitted; returned as a HackerOne duplicate. Treated as a validity
+      signal (someone else found the same root cause independently), not evidence the finding was
+      wrong — see lessons.md. See oracle-matrix.json F4.
+
+  - id: H-F4b
+    from_signal: "the same untrusted-name-as-object-key shape recurs one layer earlier, in discovery/construction rather than lookup"
+    pattern: "vuln.prototype-pollution"
+    hypothesis: >
+      default-mode tool discovery assigns discovered tools by bracket notation onto a plain object; a
+      server-supplied name equal to the prototype-link property hijacks the whole record's own
+      prototype, independent of the approval-wrapper package entirely
+    oracle_plan:
+      - "confirm via a real call through the project's own client/discovery code, not a re-implementation"
+      - "confirm the container's own inherited surface really is hijacked (its own prototype's fields become inherited own-like fields)"
+      - "gadget search: grep every consumer of the resulting tools record for a for-in loop, whole-object spread, or Object.assign that would surface INHERITED (not own) properties"
+      - "check whether a colliding name matching one of the hijacked prototype's own field names could itself be independently dangerous"
+    outcome: confirmed
+    note: >
+      confirmed as a real, novel, more root-cause primitive (found by stepping back to re-narrow
+      candidate sinks on the SAME asset, rather than moving to the next target). The gadget search was
+      exhaustive and genuinely negative: no downstream consumer was found that reads inherited
+      properties, so this does NOT currently escalate to arbitrary-name tool execution. An early draft
+      of this PoC had artificially injected an extra property to simulate a stronger, unproven claim;
+      this was caught and removed before reporting — a real self-overclaim caught and corrected, not
+      just an external regrade catch. Folded into the F4 report for root-cause consolidation rather
+      than filed separately. See oracle-matrix.json F4b.
+
+  - id: H-F5
+    from_signal: "a workflow VM's overridden deterministic RNG also feeds hook/webhook token generation"
+    pattern: "vuln.workflow-step-injection"
+    hypothesis: >
+      the bearer token the docs claim is "always randomly generated" for a public webhook endpoint is
+      actually a deterministic function of a seed whose components are knowable or boundable by the
+      workflow's own initiating caller
+    oracle_plan:
+      - "reproduce the token using the REAL, pinned dependency versions (the actual RNG/id-generation libraries), replaying the exact call ORDER the real project uses, not just the final generator in isolation"
+      - "negative controls: wrong seed component, wrong call order, and (for the stable line's timestamp-based seed) an out-of-window guess — all must fail"
+      - "trace every seed component to its source: is it public, a non-secret platform value, or client-generated-and-echoed-back"
+      - "check the adjacent encryption-key-derivation code as a possible bigger chain (breaking confidentiality outright, not just forging a token)"
+      - "bound cross-tenant reach: check whether a genuinely unrelated third party (not the run's own caller) has any path to learn a target run's id"
+    outcome: confirmed
+    note: >
+      confirmed and escalated across two rounds: first the mechanism (byte-for-byte identical token
+      from the same seed), then the full authorization-boundary chain (every seed component traced to
+      a public, non-secret, or client-echoed source, closing what was flagged as the concrete next
+      step). The adjacent encryption-key-derivation code was checked and correctly HELD (proper
+      HKDF-SHA256 with real random key material). Cross-tenant reach was checked for and not found
+      reachable from this repo alone; honestly capped at same-run-caller scope rather than asserting
+      the broader claim. Submitted; returned as a HackerOne duplicate (validity signal, not refutation
+      — see lessons.md). See oracle-matrix.json F5.
+
+  - id: H-workflow-ownerid-stub
+    from_signal: "a self-hosted backend writes literal empty-string tenant-scoping fields with a TODO stub comment"
+    pattern: "vuln.workflow-step-injection"
+    hypothesis: >
+      the stub fields imply a missing tenant/ownership check somewhere a real request path reads them,
+      producing a cross-tenant access-control gap
+    oracle_plan:
+      - "trace every READ of the stub fields in this backend implementation, not just the write"
+      - "check whether the real, hosted production backend has equivalent code at all"
+    outcome: needs_review
+    note: >
+      independently re-verified the stub itself is real and verbatim (not a research-agent
+      hallucination), but no code in this backend reads either field, so it is currently write-only,
+      unused metadata rather than a proven gap; the real hosted backend has no equivalent code at all
+      and its own isolation enforcement, if any, is closed-source and unauditable from this repo.
+      Downgraded from an initial research-pass "directly-observed gap" framing to needs_review — a
+      real observation, unproven impact. Not pursued further; recorded honestly rather than inflated.
+
+  - id: H-ms-redos
+    from_signal: "a public issue claims a ReDoS reproduction against the exact currently-published utility version"
+    pattern: "vulns/known-cve-exploitation"
+    hypothesis: >
+      the claimed catastrophic-backtracking timing regression is real and reproduces against the
+      current package
+    oracle_plan:
+      - "read the full parse/format implementation; check for an explicit length cap ahead of the regex and for a nested/overlapping-quantifier shape that would cause true exponential backtracking"
+      - "install the exact currently-published version and run the issue's own claimed input directly"
+      - "run further adversarial shapes at the maximum allowed input length"
+    outcome: refuted
+    note: >
+      the claimed input returned roughly two orders of magnitude faster than claimed; the real,
+      published package already has the length-cap guard the issue's own suggested fix proposes, and
+      no nested/overlapping-quantifier shape exists in the value regex. Closed genuinely dry, not
+      assumed dry. See oracle-matrix.json C-ms-redos.
+
+  - id: H-staticroute-fw
+    from_signal: "a sibling framework's route-rule/prerender pipeline is a named program focus area, with a very recently merged, CVE-citing fix"
+    pattern: "legacy-route-differential"
+    hypothesis: >
+      the recent fix is incomplete against nested/double-encoding variants, or a different named focus
+      area (basicAuth ordering, prerender path traversal) has a live bypass
+    oracle_plan:
+      - "verify the fix against the actual regex/implementation for double/triple-encoding, not just the accompanying comment or the tests that ship with it"
+      - "run the project's OWN existing regression-test fixture matrix for the basicAuth-ordering focus area directly against this checkout"
+      - "trace the literal traversal-substring check against the exact string later used in the filesystem join, and confirm the join helper itself never decodes percent-sequences"
+    outcome: refuted
+    note: >
+      all three sub-candidates resolved to held/dry with real evidence (a passing existing test suite,
+      an independently-verified fix, and a filesystem-join trace), on what appears to be the product
+      of a recent, deliberate, comprehensive hardening pass. Recommendation recorded: don't sink
+      further budget into this asset's named focus areas absent a genuinely different angle. See
+      oracle-matrix.json C-staticroute-fw.

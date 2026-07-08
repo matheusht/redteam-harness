@@ -1,0 +1,71 @@
+case: case-2026-06-ai-webapp-builder
+
+# The routing brain's seed data: what recon SAW -> which pattern card it should activate.
+# Field names / mechanism shapes kept as routing teeth; no values, ids, keys, or hostnames.
+# "candidate:*" activations name a NEW pattern shape with no card yet (see promotion-notes.md).
+signals:
+  - observation: "the app ships a Supabase/PostgREST anon key to the browser (a REST endpoint plus an anon-role JWT in the client bundle)"
+    where: "postgrest_data_api"
+    activates: ["candidate:postgrest-anon-data-exposure"]
+    strength: strong
+    note: "anon key is public by design; the security is RLS + RPC grants. Probe EVERY table for RLS and EVERY RPC for anon-callability."
+
+  - observation: "one data table returns rows to the anon key while sibling tables return empty"
+    where: "postgrest_data_api"
+    activates: ["candidate:postgrest-anon-data-exposure"]
+    strength: strong
+    note: "RLS enabled but a USING (true) SELECT policy = read-open. The empty siblings prove it's a per-table misconfig, not intended-public — they are the positive control."
+
+  - observation: "PostgREST exposes SECURITY DEFINER RPCs; a malformed call leaks the function signature in the error hint (PGRST202)"
+    where: "security_definer_rpc"
+    activates: ["candidate:postgrest-anon-data-exposure"]
+    strength: strong
+    note: "enumerate the RPC surface via the hint field, then test each for anon-callability. Default privileges (GRANT EXECUTE ON FUNCTIONS TO anon) make functions anon-executable UNLESS revoked from anon/authenticated OR guarded in-body."
+
+  - observation: "an RPC takes a user-id or org-id argument that selects whose data is returned"
+    where: "security_definer_rpc"
+    activates: ["pattern.client-supplied-selector-authz", "candidate:postgrest-anon-data-exposure"]
+    strength: strong
+    note: "the id arg is a client-supplied selector; if the function body has no auth.uid() check it returns arbitrary users' data. Chains with a table that leaks the ids to iterate."
+
+  - observation: "a write endpoint takes a project/object id in the request body"
+    where: "postgrest_data_api"
+    activates: ["pattern.client-supplied-selector-authz"]
+    strength: strong
+    note: "write-IDOR if the handler doesn't re-resolve ownership from the principal; the app's own org-scoped GET is the positive control that the guard belongs here."
+
+  - observation: "an object (screenshot) is served from a PUBLIC storage bucket keyed on a sequential numeric id"
+    where: "storage_bucket"
+    activates: ["pattern.client-supplied-selector-authz"]
+    strength: strong
+    note: "unauthenticated read + enumerable ids = whole-set exposure. Private bucket + signed URL gated by an ownership check is the fix shape."
+
+  - observation: "uploaded document content is folded into the builder agent's prompt alongside the spec"
+    where: "file_upload / builder_chat"
+    activates: ["pattern.indirect-prompt-injection"]
+    strength: strong
+    note: "check for data/instruction isolation. An embedded directive the agent OBEYS (including 'do not mention this note') is the confirm; reflection is not."
+
+  - observation: "the builder agent has high-agency tools (write code, deploy, provision a DB) reachable from the same context that ingests untrusted content"
+    where: "code_gen_tool_dispatch"
+    activates: ["pattern.indirect-prompt-injection"]
+    strength: strong
+    note: "escalation from injection to tool dispatch = LLM06. Require a tool EFFECT (marker written into generated code), not a chat echo, to confirm."
+
+  - observation: "the custom-domain feature accepts an arbitrary hostname, including a raw IP literal"
+    where: "custom_domain"
+    activates: ["pattern.ssrf-server-side-fetch"]
+    strength: weak
+    note: "weak on purpose — accepting an IP is not a fetch. Require an HTTP OAST callback; DNS resolution during verification is expected and is NOT SSRF."
+
+  - observation: "cross-user delivery of agent-authored content requires an org-invite token delivered only by email"
+    where: "auth_gotrue / builder_chat"
+    activates: ["pattern.indirect-prompt-injection"]
+    strength: negative
+    note: "held delivery gate — an unguessable email-only token means a confirmed injection sink can't reach a victim silently; record as the counterexample that caps severity."
+
+  - observation: "sibling tables enforce RLS, and the main preview postMessage handler validates event.source"
+    where: "postgrest_data_api / project_preview"
+    activates: ["pattern.client-supplied-selector-authz"]
+    strength: negative
+    note: "the correctly-guarded siblings are the positive controls; always diff the secure sibling against the suspect one."

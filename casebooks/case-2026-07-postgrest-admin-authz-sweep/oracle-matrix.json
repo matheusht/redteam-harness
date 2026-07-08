@@ -1,0 +1,131 @@
+{
+  "case": "case-2026-07-postgrest-admin-authz-sweep",
+  "rows": [
+    {
+      "candidate": "F-001",
+      "pattern": "candidate:rpc-family-guard-contrast",
+      "signal": "one admin-prefixed RPC returned live account data + a cross-user correlation graph to a non-admin session, while every other member of its family raised a permission error",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the RPC executed for a non-admin caller and returned PII plus cross-user linkage fields, with a real-vs-empty differential that also enumerates account existence, while ~30 sibling admin RPCs denied the identical session — the missing guard is structural, not a fluke.",
+      "controls": {
+        "negative": "the same non-admin session against ~30 sibling admin RPCs all raised a database-level permission error",
+        "positive": "the sibling denial pattern itself proves the family's guard convention works and is consistently applied elsewhere",
+        "canary": "n/a (own-account PII read only; no third-party data pulled at this stage)",
+        "replay": "reproduced independently on a second, later pass; deterministic"
+      }
+    },
+    {
+      "candidate": "F-001-xuser",
+      "pattern": "candidate:rpc-family-guard-contrast",
+      "signal": "attempt to retrieve a real, consented third party's row via the confirmed sink, to escalate from self-account to cross-user severity",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "the operator-provided third-party identifier was not registered on the target, so a genuine cross-user PII pull could not be demonstrated; the identical-mechanism existence-oracle behavior WAS confirmed cross-account, proving the enumeration leg but not the full-PII leg against a real victim.",
+      "controls": {
+        "negative": "n/a — blocked on account availability, not a defense",
+        "positive": "the existence-oracle differential (registered vs. not) reproduced cross-account using an identifier the tester does not control",
+        "canary": "n/a",
+        "replay": "n/a — single attempt, deferred pending a registered third-party identifier under review-gate"
+      }
+    },
+    {
+      "candidate": "C-header-trust",
+      "pattern": "pattern.ui-only-policy-enforcement",
+      "signal": "response appeared to vary on a client-suppliable tier/environment header during a browser-driven recon pass",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "replaying the same requests with a non-browser client and a forged privileged header value produced a byte-identical response and identical denial to the unmodified baseline — the original signal was a browser/CORS confound in the first test rig, not a live trust-header bypass.",
+      "controls": {
+        "negative": "unmodified header on the same endpoint, same session",
+        "positive": "n/a — refutation, no detector-works control needed beyond the replay",
+        "canary": "n/a",
+        "replay": "consistent across a direct non-browser client; downgraded from the original recon note"
+      }
+    },
+    {
+      "candidate": "C-rls-crosstenant",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "direct PostgREST reads with the client-chosen owner/tenant filter dropped or changed, across the schema's user-scoped tables",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "every non-empty user-scoped relation returned exactly one row (the caller's own) on an unfiltered/foreign-filtered query; no cross-tenant row surfaced on any table actually reachable.",
+      "controls": {
+        "negative": "a clearly-foreign or out-of-range id returned no rows",
+        "positive": "n/a — direct held-control observation",
+        "canary": "n/a",
+        "replay": "reconfirmed across two separate passes (initial sweep and a later full-schema re-check)"
+      }
+    },
+    {
+      "candidate": "C-mutating-rpc-errordiff",
+      "pattern": "candidate:rpc-family-guard-contrast",
+      "signal": "money-moving admin RPCs (approve/process/payout/delete/toggle) called with well-formed nonexistent target ids, so no action could complete regardless of guard presence",
+      "oracle": "execution-oracle",
+      "verdict": "held",
+      "why": "every mutating RPC tested denied via a role/permission error before touching data (not a not-found/no-op), and pre/post state reads confirmed zero rows created, modified, or deleted.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "pre/post state comparison confirms no mutation occurred, ruling out a silent partial-effect",
+        "canary": "n/a — designed so no artifact could be created by construction",
+        "replay": "n/a — single contained pass per function, by design (to avoid any retry-induced side effect)"
+      }
+    },
+    {
+      "candidate": "F-002",
+      "pattern": "candidate:decoupled-entitlement-gate",
+      "signal": "the paid-dataset RPCs take no entitlement parameter and are never observed calling the separate advisory entitlement-check RPC",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "the mechanism (a check-then-render split where the check is a separate, client-callable RPC) is real and consistent, but the only decisive test — the same call from a genuinely non-entitled session — could not be run; a paid account returning full data is the expected, non-diagnostic baseline.",
+      "controls": {
+        "negative": "not run — requires a non-entitled account, which was unavailable and could not be created (bot gate blocked automated signup)",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    },
+    {
+      "candidate": "C-coupon-pricing",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "a coupon/pricing function accepts client-supplied economics fields (interval, expected price, an entitlement-duration flag)",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "the server independently recomputes price and rejects a tampered expected-price field; entitlement duration is server-derived, not accepted from the client.",
+      "controls": {
+        "negative": "unmodified/correct price field accepted as baseline",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "consistent across repeated variations of the tampered field"
+      }
+    },
+    {
+      "candidate": "C-signup-hardening",
+      "pattern": "pattern.ui-only-policy-enforcement",
+      "signal": "native signup endpoint plus a protecting edge function fronted by a bot challenge",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "the native signup path is blocked at the database layer (forcing the protecting function), and completing the protecting function requires passing a working bot challenge; no account was created by either path during testing.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a — mass-assignment on the signup body specifically stayed UNTESTED (blocked by the same bot gate); recorded as a coverage gap, not a held claim, for that narrower question"
+      }
+    },
+    {
+      "candidate": "C-self-referral",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "referral-attribution RPC called with the caller's own real referral code and source",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "the server explicitly rejects self-attribution rather than trusting the client-supplied code/source pair.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a — single deterministic rejection, no retry needed"
+      }
+    }
+  ]
+}

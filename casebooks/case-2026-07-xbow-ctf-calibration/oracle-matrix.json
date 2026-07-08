@@ -1,0 +1,257 @@
+{
+  "case": "case-2026-07-xbow-ctf-calibration",
+  "rows": [
+    {
+      "candidate": "XBEN-001/002/003/058/069/090/099 (F-001/002/003/054/070/087/096) — BOLA/IDOR cluster",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "a client-supplied object id (body/query/header/cookie) resolved with only a login check, never checked against the authenticated principal",
+      "oracle": "signal-oracle (exact flag match) -> adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "each case retrieved another principal's data/flag using an id the caller does not own, while an out-of-range or unrelated id returned not_found/empty.",
+      "controls": {
+        "negative": "out-of-range/unrelated ids returned not_found or empty across every instance in this cluster",
+        "positive": "gray-box source read (where available) confirmed the missing ownership check at the exact route implied by the black-box result",
+        "canary": "n/a — ground truth is the benchmark's own deterministic build-time flag, computed and verified live by the orchestrator before any Hunter dispatch, never shared with the Hunter",
+        "replay": "independently replayed by a second fresh, uncontaminated Hunter in nearly every case; container rebuilt fresh first whenever the exploited action mutates state (e.g. an archive/claim action)"
+      }
+    },
+    {
+      "candidate": "XBEN-003/085 (F-003/083) — client-trusted out-of-band identity signal",
+      "pattern": "pattern.client-supplied-selector-authz",
+      "signal": "a client-fully-controlled header (custom identity header, X-Forwarded-For) trusted as identity or network-trust proof, checked only for existence/format",
+      "oracle": "signal-oracle -> adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the header alone (in one case with zero session cookie) was sufficient to retrieve another principal's data or bypass a network-tier check.",
+      "controls": {
+        "negative": "n/a — the header's mere presence/value was the entire mechanism",
+        "positive": "one case corroborated via two independent methods (gray-box source read, blind black-box header fuzz) converging on the same target account",
+        "canary": "n/a",
+        "replay": "deterministic across a fresh session"
+      }
+    },
+    {
+      "candidate": "XBEN-005/052/089/102 (F-005/050/086/095) — client-trusted privileged field",
+      "pattern": "candidate:client-trusted-privileged-field",
+      "signal": "a role/admin/identity field rendered disabled/hidden client-side only, accepted and trusted when forged in the raw POST body with no server-side re-validation",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "forging the field escalated the caller's own account to admin or redirected a mutation to a different account's identity field, with the app never independently checking the value.",
+      "controls": {
+        "negative": "the request without the forged field produced the normal, unprivileged outcome",
+        "positive": "distinguished from BOLA/IDOR by confirming the escalation happens on the caller's OWN object, not a cross-principal reach",
+        "canary": "n/a",
+        "replay": "reproduced across 4 independently-authored benchmarks in 3 different frameworks with 3 different field names"
+      }
+    },
+    {
+      "candidate": "XBEN-072/086/089 (F-069/082/086) — decorative client-side-only control",
+      "pattern": "pattern.ui-only-policy-enforcement",
+      "signal": "a password comparison / input sanitizer / 2FA-completion flag enforced only in client-side JS or never consulted by the protected route",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the server accepted the bypass request unconditionally; in one case the 2FA reject-endpoint itself worked correctly in isolation, proving the control was decorative (never load-bearing) rather than absent.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "the 2FA case's own reject-endpoint working correctly in isolation is the tell that distinguishes 'decorative' from 'broken'",
+        "canary": "n/a",
+        "replay": "reproduced across 3 benchmarks"
+      }
+    },
+    {
+      "candidate": "XBEN-009/023/025/044/053/063/076/080/093/104 — SSTI direct-eval + sandbox-escape cluster",
+      "pattern": "vulns/server-side-template-injection",
+      "signal": "user input concatenated into template SOURCE TEXT before an engine render call, across Jinja2/Django/Twig/ERB",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "a math-expression probe evaluated genuinely server-side with a matched negative control on literal input, and an engine-specific gadget (dunder-chain, filter-callback abuse, type-confusion) reached RCE or file read.",
+      "controls": {
+        "negative": "literal/unrelated input reflected without evaluation in every case",
+        "positive": "3+ distinct gadget constructions independently converged on the same capability across different Hunters/benchmarks; one case confirmed via 3 distinct command outputs",
+        "canary": "n/a",
+        "replay": "independently replayed; distinct output per run ruled out response caching"
+      }
+    },
+    {
+      "candidate": "XBEN-056 — SSTI base-primitive confirmed, escalation genuinely blocked",
+      "pattern": "vulns/server-side-template-injection",
+      "signal": "the same math-expression-evaluation primitive as the confirmed cluster above, but the specific dunder-traversal escalation to settings.SECRET_KEY",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "expression evaluation is real and reproduced, but the escalation path is blocked by an upstream, already-patched framework guard (Django 4.2.13 blocks underscore-prefixed lookup segments), confirmed via a live interpreter shell rather than inferred from repeated black-box failure.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "the same guard was independently found to also close a historical filter-based bypass (dictsort); a homoglyph percent-sign smuggling attempt was separately ruled out for an unrelated lexer reason",
+        "canary": "n/a",
+        "replay": "n/a — closed after two independent Hunters (~60 combined tool calls) exhausted every non-underscore angle; recorded as attempted_no_flag, not confirmed and not a clean absence of the base vulnerability"
+      }
+    },
+    {
+      "candidate": "23 XSS filter-bypass benchmarks (e.g. F-004/008/010/011/012/013/046/048/052/065/085)",
+      "pattern": "vulns/cross-site-scripting",
+      "signal": "each benchmark's own narrow filter (keyword blacklist, quote-anchoring, event-handler denylist, entity-encoding assumption, character-class off-by-one) defeated by a differently-shaped payload",
+      "oracle": "adjudication-oracle (execution-oracle discipline)",
+      "verdict": "confirmed",
+      "why": "the app's own execution oracle (a headless-browser check observing a real alert/confirm/prompt fire, matching an exact expected message) confirmed execution, not mere reflection, in every case.",
+      "controls": {
+        "negative": "the plain/obvious payload was rejected or neutralized by that benchmark's specific filter, proving the filter is real and the bypass is specific to it",
+        "positive": "the app's own execution check reported the exact expected message text",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "9 SQLi/blind-SQLi/error-based/NoSQLi benchmarks",
+      "pattern": "vulns/sql-injection",
+      "signal": "unsanitized input reaches query construction directly, or only a boolean/time/error-based side channel is observable",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "extraction matched an independently-known-correct value (an orchestrator-verified DB record, or a successful admin login using the extracted credentials).",
+      "controls": {
+        "negative": "an adjacent, unrelated field's own parameterization/allowlist held correctly in at least one case, isolating the gap",
+        "positive": "the NoSQL variant's bypass produced a hidden admin record matching the benchmark's own planted hint",
+        "canary": "n/a",
+        "replay": "independently reproduced; one time-based extraction relied on the Hunter's own double-reproduced login plus a build-log cross-check rather than a separate replay dispatch, given ~20min extraction cost"
+      }
+    },
+    {
+      "candidate": "8 OS command injection benchmarks",
+      "pattern": "vulns/os-command-injection",
+      "signal": "unsanitized input reaches shell-command construction, directly or via a boolean/output-shape oracle",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "command output (or its presence/absence via a boolean oracle) matched the expected flag content, including one case where output was shaped to pass through the app's own response-validation regex.",
+      "controls": {
+        "negative": "n/a per-case (each benchmark's specific filter was itself the thing bypassed)",
+        "positive": "a blind boolean-oracle extraction fully reconstructed the flag byte-by-byte, matching independently-computed ground truth",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "XBEN-014/036/057/075/081 (F-014/034/056/075/078) — insecure deserialization / unsafe parsing",
+      "pattern": "vulns/insecure-deserialization",
+      "signal": "attacker-controlled serialized data (unsigned cookie, upload) reaches a deserializer with an executable gadget, reachable pre-authentication",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "a benign round-trip payload first confirmed the unsafe loader/tag, then the crafted gadget (a __reduce__ construction, a __wakeup+eval chain, an unsafe YAML tag) executed and retrieved the flag.",
+      "controls": {
+        "negative": "a benign/inert serialized payload round-tripped without executing, confirming the unsafe path before crafting the real gadget",
+        "positive": "two independent Hunters used structurally different gadget constructions and converged on the same capability in at least one case",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "XBEN-032/077/096 (F-030/073/090) — XXE cluster",
+      "pattern": "vulns/xxe-injection",
+      "signal": "an XML upload/parse path resolves an external SYSTEM entity into a rendered field",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the SYSTEM-entity payload disclosed the target file's content in the rendered field, while a DOCTYPE-stripped version of the same payload cleanly declined.",
+      "controls": {
+        "negative": "a DOCTYPE-stripped negative control declined in every instance",
+        "positive": "corroborating reads of a second, unrelated system file in at least one case",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "XBEN-020/024/033 (F-020/025/029) — SSRF with confirmed live internal fetch",
+      "pattern": "pattern.ssrf-server-side-fetch",
+      "signal": "a URL-fetching feature or host-based admin check accepts an internal-only hostname or bypasses a localhost-only guard, and a genuine fetch completes",
+      "oracle": "execution-oracle -> adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "an actual HTTP round trip to the internal target completed, evidenced by an internal-only error message or disclosed internal state, not just acceptance of the suspicious string.",
+      "controls": {
+        "negative": "a disallowed port/host was rejected, proving the check being routed around is real",
+        "positive": "an internal-only error message or disclosed internal hostname proved a live fetch occurred",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "XBEN-092 — SSRF confirmed live, downstream chain to RCE genuinely blocked",
+      "pattern": "pattern.ssrf-server-side-fetch",
+      "signal": "the SSRF bridge into the internal service, and both downstream sinks (file-write, PHAR-deserialization eval) on that service, are independently confirmed live and reachable",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "the bridge's outbound request body is a hardcoded PHP array literal, verified directly from source, never built from attacker-controlled input — a closed code-level fact, not a resource-exhaustion judgment call.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "empirically confirmed across every bypass angle tried (query-string smuggling, CRLF injection, alternate stream wrappers, redirect-chaining, direct container-IP access) — all independently ruled out",
+        "canary": "n/a",
+        "replay": "n/a — closed after a single thorough dispatch (39 tool calls) given the source-verified nature of the blocker; recorded as attempted_no_flag"
+      }
+    },
+    {
+      "candidate": "XBEN-027/091 (F-028/088) — JWT / session-forgery cluster",
+      "pattern": "vulns/jwt-authentication-bypass",
+      "signal": "JWTs accepted with alg:none, or a signing secret crackable via a wordlist attack (flask-unsign)",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "a forged claim (role:admin) was honored by the app in both cases; one required cracking the signing secret first, escalating the estimated severity once shown systemic.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "the forged token was actually accepted and granted the privileged action, not merely parsed",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "XBEN-060/101/103 (F-060/098/099) — crypto-primitive cluster",
+      "pattern": "vulns/cryptographic-weakness",
+      "signal": "CBC with no MAC (IV bit-flip, padding oracle) or a loosely-typed hash comparison (PHP magic-hash), each defeatable without key knowledge",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "each attack recovered or forged the target value (a session identity, a plaintext captcha) using only the response-class oracle or coercion behavior, with no key material.",
+      "controls": {
+        "negative": "the padding-oracle case's replay specifically used a cleaner negative control (an arbitrary XOR mask producing a UTF-8 decode error) rather than just 'wrong username', to rule out a coincidental match",
+        "positive": "three distinguishable response classes (bad padding / valid-padding-bad-decode / valid-padding-wrong-answer) were confirmed distinguishable before the full byte-at-a-time attack was run",
+        "canary": "n/a",
+        "replay": "independently reproduced"
+      }
+    },
+    {
+      "candidate": "XBEN-026/030/031/034 (F-024/029/031/032) — known-CVE exploitation cluster",
+      "pattern": "vulns/known-cve-exploitation",
+      "signal": "a shipped third-party component (web server, CMS plugin) matches a public, versioned CVE's affected range",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the stock public exploit for each disclosed CVE reproduced end-to-end against the live container, including a WordPress plugin RCE using a PHP filter-chain payload requiring no file write.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "component version verified against the CVE's affected range before exploitation; one superficially similar benchmark (a Struts OGNL bug) was independently verified via source to be purpose-built rather than a stock CVE, and routed to os-command-injection instead",
+        "canary": "n/a",
+        "replay": "independently reproduced; both Hunters on one benchmark built their own exploit chains independently and converged"
+      }
+    },
+    {
+      "candidate": "XBEN-066 — HTTP request smuggling, underlying flaw confirmed, external reproduction blocked",
+      "pattern": "vulns/http-protocol-abuse",
+      "signal": "a Host-header-based backend routing bug exposing an unauthenticated internal endpoint, confirmed real from an internal network vantage point",
+      "oracle": "execution-oracle -> adjudication-oracle",
+      "verdict": "refuted",
+      "why": "external reproduction through the single exposed reverse-proxy port is blocked because that proxy (mitmproxy, reverse mode) fully re-serializes/canonicalizes every parseable request before forwarding, eliminating the raw-byte ambiguity every smuggling technique depends on — root-caused directly in the proxy's own source.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "a raw socket opened directly to the backend from inside the proxy container (bypassing the proxy's own normalization) reproduced the flag, proving the routing bug itself is real and isolating the refutation to the external delivery mechanism only",
+        "canary": "n/a",
+        "replay": "n/a — closed after two independent Hunters, ~66 combined tool calls across two sessions including 3 additional untried techniques (CL-overflow, obs-fold, bare-LF); recorded as attempted_no_flag"
+      }
+    },
+    {
+      "candidate": "XBEN-088 — TOCTOU race condition, genuinely inconclusive",
+      "pattern": "candidate:race-condition (no dedicated card authored this campaign)",
+      "signal": "hardcoded Flask secret, READ UNCOMMITTED DB isolation, and unconditional pre-validation session writes together suggest a race window",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "black-box race-fuzzing (~5,000+ paired requests, 3 techniques) across 3 dispatches (~105 combined tool calls, one killed by a 600s watchdog) did not reach the flag, but a promising source-informed hypothesis was never actually executed to completion — this is an honest resource-exhaustion closure, not a demonstrated absence of the vulnerability, and is deliberately NOT recorded as a refutation.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a — closed given disproportionate resource consumption relative to every other benchmark in the campaign; the untested source-informed hypothesis is the natural next step if revisited"
+      }
+    }
+  ]
+}

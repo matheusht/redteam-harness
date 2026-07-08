@@ -1,0 +1,173 @@
+id: case-2026-07-jvm-gateway-telemetry-oss
+date: 2026-07
+target_class: >
+  Three open-source JVM backend components from a single public bug-bounty program, white-box
+  (source-available, local-build-only, no live production surface touched): an async, Netty-based
+  API edge gateway with a filter-chain-style request-processing pipeline (primary target, highest
+  reward tier in the whole program); a Scala time-series telemetry/monitoring backend with a query
+  DSL and an HTTP API (secondary); and a Java client-side metrics instrumentation library embedded
+  into other services, the smallest attack surface of the three by design since it is a library, not
+  a network-facing service on its own (secondary).
+surfaces:
+  - filter_chain_pipeline          # inbound / endpoint / outbound stages of a request-processing chain
+  - request_forwarding_stage       # the stage that hands a request to the backend origin
+  - http2_http1_downgrade_boundary
+  - dependency_cve_surface         # pinned transitive dependencies (codec + data-binding libraries)
+  - query_dsl_evaluation           # stack-language interpreter, group-by expansion
+  - outbound_fetch_candidate_paths # classes capable of making an outbound network call
+  - http_api_authz_layer
+  - metrics_ingestion_validation   # server-side character/format rules on ingested metric data
+  - metrics_tag_client_path        # client-side library code that sets tag/metric names
+  - opt_in_regex_introspection_endpoint
+auth_model: >
+  no live target, no accounts, no tenancy — white-box, source-available (public repos, pinned
+  commits/tags) with local build + local test harness as the only "session" concept. A separate live
+  production surface exists under the same bounty program but was explicitly out of scope for this
+  engagement and was never touched.
+scope_ref: "Plane 3 engagement scope (target repo) — not reproduced here"
+
+confirmed_findings:
+  - label: F1
+    pattern: "candidate:filter-chain-doc-mismatch-authz-bypass"
+    owasp: "A01 Broken Access Control (authorization check exists but does not gate the sink)"
+    severity: high
+    one_line: >
+      in the primary target's filter-chain pipeline, a public API method whose own documentation
+      describes it as blocking/rejecting a request does not actually gate the request-forwarding
+      stage (nor the response-return stage) of the pipeline; those stages check a separate,
+      undocumented flag instead, so a filter written strictly to the documented API silently fails
+      open and the caller gets the origin's real, unmodified response. Confirmed empirically against
+      the real, unmodified library classes with a negative control; independently regraded, which
+      corrected the framing from "default-deployment bypass" to "a real API-safety defect / foreseeable
+      trap for anyone writing a custom filter against this library's documented public surface" (no
+      shipped filter in the project's own source uses the vulnerable pattern) and capped severity at
+      high accordingly. Unresolved / pending disclosure under a no-disclosure program at time of
+      writing — see `sanitization` below for why this entry stops at pattern-shape abstraction.
+  - label: F2
+    pattern: "candidate:unbounded-regex-introspection-dos"
+    owasp: "A05:2021 Security Misconfiguration / resource exhaustion"
+    severity: medium
+    one_line: >
+      in the metrics-instrumentation library, an opt-in (disabled by default) introspection endpoint
+      compiles client-supplied regex strings with no length/complexity bound and matches them against
+      every entry in a live in-process registry — a real, mechanism-confirmed unbounded-CPU sink, not
+      theoretical. Not pursued to a report: the program's own policy excludes denial-of-service /
+      resource-exhaustion submissions regardless of proof quality, the same disposition already
+      reached on an unrelated real gap found in the primary target (see `refuted_candidates`).
+
+refuted_candidates:
+  - label: C1
+    looked_like: >
+      a research-grounded lead pointed at a specific dynamic-script-compilation sink in the primary
+      target's source tree, with real disclosed precedent for that exact vulnerability class
+      (a build-tool sandbox-bypass CVE and two deserialization-RCE CVEs in the same host language's
+      dynamic-scripting ecosystem) — the single highest-confidence candidate the pre-Stage-0 research
+      pass produced.
+    refuted_by: >
+      direct source verification against the exact pinned commit/tag in scope showed the cited file
+      does not exist on that branch at all; it only exists on a separate, architecturally distinct
+      legacy branch of the same repository that is explicitly out of scope. The branch actually in
+      scope is a full async rewrite that never contained the cited mechanism. A citation is a claim
+      about a permalink, not about applicability to the exact commit checked out — this was caught by
+      re-verifying against the pinned commit, not by trusting the research agent's summary.
+    pattern: "n/a — routing/verification lesson, not a pattern card"
+
+  - label: C2
+    looked_like: >
+      a real, disclosed dependency CVE (a polymorphic-typing bypass in a widely used data-binding
+      library) with the primary target's pinned version sitting squarely inside the disclosed
+      vulnerable range.
+    refuted_by: >
+      grepping every call site of the affected configuration surface across the vulnerable module
+      found zero polymorphic-typing configuration anywhere in code that actually runs — one call site
+      is write-only, the other deserializes to a single concrete, non-polymorphic type with no current
+      callers. The vulnerable dependency version is present and unfixed, but the specific bypass
+      mechanism the CVE describes has no reachable trigger. Held for re-check only if future code adds
+      polymorphic-typing configuration.
+    pattern: cve.known-vulnerable-component
+
+  - label: C3
+    looked_like: >
+      a real coverage gap in the primary target's own dedicated remediation handler for a disclosed,
+      high-bounty protocol-downgrade smuggling precedent: a client-controlled
+      framing header survived a protocol-version downgrade and sailed through the handler completely
+      unrejected in the exact real, unmodified dependency version pinned in this project.
+    refuted_by: >
+      tracing the downstream outbound stage found it independently re-serializes the request into
+      syntactically correct, unambiguous wire framing regardless of how the bytes originally arrived,
+      operating on the object model rather than raw bytes — so the backend origin can never actually
+      receive an ambiguous frame, and the smuggling-class impact does not materialize even though the
+      upstream coverage gap is real. The only residual effect is unbounded body size, a
+      resource-exhaustion class this program's own policy excludes from reward — capped honestly as a
+      real-but-non-submittable gap rather than force-fit into a smuggling report.
+    pattern: httpabuse.http-protocol-abuse
+
+  - label: C4
+    looked_like: >
+      an outbound-HTTP-capable class in a streaming/subscription API on the secondary telemetry
+      target suggested a webhook/callback-style server-side-fetch shape.
+    refuted_by: >
+      both candidate destination URLs are deploy-time, config-sourced only; the subscription model
+      itself carries an expression string, not a callback/destination URL. No webhook-style
+      server-side-fetch primitive exists in these modules at all.
+    pattern: pattern.ssrf-server-side-fetch
+
+held_defenses:
+  - control: a stack-language expression interpreter enforces a real, load-bearing max-stack-size
+      bound, and a separate group-by cardinality-expansion path is bounded by a configured
+      max-input-datapoints check
+    why_held: >
+      both bounds gate real code paths (not decorative constants) on the secondary telemetry target's
+      query-DSL evaluation surface, checked directly in source rather than assumed from documentation.
+    contrast_pattern: "candidate:unbounded-regex-introspection-dos"
+  - control: metrics-ingestion validation rejects (does not merely sanitize) any character outside a
+      strict allowlist, and all literal/identifier construction downstream uses the real database
+      driver's own escaping functions
+    why_held: >
+      ingestion-time validation is enabled by default and layered with real driver-level escaping, not
+      hand-rolled string concatenation — checked directly against the shipped default configuration.
+  - control: a client-side tag-name character allowlist in the metrics-instrumentation library
+      mirrors the server-side registry's own allowlist exactly
+    why_held: >
+      defense-in-depth: the same restrictive character set is enforced on both the client library path
+      and the server-side ingestion path independently, so neither side is relying solely on the other.
+  - control: a fully-built, tested input sanitizer in the metrics library has zero production call
+      sites anywhere in the repository
+    why_held: >
+      traced directly rather than assumed benign: the real tag-setting API only ever accepts
+      pre-resolved structured values from the embedding application's own service-discovery layer, so
+      there is no call site today where an unsanitized raw value could reach a tag — orphaned/reserved
+      code, not a live gap, and a useful reminder that an unused defensive class is neither a finding
+      nor proof of anything by itself.
+  - control: the primary target's pinned transport-codec dependency is already patched against two
+      recently disclosed protocol-smuggling CVEs in the same dependency
+    why_held: >
+      checked directly against the pinned version string in the build manifest, not assumed from the
+      advisory text alone; both disclosed CVEs' fixed versions are below the pinned version.
+  - control: an HTTP API on the secondary telemetry target has no internal authentication/
+      authorization layer of any kind
+    why_held: >
+      confirmed by direct read of every file in the API package — architecturally consistent with a
+      metrics backend meant to sit behind an external fronting gateway (the same pattern comparable
+      open-source telemetry backends use), though the project's own documentation does not state this
+      trust model explicitly, so this is recorded as a reasoned assumption rather than a fully proven
+      design intent.
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-07, with an additional layer beyond the harness's standard PII/secret scrub
+    because the program governing this engagement does not permit disclosure of vulnerability
+    information under any circumstance, for anything found here, ever. For F1 (the confirmed,
+    unresolved finding pending operator review/filing): removed the exact class name, exact method
+    name(s), and all file:line citations for the vulnerable mechanism, replacing them with a
+    pattern-shape description generalizable to any filter-chain/middleware architecture; removed the
+    specific CWE/CVSS-vector strings, the exact affected-file GitHub permalinks, and the identifying
+    numbers of two corroborating public issue-tracker threads. The technology names themselves
+    (the gateway project, the telemetry project, the metrics-library project, and their host
+    languages/frameworks) are kept because the existence of this bug-bounty program and these public
+    open-source projects is itself public knowledge — only the specific unresolved vulnerability
+    mechanism is abstracted, not the fact that this engagement happened. Standard scrub also applied:
+    no live ids, no tokens/credentials, no verbatim report text, no exact commit-line citations for
+    any candidate. Re-review before F1 is ever promoted further, and re-review again once the
+    underlying report reaches a public/resolved disposition (it has not, at time of writing).

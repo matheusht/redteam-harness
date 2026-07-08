@@ -1,0 +1,218 @@
+id: case-2026-07-oss-supply-chain-tooling
+date: 2026-07
+target_class: >
+  white-box / source-available audit of a cloud-platform vendor's open-source developer-tooling
+  ecosystem (an LLM agent-tool SDK, a feature-flags SDK, an agent-skill install/registry CLI, a
+  durable workflow orchestration framework, and a small duration-parsing utility library) under
+  that vendor's public bug bounty program. No live target: production testing is explicitly
+  forbidden by program policy, so the whole engagement is local source audit plus local-repro PoC
+  construction against locally built copies of each project.
+surfaces:
+  - mcp_tool_approval_policy       # developer-configured allow/deny/approval map for MCP-discovered tools
+  - mcp_tool_discovery             # plain-object construction of the discovered-tools record from server-supplied names
+  - flag_provider_data_merge       # combining multiple flag-provider definitions objects into one discovery payload
+  - flag_override_evaluation       # per-request override-cookie lookup that decides a flag's forced value
+  - flag_discovery_endpoint_auth   # well-known/discovery endpoint access-token verification (held control)
+  - skill_install_pipeline         # symlink-following directory copy during skill install
+  - skill_metadata_terminal_sanitizer  # fixed-order regex stripping of terminal escape sequences in untrusted metadata
+  - skill_use_agent_prompt_generation  # prompt built from a staged skill directory and handed to an agent CLI
+  - workflow_hook_webhook_token_generation  # bearer-token generation for pausable workflow hooks/webhooks
+  - workflow_vm_deterministic_rng  # VM-wide Math.random override for replay-determinism
+  - workflow_step_completion_dispatch  # internal queue vs. public HTTP endpoint for step completion (held control)
+  - workflow_multitenant_backend_storage  # self-hosted backend's unused tenant-scoping fields (needs-review lead)
+  - utility_duration_parser        # ms's own regex-based parse()/format() (investigated, dry)
+  - static_route_rule_engine       # a sibling framework's basicAuth/path-traversal route-rule handling (held/dry)
+auth_model: >
+  No single live auth model — this is a multi-project source audit, not one application. Per-surface
+  trust boundaries instead: an untrusted-but-connected MCP server is the attacker for the agent-tool
+  SDK surface; an untrusted-but-integrated flag-provider API response is the attacker for the
+  feature-flag surface; a skill source repo the victim chooses to install/use is the attacker for the
+  CLI surface; a workflow's own initiating caller versus other principals within or across a run is
+  the attacker/victim pair for the workflow surface. No live production instance was ever in scope;
+  every PoC runs a locally built copy of the affected package end to end.
+scope_ref: "Plane 3 engagement scope (target repo) — not reproduced here"
+
+confirmed_findings:
+  - label: F1
+    pattern: "candidate:sanitizer-fixed-pass-order-reconstitution"
+    owasp: "CWE-150 Improper Neutralization of Escape/Meta/Control Sequences"
+    severity: high
+    one_line: >
+      a terminal-escape sanitizer for untrusted CLI-metadata text ran its regex passes once, in a
+      fixed order, so a spacer control byte placed between an escape introducer and its follow-on
+      character defeated the early escape-specific passes, then got removed by the final catch-all
+      pass — reconstituting a complete, valid escape sequence (clear-screen, concealed/misleading
+      text, and a terminated clipboard-write sequence) in the sanitizer's own supposedly-clean output.
+      Submitted to the program; outcome pending at engagement close.
+  - label: F2
+    pattern: "candidate:symlink-dereference-no-target-boundary-check"
+    owasp: "CWE-59 Improper Link Resolution Before File Access"
+    severity: critical
+    one_line: >
+      an install-time recursive directory copy followed symlinks (dereference-on-copy) with no check
+      that the resolved target stayed inside the source directory being installed, so a malicious
+      install source could point a symlink at any file or directory the victim's OS user could read
+      and have its real content silently copied into the installed output; a second, independent
+      occurrence of the same unguarded pattern in a separate code path fed a generated prompt telling
+      an agent to read from the now-poisoned directory, escalating silent disclosure to automatic,
+      agent-mediated exposure. Submitted to the program; outcome pending at engagement close.
+  - label: F3
+    pattern: "vuln.prototype-pollution"
+    owasp: "CWE-1321 Prototype Pollution"
+    severity: high
+    one_line: >
+      a public merge utility for combining externally sourced provider data had no own-key guard, so
+      a provider payload containing a real, JSON.parse-derived `__proto__` key polluted the live,
+      global Object.prototype directly; a downstream override-evaluation check that reads a
+      request-scoped property with a plain truthy/undefined test (not an own-key check) then let an
+      attacker force a specific, targeted flag's value for any request already carrying any valid
+      override cookie, without ever holding permission to override that flag. Regraded from an
+      initial critical to high once an independent review confirmed the escalation requires
+      provider-side privilege (PR:L, not PR:N). Submitted to the program; outcome pending at
+      engagement close.
+  - label: F4
+    pattern: "vuln.prototype-pollution"
+    owasp: "A01:2021 Broken Access Control / CWE-1321"
+    severity: high
+    one_line: >
+      a tool-approval wrapper meant to gate every MCP-discovered tool behind an explicit rule or a
+      safe default looked up the rule by a server-controlled tool name with a plain property access
+      (no own-key guard); naming a tool after an Object.prototype member (e.g. a constructor-style
+      name) resolved to a live built-in function instead of the configured default, which the
+      dispatcher then invoked as if it were a real approval callback and treated the resulting
+      non-matching status as authorization to execute — a zero-approval bypass of an explicit
+      developer safety gate, triggered entirely by the identity of an already-trusted upstream MCP
+      server. Submitted to the program; returned as a HackerOne duplicate.
+  - label: F4b
+    pattern: "vuln.prototype-pollution"
+    owasp: "CWE-1321 Prototype Pollution"
+    severity: low
+    one_line: >
+      a related, more root-cause primitive one layer earlier in the same SDK family: default-mode
+      tool discovery assigned discovered tools onto a plain object by bracket notation, so a
+      server-supplied tool name equal to the prototype-link property itself hijacked the whole
+      discovered-tools container's own prototype. Confirmed as a real, novel primitive and folded
+      into the F4 report for root-cause consolidation, but an exhaustive gadget search across every
+      consumer of the tools record found no downstream code that surfaces inherited (not own)
+      properties, so this does not currently escalate to arbitrary-name tool execution — a genuine,
+      checked negative on further chaining, not an early stop.
+  - label: F5
+    pattern: "vuln.workflow-step-injection"
+    owasp: "A01:2021 Broken Access Control / A02:2021 Cryptographic Failures"
+    severity: high
+    one_line: >
+      a workflow runtime's sandboxed VM deliberately overrides its random-number source with a
+      seeded, deterministic generator for legitimate replay-determinism, and bearer tokens for
+      pausable hooks/webhooks are generated from that same overridden source; every component of the
+      seed is either public, derivable from a non-secret platform env var, or generated client-side
+      and echoed back to that same client in a response header — so a workflow's own initiating
+      caller can derive tokens for hooks/webhooks created later in the same run that were never
+      intended for them (e.g. self-approving an admin/payment-provider gate). Bounded honestly to
+      same-run scope; a genuinely different third party deriving an unrelated run's token was checked
+      for and not found reachable. Submitted to the program; returned as a HackerOne duplicate.
+
+refuted_candidates:
+  - label: C-ms-redos
+    looked_like: >
+      an open public GitHub issue on the target utility library claimed its duration-parsing regex
+      had catastrophic-backtracking ReDoS behavior on a crafted long-digit-string input, with a
+      specific claimed per-call timing regression, against the exact currently-published version.
+    refuted_by: >
+      execution-oracle — installed the real, currently-published package version and ran the issue's
+      own claimed proof-of-concept input directly: it returned two orders of magnitude faster than
+      the claimed timing, because the package already carries the length-cap guard the issue's own
+      suggested fix proposes. Eight further adversarial input shapes at the maximum allowed length
+      were also sub-millisecond. The public issue's claim does not reproduce against the real package.
+    pattern: "vulns/known-cve-exploitation"
+  - label: C-workflow-step-completion-forgery
+    looked_like: >
+      step-correlation identifiers in the same workflow runtime use the identical seeded/deterministic
+      RNG as the hook/webhook tokens above, suggesting a caller who can predict one could also forge
+      or replay a step's completion.
+    refuted_by: >
+      architecture read, checked directly (not assumed) — step completion is dispatched through an
+      internal message queue, not a public, token-only HTTP endpoint the way hook/webhook resumption
+      is. No public API accepts a bare step id plus a claimed result; forging a completion would
+      require actually enqueueing into the underlying queue infrastructure, a separate access-control
+      boundary a predicted id does not grant.
+    pattern: "vuln.workflow-step-injection"
+  - label: C-git-transport-rce
+    looked_like: >
+      the install CLI's "accept any git URL" source-resolution fallback appeared to allow exotic git
+      transport schemes (e.g. an external-command or file-descriptor transport) that are a classic
+      RCE vector when a URL is attacker-controlled.
+    refuted_by: >
+      an authoritative negative from the dependency itself, not a self-built harness — the locally
+      installed git binary refuses those transports by default as part of its own hardened protocol
+      allowlist, independent of anything the CLI does.
+    pattern: "vulns/os-command-injection"
+
+held_defenses:
+  - control: >
+      a flag framework's discovery-endpoint access token and override-cookie verification use real
+      authenticated encryption (JWE) with purpose-tagging, and precompute/serialize signing uses real
+      JWS — an attacker cannot forge new override values, only replay ones the server itself issued
+    why_held: >
+      this surface had already been through one round of real hardening from a prior, unrelated
+      published advisory on the same repository (an access-verification information-disclosure bug,
+      already patched). Lesson generalized: code adjacent to a project's own prior CVE/GHSA is worth
+      checking specifically for what the old fix did NOT touch, but it is also frequently the
+      best-hardened code in the repo — don't assume "already had one CVE" means "still weak here."
+    contrast_pattern: "vuln.prototype-pollution"
+  - control: >
+      a workflow backend's own hardware key-derivation path for hook/webhook payload encryption uses
+      proper HKDF-SHA256 with genuinely random key material, using the same run identifier only as
+      non-secret derivation context, never as key material itself
+    why_held: >
+      checked as a candidate bigger chain (breaking confidentiality outright, not just forging a
+      token) alongside the token-predictability finding above, and correctly held — the two
+      mechanisms in the same codebase look superficially similar (both consume `runId`) but only one
+      of them treats it as secret-adjacent, and it doesn't. Diffing the two uses of the same
+      identifier inside one project was the tell.
+    contrast_pattern: "vuln.workflow-step-injection"
+  - control: >
+      a sibling static-routing framework's basicAuth route-rule ordering and its prerender/static-file
+      path handling both defended against the exact classes of bypass this program's own guidelines
+      hinted at (percent-encoding variants, rule-composition-order bypass, decode-after-check gaps)
+    why_held: >
+      resolved empirically, not by reading a comment — an existing, purpose-built regression-test
+      fixture matrix covering exactly these classes was run directly against this checkout and passed
+      in full; the traversal path was independently confirmed dry by tracing the literal check string
+      against the exact string later used in the filesystem join, plus confirming the join helper
+      itself never decodes percent-sequences. This checkout appeared to be the product of a recent,
+      deliberate, comprehensive hardening pass naming its own historical CVE in the fix comment —
+      recognizing that pattern is itself a signal to stop sinking budget into that asset's named
+      focus areas.
+    contrast_pattern: "candidate:symlink-dereference-no-target-boundary-check"
+  - control: >
+      an install CLI's own skill-name path-safety check is allowlist-based and is applied at every
+      install entry point that resolves a final on-disk path from untrusted metadata
+    why_held: >
+      no bypass found; recorded honestly as a reasonably thorough but not exhaustively fuzzed
+      negative, the correct counterpart showing the same codebase knows how to gate a
+      path-from-untrusted-input pattern correctly elsewhere, even though the symlink-dereference
+      finding (F2) shows it missed doing so for symlink targets specifically.
+    contrast_pattern: "candidate:symlink-dereference-no-target-boundary-check"
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-07: grepped every evidence/report/finding file in the source engagement for
+    credential-shaped strings (API keys, bearer tokens, private-key headers, password/api-key
+    assignment patterns) and found none beyond the engagement's own benign PoC marker literals
+    (excluded here too) — this was a source-audit/local-repro engagement with no live target, so no
+    live user/tenant/session ids, cookies, or signed URLs were ever captured to begin with. Verified
+    program-policy.md before naming projects: this is a Gold-Standard-Safe-Harbor, Coordinated
+    Vulnerability Disclosure program on public GitHub repos, where CVE'd reports go public 30 days
+    after CVE publication — but report/PoC/communications carry their own 2-year confidentiality
+    obligation requiring the vendor's written consent for further disclosure, which is NOT the same as
+    a blanket "publish freely once fixed" license. Reflecting that distinction, and per the harness's
+    own hard rule ("no marketing/client name beyond an abstract target_class"), this casebook abstracts
+    the vendor/platform name and every named repo/project identity out of all six files (an earlier
+    draft incorrectly kept them and cited a nonexistent repo "precedent" for doing so — corrected on
+    independent audit, 2026-07; no such precedent exists anywhere in this harness, including in the
+    worked example, which explicitly attests to stripping its own platform/client name). Every
+    mechanism is abstracted to pattern-shape level: no verbatim submitted-report prose, no exact
+    CVSS-vector strings, no exact file:line GitHub permalinks, no PoC source code. Exact remediation
+    detail, npm version pins, real project names, and HackerOne report text stay in Plane 3 (the
+    engagement's own `reports/`/`findings/` directories).

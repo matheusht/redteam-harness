@@ -1,0 +1,109 @@
+case: case-2026-07-xbow-ctf-calibration
+
+# The routing brain's seed data: what recon SAW across 104 independent benchmark apps -> which
+# pattern card it should activate. This engagement's own recon-signals.md was never filled in real
+# time (a batch-CTF campaign, not a single-target recon phase) — these signals are reconstructed
+# post-campaign from progress.md / pattern-candidates.md / the finding set, which is why every entry
+# below carries a recurrence count instead of a single observation.
+signals:
+  - observation: "a request field (body/query/header/cookie) NAMES a selector of whose data/permissions apply (an order/job/draft/user id), and the route resolves it with only a login check (sometimes none)"
+    where: "object_selector_routes"
+    activates: ["pattern.client-supplied-selector-authz"]
+    strength: strong
+    note: "recurred across at least 7 of 104 independently-authored codebases/frameworks — the single most-recurring class in the whole campaign. Probe: point the selector at a foreign-but-unrelated id; require the response to actually contain that principal's data, not just a 200."
+
+  - observation: "identity or trust-tier is decided from a client-fully-controlled header (a custom identity header, X-Forwarded-For) checked only for existence/format, not bound to session state"
+    where: "identity_trust_signal"
+    activates: ["pattern.client-supplied-selector-authz"]
+    strength: strong
+    note: "2 occurrences (custom header, XFF). In one case the header ALONE bypassed login entirely — closer to broken authentication than pure BOLA. Recommend extending this card's activation.strong bullets to explicitly name headers as a selector carrier, not just body/query."
+
+  - observation: "a privileged/identity field (role, is_admin, username) is rendered disabled or hidden in the client UI, but the server accepts and trusts the same field name when it is present and forged in the raw request body, mutating the CALLER's own account or redirecting the mutation's target"
+    where: "profile_settings_endpoints"
+    activates: ["candidate:client-trusted-privileged-field"]
+    strength: strong
+    note: "4 occurrences across 3 frameworks (is_admin, role, username as the specific field). Distinct from client-supplied-selector-authz: the boundary crossed is a FIELD's trust level on one's own object, not an object's owner. No existing card names this shape explicitly."
+
+  - observation: "a security-relevant check (a password comparison, an input sanitizer, a 2FA-completion flag) exists only as client-side JavaScript, or is performed server-side but the protected route never reads the result"
+    where: "auth_session_flow"
+    activates: ["pattern.ui-only-policy-enforcement"]
+    strength: strong
+    note: "3 occurrences. This card was authored against LLM-app tool/model selectors; this campaign shows it generalizes cleanly to plain web auth/2FA/sanitizer flows — worth noting in the card as a cross-domain confirmation, not just an LLM-specific shape."
+
+  - observation: "user-controlled input is concatenated into template SOURCE TEXT (not bound as a template variable) before an engine render call"
+    where: "template_render_pipeline"
+    activates: ["vulns/server-side-template-injection"]
+    strength: strong
+    note: "10 confirmed across 4 engines (Jinja2, Django, Twig, ERB), plus 1 bounded case (Django) where the primitive was open but escalation was blocked by an upstream guard. Confirm the primitive with a math-expression probe (e.g. 7*7 -> 49) with a negative control on literal/unrelated input BEFORE attempting an engine-specific sandbox-escape gadget — the two are separately falsifiable."
+
+  - observation: "the app applies its own narrow, specific filter (a keyword blacklist, quote-anchoring, an event-handler denylist, an entity-encoding assumption) before rendering user input into HTML"
+    where: "reflected_html_sink"
+    activates: ["vulns/cross-site-scripting", "pattern.transitive-sanitizer-reliance"]
+    strength: strong
+    note: "23 of 104 benchmarks, the single largest tag category — each with a DIFFERENT specific bypass. Reflection is never sufficient: require the app's own execution oracle (or an equivalent local execution signal) to fire before calling it XSS. Any app-level filter is 'probably incomplete,' not 'proof of safety.'"
+
+  - observation: "user input reaches a query-construction path directly, or only a boolean/time/error-based side channel is observable (no direct data reflected)"
+    where: "sql_query_layer"
+    activates: ["vulns/sql-injection"]
+    strength: strong
+    note: "9 occurrences including several requiring byte-by-byte blind/time-based extraction and one NoSQL filter-injection variant bypassing a frontend-JS-only exclusion flag. A frontend-only exclusion check on a query parameter is a signal, not a control."
+
+  - observation: "user input reaches shell-command construction, directly or via a boolean/output-shape oracle"
+    where: "os_shell_dispatch"
+    activates: ["vulns/os-command-injection"]
+    strength: strong
+    note: "8 occurrences. Two used a boolean side-channel (no direct output) requiring a full byte-by-byte extraction; one smuggled output through a regex the app used to validate its OWN expected response shape — a control the app trusted as an output filter was itself the exfiltration channel."
+
+  - observation: "attacker-controlled serialized data (a cookie, an upload) reaches a deserializer (PHP unserialize, Python pickle, a YAML loader) with an executable gadget, reachable pre-authentication"
+    where: "deserialization_sink"
+    activates: ["vulns/insecure-deserialization"]
+    strength: strong
+    note: "5 occurrences. Confirm the unsafe loader/tag with a BENIGN round-trip payload before crafting the real gadget — don't assume unsafety from the library name alone."
+
+  - observation: "attacker controls the TYPE of a serialized/deserialized field (not just its value), which feeds a dynamic-language loose comparison (PHP ==)"
+    where: "auth checks over deserialized or coerced fields"
+    activates: ["vulns/insecure-deserialization"]
+    strength: weak
+    note: "2 related-but-mechanistically-distinct occurrences (boolean-injection type confusion vs. numeric-string '0e...' magic-hash coercion) — same family, not the same bug. Kept weak/local per the engagement's own honest reassessment; not strong enough alone to warrant a dedicated card yet."
+
+  - observation: "an XML upload/parse path (SOAP body, SVG upload, XML metadata field) resolves an external SYSTEM entity into a rendered field"
+    where: "xml_parser"
+    activates: ["vulns/xxe-injection"]
+    strength: strong
+    note: "3 occurrences, all with a clean DOCTYPE-stripped negative control declining."
+
+  - observation: "a URL-fetching feature or a host-based admin check accepts an internal-only hostname, a localhost-bypass string, or a metadata-adjacent value"
+    where: "ssrf_bridge"
+    activates: ["pattern.ssrf-server-side-fetch"]
+    strength: strong
+    note: "3 confirmed with a genuine completed HTTP round trip to the internal target; 1 bounded case where the bridge itself was live but the outbound request body was a hardcoded, non-attacker-controlled literal. Acceptance of a suspicious host string is the activation; require an actual fetch/side-effect for confirmation."
+
+  - observation: "JWTs are accepted with alg:none, or a signing secret is short/dictionary-guessable"
+    where: "jwt_session_token"
+    activates: ["vulns/jwt-authentication-bypass"]
+    strength: strong
+    note: "2 occurrences. A crackable secret escalates severity beyond a single-object bug — it's a systemic key-management failure (any claim, any user) — reclassify upward once crackability is demonstrated, don't leave it at the initial per-object estimate."
+
+  - observation: "session/cookie confidentiality-integrity relies on CBC with no MAC, or a loosely-typed hash/string comparison"
+    where: "crypto_primitive_endpoint"
+    activates: ["vulns/cryptographic-weakness"]
+    strength: strong
+    note: "3 occurrences (IV bit-flip, byte-at-a-time padding oracle, PHP '==' magic-hash). None require key knowledge — the oracle is the response CLASS (bad-padding vs valid-padding-bad-decode vs valid-padding-wrong-answer), not the response content; use the cleanest negative control available (e.g. an arbitrary XOR mask producing a decode error), not just 'wrong username'."
+
+  - observation: "the app ships a real, versioned, historically-CVE'd component (web server, CMS plugin) rather than custom code at the vulnerable layer"
+    where: "any surface backed by a named third-party component"
+    activates: ["vulns/known-cve-exploitation"]
+    strength: strong
+    note: "4 occurrences. Distinguish a stock public CVE from a purpose-built vulnerability that merely resembles one via source read before assuming a known exploit applies verbatim (one benchmark's Struts OGNL bug was purpose-built, not the expected stock CVE)."
+
+  - observation: "a CTF-tag category (e.g. path_traversal/lfi) implies the bug lives in application code, but the actual routing/serving layer (reverse proxy, web-server alias config) is a separate boundary that can carry the same class of bug"
+    where: "any multi-hop request pipeline (proxy_chain_ingress, static-file serving)"
+    activates: ["vulns/path-traversal-lfi", "vulns/http-protocol-abuse"]
+    strength: negative
+    note: "one benchmark's tagged path-traversal/LFI bug was actually an nginx `alias` misconfiguration (a second, slash-less location block), not application code at all — check the FULL pipeline (proxy/web-server config, not just app source) before scoping a fix or a routing decision to the app layer alone."
+
+  - observation: "an SSTI/template-injection or protocol-desync primitive is base-confirmed (expression evaluates / internal routing bug reproduces from an internal vantage point), but the specific escalation path relies on an upstream framework guard or an intermediary's own request-canonicalization behavior"
+    where: "template_render_pipeline / proxy_chain_ingress"
+    activates: ["vulns/server-side-template-injection", "vulns/http-protocol-abuse"]
+    strength: negative
+    note: "2 occurrences where a real, already-in-place control (Django's underscore-lookup guard; mitmproxy's request re-serialization) closes ONLY the escalation/external-reproduction leg while the base primitive stays confirmed open — record these as separately falsifiable claims, not a single pass/fail verdict."

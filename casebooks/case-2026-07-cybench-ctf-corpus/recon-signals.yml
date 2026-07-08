@@ -1,0 +1,157 @@
+case: case-2026-07-cybench-ctf-corpus
+
+# The routing brain's seed data: what recon SAW -> which pattern/vuln card it should activate.
+# Field names / mechanism shapes kept as routing teeth; no values, ids, ports, or flag strings.
+# "vulns:*" activations name an existing skills/vulns/ card. "pattern.*" names an existing
+# skills/patterns/ card. "candidate:*" names a NEW shape with no card yet (see promotion-notes.md).
+signals:
+  - observation: >
+      an unauthenticated config/options-style endpoint returns its FULL internal state (a routing
+      table, a command list) rather than only what the visible UI surfaces
+    where: "api_config_endpoint"
+    activates: ["vulns:information-disclosure"]
+    strength: strong
+    note: >
+      the tell is a response that is bigger than the UI needs; diff what the UI shows against what
+      the raw endpoint returns and treat every extra field/entry as a lead.
+
+  - observation: "a live app serves its own .git working directory over HTTP with no access restriction"
+    where: "git_exposed_directory"
+    activates: ["vulns:information-disclosure"]
+    strength: strong
+    note: >
+      don't stop at the branch tip — check the reflog and dangling objects. A file removed from HEAD
+      via reset/rebase is often still fetchable object-by-object if the directory itself is exposed.
+
+  - observation: >
+      an authentication check compares an attacker-controlled value with a loose/dynamically-typed
+      equality operator (PHP `==`, and structurally similar patterns in other loosely-typed languages)
+    where: "web_app_endpoint / jwt_session_auth"
+    activates: ["candidate:type-juggling-comparison-bypass"]
+    strength: strong
+    note: >
+      try type-confusing inputs (JSON booleans/arrays/numbers in place of the expected string) against
+      every loose-comparison auth check found in source; pair with a scan for hardcoded/default creds
+      gating the same login, since the two often co-occur in the same task.
+
+  - observation: >
+      raw request/user input is string-concatenated directly into a template's SOURCE before parsing,
+      rather than bound as a context/model variable the template engine renders
+    where: "web_app_endpoint"
+    activates: ["vulns:server-side-template-injection"]
+    strength: strong
+    note: >
+      confirm with an arithmetic canary (`#set($x=7*7)$x` -> 49 / `${7*7}` -> 49) against a negative
+      control, then look for a reflection-based escalation gadget if the engine has no direct
+      `new`/exec primitive (true of Velocity and similar sandboxed template languages).
+
+  - observation: >
+      a validation-failure / constraint-violation message is built from raw attacker input and passed
+      to a message interpolator that evaluates it as an expression language, AND a keyword/character
+      denylist sits in front of the same input but does not enumerate the EL delimiter syntax itself
+    where: "waf_input_filter / web_app_endpoint"
+    activates: ["vulns:server-side-template-injection", "vulns:injection"]
+    strength: strong
+    note: >
+      a denylist that blocks known payload keywords but not the delimiter/entry syntax of the
+      underlying interpreter is a near-miss, not a mitigation — always ask "what syntax actually
+      invokes the interpreter, and is THAT specific token on the list."
+
+  - observation: >
+      a JWT verification flow fetches its OWN signing key material from a URL/reference that embeds
+      caller-controlled data (a JWKS-by-reference or similar self-trust loop)
+    where: "jwt_session_auth"
+    activates: ["vulns:jwt-authentication-bypass", "pattern.ssrf-server-side-fetch"]
+    strength: strong
+    note: >
+      trace where the trusted key comes from, not just whether the signature check runs; a verifier
+      that trusts a caller-influenced key source is broken even if the cryptographic check itself is
+      implemented correctly.
+
+  - observation: >
+      a caching/normalization layer strips or reads a request header via an exact-case string match,
+      while the front-end (e.g. nginx) is case-insensitive and prefers a differently-cased duplicate
+    where: "reverse_proxy_edge"
+    activates: ["vulns:http-protocol-abuse"]
+    strength: strong
+    note: >
+      classic CL.TE/TE.CL smuggling precondition; confirm the disagreement causes a shared cache to
+      be poisoned, not just a single malformed request to be misrouted.
+
+  - observation: >
+      an edge reverse-proxy's path-prefix filter (e.g. HAProxy `path_beg`) and the backend framework's
+      own router normalize a path DIFFERENTLY (leading/embedded double-slash, encoding, trailing slash)
+    where: "reverse_proxy_edge"
+    activates: ["candidate:proxy-backend-parser-differential"]
+    strength: strong
+    note: >
+      the filter and the thing it's filtering for must agree on what a "path" is; test every path
+      -normalization edge case (double slash, dot-segments, encoded slashes) against both layers.
+
+  - observation: >
+      a JWT/token library parses the SAME token with two independent parsers for two different
+      purposes (a JSON-based signature verifier vs. a naive string-split claims extractor)
+    where: "jwt_session_auth"
+    activates: ["vulns:known-cve-exploitation", "vulns:jwt-authentication-bypass"]
+    strength: strong
+    note: >
+      dual-parser confusion is a known CVE shape (CVE-2022-39227 here); check library versions
+      against known advisories before assuming a novel bug — a polyglot payload valid under both
+      parsings, with different results, is the confirm.
+
+  - observation: >
+      an app ships a home-rolled / non-standard cryptographic primitive (custom cipher, custom
+      hash-based membership filter, custom comparison "oracle") instead of a vetted library construction
+    where: "offline_crypto_puzzle / live_crypto_oracle"
+    activates: ["vulns:cryptographic-weakness"]
+    strength: strong
+    note: >
+      this is the single highest-yield signal in this corpus (10 of 17 confirmed findings). Assume
+      breakable and look for: weak parameter generation, leaked structural information (digits,
+      cycle structure, published collisions), and any response richer than flat accept/reject.
+
+  - observation: >
+      a decrypt/verify endpoint's response is richer than a flat accept/reject — a parity bit, a
+      coordinate, a partial byte/digit count, a majority-vote-able value among decoys
+    where: "live_crypto_oracle"
+    activates: ["vulns:cryptographic-weakness"]
+    strength: strong
+    note: >
+      treat any information leak beyond pass/fail as a comparison oracle; verify what the signal
+      ACTUALLY correlates with (don't trust the task's own wording about the mechanism) before
+      building an interval-halving or majority-vote attack on top of an unverified assumption.
+
+  - observation: >
+      a security-relevant value is re-derived from public/re-derivable material on every connection
+      while the underlying secret stays fixed, and the service allows unlimited reconnection
+    where: "live_crypto_oracle"
+    activates: ["vulns:cryptographic-weakness"]
+    strength: strong
+    note: >
+      each connection is a fresh linear equation over the same unknowns; a handful of reconnects
+      plus Gaussian elimination / GF(2) linear algebra often fully determines the secret with no
+      brute force needed.
+
+  - observation: >
+      the CTF task's own bundled solve script or the task description's prose asserts a specific
+      mechanism, index, or oracle shape
+    where: "offline_crypto_puzzle / web_app_endpoint"
+    activates: []
+    strength: weak
+    note: >
+      treat as a hint, never as ground truth for the exact mechanism — a bundled script can be stale
+      for the live build (observed: a hardcoded gadget index that had drifted), and a task's own
+      wording can describe the WRONG oracle shape (observed: "per-bit" described what was actually a
+      magnitude signal). Verify live before committing to an attack built on either.
+
+  - observation: >
+      adversarial "system-reminder"-shaped content is embedded inside a CTF tool's own output/help
+      text (not the target application's HTTP responses)
+    where: "tool_output_channel (Hunter-side, not target-side)"
+    activates: ["pattern.indirect-prompt-injection"]
+    strength: negative
+    note: >
+      held control on the HARNESS side, not the target's: a Hunter correctly treated this as
+      untrusted data and disregarded it, across three separate dispatches on two different tasks,
+      without being specifically instructed to look for it. Record as the counterexample for what
+      correct tool-output hygiene looks like.

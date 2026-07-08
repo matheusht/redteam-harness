@@ -1,0 +1,117 @@
+case: case-2026-07-waf-content-filter-bypass
+
+# The routing brain's seed data: what recon SAW -> which pattern card it should activate.
+# Field names / mechanism shapes kept as routing teeth; no values, ids, hostnames, or rule codes.
+# "candidate:*" activations name a NEW pattern shape with no card yet (see promotion-notes.md).
+signals:
+  - observation: >
+      a public multipart upload form has no client-side extension/MIME restriction at all, and is
+      fronted by a distinct WAF/gateway layer that produces its own branded error/rule-id pages on
+      block
+    where: "upload_surface"
+    activates: ["upload.arbitrary-file-upload"]
+    strength: strong
+    note: >
+      the client-side gap is a non-issue (there is no client gate to bypass); this is purely a
+      server/WAF content-detector-bypass target. Probe extension allowlist AND content-based
+      detection separately — they are independent layers here.
+
+  - observation: >
+      WAF/gateway error pages carry a custom rule-id scheme whose numeric suffixes align with a
+      well-known public WAF rule-set's category-prefix taxonomy (distinct numeric bands per
+      XSS/SQLi/LFI/RCE family)
+    where: "waf_gateway_layer"
+    activates: ["xss.cross-site-scripting", "sqli.sql-injection", "patht.path-traversal-lfi", "inj.injection"]
+    strength: strong
+    note: >
+      fingerprint the WAF via its own error taxonomy before testing — it tells you which
+      category-classes are covered and lets you predict, not just discover, which classic payload
+      shapes will be blocked outright versus reach the app.
+
+  - observation: >
+      a content-based upload filter blocks known dangerous tag-opening syntax and a wide set of
+      RCE-primitive function-call shapes, but its coverage is enumerated by known keyword/call shape
+      rather than by the underlying capability (any way to reach a shell)
+    where: "upload_surface"
+    activates: ["upload.arbitrary-file-upload", "candidate:keyword-blocklist-syntax-equivalence-gap"]
+    strength: strong
+    note: >
+      once a broad keyword/call-shape blocklist is confirmed, the next move is testing an
+      alternate-but-semantically-equivalent syntax (a different tag-opening form; an operator-based
+      execution primitive instead of a `name(` call) — this is exactly what surfaced the real gap.
+
+  - observation: >
+      a WAF blocks classic boolean-logic keywords (e.g. AND/OR) and one boolean operator symbol on
+      an injection-shaped field, but not a second boolean operator symbol that is semantically
+      equivalent in the target's query dialect
+    where: "cms_complaint_form / cms_search"
+    activates: ["sqli.sql-injection", "candidate:keyword-blocklist-syntax-equivalence-gap"]
+    strength: strong
+    note: >
+      a keyword-filter bypass is a WAF-evasion primitive, not itself a finding — it still needs a
+      real logic differential (true vs. false clause) against a genuine positive record before it
+      says anything about the app.
+
+  - observation: >
+      a complaint/ticket lookup form takes a client-supplied numeric tracking-number field that
+      appears to directly select a backend record, separate from the form's own submission fields
+    where: "cms_complaint_form"
+    activates: ["pattern.client-supplied-selector-authz", "sqli.sql-injection"]
+    strength: strong
+    note: >
+      classic client-supplied-selector shape. Cross-user record reach and SQL-injection-in-the-
+      selector are two separate questions — a scope ceiling on the former does not block a
+      logic-differential test of the latter using a nonexistent or self-owned id.
+
+  - observation: >
+      a reflected search input lands in two different sinks (an HTML text region and an inline
+      script variable assignment) via a non-standard character-substitution escaping scheme instead
+      of standard entity/backslash escaping
+    where: "cms_search"
+    activates: ["xss.cross-site-scripting"]
+    strength: weak
+    note: >
+      non-standard escaping is worth testing thoroughly precisely because it's unusual, but unusual
+      does not mean broken — confirm coverage against multiple encodings before calling it a gap.
+
+  - observation: >
+      a content-language selector parameter accepts a fixed small set of values; any other value,
+      including a path-traversal-shaped payload, receives an identical generic rejection
+    where: "cms_query_routes"
+    activates: ["patht.path-traversal-lfi"]
+    strength: negative
+    note: >
+      a positive allowlist enforced ahead of the app (gateway layer), not app logic — the identical
+      block for garbage and for a crafted payload is the tell that this is held, not under-tested.
+
+  - observation: >
+      a sibling admin route redirects to a separate auth flow while the upload route on the same
+      host is fully public
+    where: "admin_route vs upload_surface"
+    activates: ["pattern.legacy-route-differential"]
+    strength: weak
+    note: >
+      differing access by design (one route is meant to be public), not itself an authorization gap;
+      keep as routing context for a future authenticated session.
+
+  - observation: >
+      a command-line request with a spoofed full browser User-Agent header still receives a direct
+      rejection with no gateway page rendered, distinct from how genuine browser-shaped requests are
+      treated
+    where: "waf_gateway_layer"
+    activates: []
+    strength: negative
+    note: >
+      access-shaping is deeper than a single spoofable header (likely TLS/header-shape
+      fingerprinting) — record as a baseline control, not a bypassable gate, and use a genuine
+      browser-shaped request path for all further testing.
+
+  - observation: >
+      no shell-out-shaped feature (file conversion, network utility wrapper, archive extraction) was
+      found anywhere on the public CMS surface
+    where: "cms_query_routes"
+    activates: ["cmdi.os-command-injection"]
+    strength: negative
+    note: >
+      coverage-checked as not-applicable (no candidate sink), not silently skipped — record the
+      absence explicitly so a future session doesn't re-derive it from scratch.
