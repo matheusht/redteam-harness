@@ -1,0 +1,89 @@
+{
+  "case": "case-2026-07-waf-content-filter-bypass",
+  "rows": [
+    {
+      "candidate": "F1",
+      "pattern": "upload.arbitrary-file-upload",
+      "signal": "an alternate, syntactically valid PHP tag-opening form passed a content filter that blocked every other tag-opening variant tried, carrying only an inert benign-marker string",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the upload was accepted where every other tag-opening syntax variant (including a magic-byte polyglot) was blocked, so this is a genuine, reproducible signature miss on the content filter — but no web-reachable storage path was found, so impact stays at filter-bypass, not code-execution.",
+      "controls": {
+        "negative": "every other tag-opening variant tried (case variants, whitespace variants, a magic-byte-correct polyglot) was blocked by the same content rule",
+        "positive": "an out-of-allowlist extension was rejected outright, confirming the extension layer and the content layer are independently enforced and this bypass is specific to the content layer",
+        "canary": "an inert benign string literal inside the alternate tag form (literal scrubbed)",
+        "replay": "reproduced deterministically on repeat submission"
+      }
+    },
+    {
+      "candidate": "F2",
+      "pattern": "candidate:keyword-blocklist-syntax-equivalence-gap",
+      "signal": "a shell-exec operator syntax carrying a harmless, read-only system command passed the same content filter that blocked every common RCE-primitive function-call form, every superglobal-access form, and a bare-keyword blocklist entry, tried across a systematic signature-mapping batch",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the filter's coverage is enumerated by known keyword/call-shape/superglobal signatures, not by the underlying capability, so a differently-shaped construct with the same capability evaded all three signature classes simultaneously; this is a genuine filter-bypass finding, but reachability of the artifact could not be established after exhaustive search, so severity is honestly capped at filter-bypass-confirmed rather than assumed critical.",
+      "controls": {
+        "negative": "roughly a dozen common RCE-primitive function-call forms were all blocked by the same filter in the same batch, showing the filter's call-shape detector is broad and functioning, not merely absent",
+        "positive": "a single bare recon-flavored keyword with no tag or parentheses at all was also blocked, showing the filter's keyword layer catches even tag-less content; the confirmed bypass construct is the one signature-class gap found across dozens of variants tried",
+        "canary": "a harmless, read-only, non-destructive system command with no argument and no persistence effect (literal scrubbed)",
+        "replay": "reproduced deterministically on repeat submission; the artifact itself was intentionally left un-located per an explicit escalation pause, not because reproduction failed"
+      }
+    },
+    {
+      "candidate": "C-xss-search-breakout",
+      "pattern": "xss.cross-site-scripting",
+      "signal": "raw single-quote input to a search field reaching an HTML-text sink and an inline-script variable-assignment sink",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "ten distinct encoding/technique variants across two passes were all either neutralized by the app's escaping scheme, blocked upstream by the WAF, or passed through as syntactically-inert characters with no breakout effect on the sink; a raw-backslash test additionally showed the scheme doubles input backslashes, closing the classic trailing-backslash-escapes-the-closing-quote trick, so this is a deliberately competent scheme, not an accidental gap.",
+      "controls": {
+        "negative": "a benign search term reflected verbatim with a clean, distinct baseline response",
+        "positive": "the same ten techniques were tried against both sinks identically, and the outcome was consistent across both, ruling out a single-sink-only miss",
+        "canary": "n/a (encoding/character probes only, no persistent artifact created)",
+        "replay": "consistent across two separate testing passes in the same session"
+      }
+    },
+    {
+      "candidate": "C-sqli-tracking-lookup",
+      "pattern": "sqli.sql-injection",
+      "signal": "a WAF-bypassing boolean-operator symbol (standing in for the blocked AND/OR keywords) on a numeric tracking-id lookup field produced no observable change in query outcome",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "a true-clause and a false-clause variant of the injected condition, tested against a real self-owned record (not a nonexistent id, which cannot distinguish injectability), returned the identical found result — the injected clause had zero effect on query logic, consistent with parameterization or integer casting of a numeric field.",
+      "controls": {
+        "negative": "a nonexistent tracking id returned a distinct not-found response, establishing a clean baseline; the bare, unmodified real id returned a distinct found response, establishing the true positive",
+        "positive": "the true-clause variant returned found (expected either way, not diagnostic alone) and the false-clause variant ALSO returned found (diagnostic: this is the result that would differ if the field were actually injectable)",
+        "canary": "a self-owned test record created via an authorized, clearly-marked canary submission, never a real third party's record",
+        "replay": "deterministic across repeat requests in the same session"
+      }
+    },
+    {
+      "candidate": "C-lang-param-traversal",
+      "pattern": "patht.path-traversal-lfi",
+      "signal": "a path-traversal-shaped payload submitted to a content-language selector parameter",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "the traversal payload received the exact same generic rejection as any value outside a two-item allowlist, including plain nonexistent garbage values — a positive allowlist enforced ahead of the application, not an application-level signal, so there is no app-level LFI surface reachable through this parameter.",
+      "controls": {
+        "negative": "a plain nonexistent (non-traversal) value received the identical generic rejection as the traversal payload",
+        "positive": "both legitimate allowlisted values returned distinct, correct, differing content, confirming the parameter does have real app-level effect for its two valid values",
+        "canary": "n/a",
+        "replay": "consistent across repeat requests"
+      }
+    },
+    {
+      "candidate": "H-reachability-gate",
+      "pattern": "upload.arbitrary-file-upload",
+      "signal": "two content-detector-bypassing uploads were accepted; no reference to either stored file appeared anywhere in the upload response",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "an exhaustive search (roughly 95 distinct guesses across four independent technique classes: direct path guessing, verbose-error-message leakage, script/query-param serving guesses, and subdomain enumeration) found no web-reachable location for either artifact, and a working gateway-level route-allowlist control confirmed the negative result was a genuine miss rather than a gateway-hidden path — but a black-box vantage cannot positively prove no reachable path exists anywhere, so this stays an honestly-capped open question rather than a confirmed absence.",
+      "controls": {
+        "negative": "plain nonexistent-path guesses returned uniform, unremarkable not-found responses with no directory listing anywhere",
+        "positive": "script/query-param guesses that WERE intercepted by the gateway's own route allowlist returned a visibly different, branded block response — proving the plain not-found responses on real path guesses were genuine misses, not gateway-masked hits",
+        "canary": "the two upload artifacts from F1/F2 (literals scrubbed)",
+        "replay": "n/a — the open question is reachability, not reproducibility of the upload itself"
+      }
+    }
+  ]
+}

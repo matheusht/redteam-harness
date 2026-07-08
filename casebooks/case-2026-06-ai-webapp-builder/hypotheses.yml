@@ -1,0 +1,75 @@
+case: case-2026-06-ai-webapp-builder
+
+# signal -> hypothesis -> predicted finding -> oracle plan -> outcome.
+# Light by design: the reasoning trail the routing brain should reproduce.
+hypotheses:
+  - id: H-F6
+    from_signal: "app ships an anon key; probe every table for RLS"
+    pattern: "candidate:postgrest-anon-data-exposure"
+    hypothesis: "a table has RLS on but a permissive policy, so anon reads all rows"
+    oracle_plan:
+      - "count rows per table with the anon key only (no user token)"
+      - "negative control: sibling tables (orgs, messages, members) -> expect empty for anon"
+      - "confirm foreign rows are present (author id not ours, private visibility)"
+      - "cross-check the app's own org-scoped API returns only our org (the correct counterpart)"
+    outcome: confirmed
+    note: "root cause was a USING (true) SELECT policy on one table; siblings correctly empty. See oracle-matrix F6."
+
+  - id: H-F7
+    from_signal: "SECURITY DEFINER RPC takes a user-id arg; anon key present"
+    pattern: "candidate:postgrest-anon-data-exposure"
+    hypothesis: "the RPC returns arbitrary users' PII because default privileges leave it anon-executable and it has no in-body principal check"
+    oracle_plan:
+      - "harvest a user id from F6 (the chain enabler)"
+      - "call the RPC with the anon key and that id -> expect email + PII back"
+      - "negative/positive: a sibling anon-granted RPC that guards in-body rejects the same anon call"
+      - "reconcile source vs black-box: a diff showed REVOKE ... FROM PUBLIC, but the live call returned 200"
+    outcome: confirmed
+    note: "REVOKE FROM PUBLIC does NOT strip the explicit anon grant from Supabase default privileges; the live 200 was right and the diff was misleading."
+
+  - id: H-F1-F2
+    from_signal: "client-supplied object id selects a screenshot (public bucket read; body-supplied id on write)"
+    pattern: pattern.client-supplied-selector-authz
+    hypothesis: "no ownership re-resolution -> unauth read of any object AND cross-tenant write"
+    oracle_plan:
+      - "read: fetch a foreign sequential id from the public bucket unauthenticated -> expect the image"
+      - "negative control: an out-of-range id -> expect not_found"
+      - "write: as tenant A, POST a screenshot to tenant B's project id -> expect it lands"
+      - "positive control: A is 403 from B's org on every app API endpoint -> isolates the gap to this handler"
+      - "revert the write"
+    outcome: confirmed
+    note: "same anti-pattern as the b2b case, second target class. See oracle-matrix F1/F2."
+
+  - id: H-F3-F4
+    from_signal: "uploaded doc content reaches the builder agent; the agent has code-gen tools"
+    pattern: pattern.indirect-prompt-injection
+    hypothesis: "unisolated file content is obeyed as instruction and can drive the code-gen tool"
+    oracle_plan:
+      - "embed a benign directive in an uploaded doc; build an unrelated app"
+      - "negative control: clean doc, same prompt -> no marker"
+      - "confirm a tool EFFECT: the directive's marker written into the generated code (not a chat echo)"
+      - "replay in a fresh project"
+    outcome: confirmed
+    note: "sink confirmed (F3 -> F4). Cross-user delivery tested separately (H-F4-xuser)."
+
+  - id: H-F4-xuser
+    from_signal: "can A-authored injected content reach B's agent?"
+    pattern: pattern.indirect-prompt-injection
+    hypothesis: "if a delivery channel exists, the sink becomes a cross-user compromise (Critical)"
+    oracle_plan:
+      - "enumerate A->B delivery channels (duplicate, templates, visibility, org invite)"
+      - "org invite is the only one; try to accept as B and trigger B's agent on A's content"
+      - "check the invite token: is it in any API/UI response? numeric-id IDOR?"
+    outcome: needs_review
+    note: "sink re-confirmed, but the invite token is unguessable and email-only, no IDOR -> B can't be reached silently. Held gate caps severity at High. Operator closed as low-value."
+
+  - id: H-ssrf
+    from_signal: "custom-domain feature accepts IP literals incl. the metadata IP"
+    pattern: pattern.ssrf-server-side-fetch
+    hypothesis: "the platform fetches the submitted host -> SSRF to internal/metadata targets"
+    oracle_plan:
+      - "submit an attacker-controlled OAST host as a custom domain on our own project"
+      - "watch the listener: DNS lookups vs an actual HTTP fetch"
+      - "read the backend status payload for the provisioning gate"
+    outcome: refuted
+    note: "DNS-only, zero HTTP fetch; provisioning gated behind an ownership-CNAME the attacker can't set. IP-literal acceptance is cosmetic. Kept as the ssrf card's refutation."

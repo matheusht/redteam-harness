@@ -1,0 +1,131 @@
+{
+  "case": "case-2026-07-jvm-gateway-telemetry-oss",
+  "rows": [
+    {
+      "candidate": "F1",
+      "pattern": "candidate:filter-chain-doc-mismatch-authz-bypass",
+      "signal": "a filter using only the documented reject/block API still resulted in the request reaching the forwarding stage and the origin's real response reaching the caller",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the forwarding stage (and separately the response-return stage) checks a different, undocumented flag than the one the documented rejection API sets, so a filter written strictly to documentation fails open, confirmed with the project's own real classes end to end.",
+      "controls": {
+        "negative": "the same setup using the OTHER (undocumented) flag instead correctly blocked the request, proving the divergence is specific to which flag is used and not an artifact of the test harness",
+        "positive": "a pre-existing test in the project's own suite independently corroborates that the forwarding-stage exemption itself is deliberate design, narrowing the real gap to the separate guard the forwarding stage actually uses",
+        "canary": "n/a (mechanism confirmed via response-propagation observation, no data exfiltrated; all testing against local, self-built artifacts)",
+        "replay": "reproduced across 2 sessions (initial build + standalone clean-room package extracted and rebuilt from scratch); deterministic both times"
+      }
+    },
+    {
+      "candidate": "C1",
+      "pattern": "n/a — verification lesson",
+      "signal": "a research citation pointed at a specific dynamic-script-compilation sink with strong disclosed precedent",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "the cited file does not exist at the exact pinned commit/tag in scope; it exists only on a separate, out-of-scope legacy branch of the same repository.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "direct source check against the pinned commit (file-existence check) rather than trusting the citation",
+        "canary": "n/a",
+        "replay": "n/a — closed on first direct verification"
+      }
+    },
+    {
+      "candidate": "C2",
+      "pattern": "cve.known-vulnerable-component",
+      "signal": "a pinned dependency version sits inside a disclosed CVE's advisory-stated vulnerable range",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "the specific configuration surface the CVE's bypass requires is not present anywhere in the vulnerable module's reachable code, so the vulnerable version does not translate into a live sink.",
+      "controls": {
+        "negative": "grep of every call site of the relevant configuration API found zero polymorphic-typing configuration",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a — held for re-check only if future code adds the missing configuration"
+      }
+    },
+    {
+      "candidate": "C3",
+      "pattern": "httpabuse.http-protocol-abuse",
+      "signal": "a client-controlled framing header survived a protocol-version downgrade through the project's own dedicated remediation handler completely unrejected",
+      "oracle": "execution-oracle",
+      "verdict": "held",
+      "why": "an independent downstream re-serialization stage rebuilds unambiguous wire framing regardless of upstream provenance, so the backend origin can never receive an ambiguous frame even though the upstream coverage gap is real; the only residual effect is unbounded body size, a resource-exhaustion class this program's policy excludes from reward.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "traced the outbound stage's re-serialization output directly and confirmed correct, unambiguous framing byte-for-byte regardless of how the input arrived",
+        "canary": "n/a",
+        "replay": "consistent across the verification run; no destructive testing performed"
+      }
+    },
+    {
+      "candidate": "C4",
+      "pattern": "pattern.ssrf-server-side-fetch",
+      "signal": "an outbound-HTTP-capable class sits inside a streaming/subscription API resembling a webhook-registration surface",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "both candidate destination URLs are deploy-time config only, and the subscription payload itself carries an expression string rather than a callback/destination URL, so no client-controlled-destination primitive exists.",
+      "controls": {
+        "negative": "traced the origin of every candidate destination value in the module; all config-sourced",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    },
+    {
+      "candidate": "H-telemetry-dsl-dos",
+      "pattern": "candidate:unbounded-regex-introspection-dos",
+      "signal": "a query-DSL expression interpreter and a separate group-by/cardinality-expansion path both looked like unbounded-evaluation candidates",
+      "oracle": "adjudication-oracle",
+      "verdict": "refuted",
+      "why": "both paths carry a real, checked-in-source numeric bound that gates the live code, not a decorative constant.",
+      "controls": {
+        "negative": "read both bound implementations directly and confirmed they gate the actual growth/expansion logic",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    },
+    {
+      "candidate": "H-telemetry-authz",
+      "pattern": "bola.broken-object-level-authz",
+      "signal": "an HTTP API surface showed no internal authentication/authorization mechanism on first read",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "confirmed by reading every file in the API package that there is genuinely no internal auth mechanism at all, a different bug class than a check that exists but fails to enforce; architecturally plausible as expecting an external fronting gateway, but the project's own documentation never states this trust model, so 'safe by design' cannot be fully confirmed from source alone.",
+      "controls": {
+        "negative": "n/a — nothing to fail; recorded the absence itself",
+        "positive": "n/a",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    },
+    {
+      "candidate": "H-metricslib-tag-cardinality",
+      "pattern": "n/a — routing/verification lesson",
+      "signal": "a tag-setting surface in the client instrumentation library looked like it might accept unsanitized values reaching a live metrics registry",
+      "oracle": "adjudication-oracle",
+      "verdict": "held",
+      "why": "real, wired-in sanitizers are genuinely invoked on the tag-setting path, and one loose thread (a fully-built sanitizer with zero production callers) was traced directly and confirmed orphaned rather than a live gap, since the real tag-setting API only ever accepts pre-resolved structured values.",
+      "controls": {
+        "negative": "traced the real call graph of the input path; confirmed no call site reaches it with a raw, unsanitized value",
+        "positive": "the wired-in sanitizers were confirmed genuinely invoked at the real call sites, not just present in the codebase",
+        "canary": "n/a",
+        "replay": "n/a"
+      }
+    },
+    {
+      "candidate": "F2",
+      "pattern": "candidate:unbounded-regex-introspection-dos",
+      "signal": "an opt-in introspection endpoint compiles client-supplied strings directly as regular expressions with no bound, matched against every entry in a live in-process registry",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the mechanism is unambiguous from source alone (no length/complexity/timeout guard on a client-controlled regex compiled and matched against a live registry), but this is a resource-exhaustion class this program's policy excludes from reward regardless of proof quality — confirmed as real, not pursued as a submission.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "confirmed the endpoint is reachable when the feature flag is enabled and that the matching runs against the full live registry, not a bounded subset",
+        "canary": "n/a",
+        "replay": "n/a — no PoC built; mechanism already unambiguous from source and non-submittable either way"
+      }
+    }
+  ]
+}

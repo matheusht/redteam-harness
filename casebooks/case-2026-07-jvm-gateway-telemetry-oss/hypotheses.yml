@@ -1,0 +1,121 @@
+case: case-2026-07-jvm-gateway-telemetry-oss
+
+# signal -> hypothesis -> predicted finding -> oracle plan -> outcome.
+# Light by design: the reasoning trail the routing brain should reproduce.
+# F1 entries are pattern-shape-abstracted per case.yml sanitization (no-disclosure program).
+hypotheses:
+  - id: H-F1
+    from_signal: "filter-chain pipeline; a documented reject/block API exists on the request context"
+    pattern: "candidate:filter-chain-doc-mismatch-authz-bypass"
+    hypothesis: >
+      the pipeline stage that forwards a request to the backend origin does not actually check the
+      flag the documented rejection API sets, so a filter written to that documented API alone fails
+      open at the forwarding stage
+    oracle_plan:
+      - "read the forwarding-stage source directly; identify every flag it actually checks vs. the flag the documented API sets"
+      - "build an end-to-end test using the project's own real filter-chain classes, wired the same way production wires them"
+      - "register a filter that rejects using only the documented API; confirm the flag is set, then confirm the forwarding stage runs anyway"
+      - "negative control: same setup, but the filter uses the OTHER (undocumented) flag instead -> expect it correctly blocks"
+      - "amplifier: repeat for the response-return stage with a realistic response-side security filter"
+    outcome: confirmed
+    note: >
+      independent regrade corrected first-pass framing (see oracle-matrix F1) and requested the
+      amplifier test before treating as report-ready; novelty-checked via the project's own security-
+      advisory API and a general web search before drafting. Unresolved/pending at time of writing —
+      see case.yml sanitization for why this entry stops at pattern-shape level.
+
+  - id: H-groovy-rce
+    from_signal: "pre-Stage-0 research grounding cited a specific dynamic-script-compilation sink with strong disclosed precedent"
+    pattern: "n/a — verification lesson"
+    hypothesis: "the primary target compiles attacker-influenced source text via a dynamic scripting engine with no sandbox, matching a known RCE precedent class"
+    oracle_plan:
+      - "confirm the cited file exists at the exact pinned commit/tag in scope"
+      - "if present, check what controls (sandboxing, source-of-truth restriction) gate it"
+    outcome: not_applicable
+    note: >
+      the cited file does not exist on the branch/tag actually in scope; it exists only on a separate,
+      out-of-scope legacy branch of the same repository. Caught by direct verification against the
+      pinned commit before spending Stage-0 budget on it, not by trusting the citation.
+
+  - id: H-h2-downgrade-smuggling
+    from_signal: "gateway downgrades HTTP protocol versions via the same topology a real disclosed vulnerability was found in"
+    pattern: "httpabuse.http-protocol-abuse"
+    hypothesis: "a client-controlled framing header survives the protocol downgrade unrejected by the project's own dedicated remediation handler, producing an ambiguous frame at the origin"
+    oracle_plan:
+      - "write a real test against the exact pinned dependency version reproducing the downgrade path"
+      - "confirm the framing header survives the remediation handler unrejected"
+      - "trace the outbound re-serialization stage: does it independently rebuild unambiguous framing, or does it forward the ambiguous bytes verbatim?"
+    outcome: confirmed_but_excluded
+    note: >
+      the coverage gap is real, but the outbound stage independently re-serializes into unambiguous
+      framing regardless of upstream provenance, so no ambiguous frame reaches the origin. Residual
+      risk is unbounded body size (resource exhaustion), which this program's policy excludes from
+      reward. Capped honestly, not force-fit into a smuggling submission.
+
+  - id: H-jackson-ptv
+    from_signal: "pinned dependency version sits inside a disclosed polymorphic-typing-bypass CVE's vulnerable range"
+    pattern: "cve.known-vulnerable-component"
+    hypothesis: "the vulnerable module configures polymorphic typing somewhere reachable, making the disclosed bypass live"
+    oracle_plan:
+      - "grep every call site of the relevant serialization configuration API across the vulnerable module"
+      - "for each hit, confirm whether it configures polymorphic typing and whether it has any live callers"
+    outcome: refuted
+    note: "zero polymorphic-typing configuration found anywhere in the module; held for re-check only if that changes."
+
+  - id: H-telemetry-dsl-dos
+    from_signal: "query-DSL / expression-evaluation surface on the secondary telemetry target"
+    pattern: "candidate:unbounded-regex-introspection-dos"
+    hypothesis: "the expression interpreter or group-by expansion has no bound, allowing unbounded resource consumption from a crafted query"
+    oracle_plan:
+      - "read the interpreter's stack/list-growth logic for an enforced bound"
+      - "read the group-by/cardinality-expansion path for a separate bound"
+    outcome: refuted
+    note: "both bounds are real, load-bearing, and enforced on the live code path, not decorative constants."
+
+  - id: H-telemetry-ssrf
+    from_signal: "an outbound-HTTP-capable class sits in a subscription/streaming API"
+    pattern: "pattern.ssrf-server-side-fetch"
+    hypothesis: "the subscription/streaming model accepts a client-supplied callback/destination URL, giving a webhook-style SSRF primitive"
+    oracle_plan:
+      - "identify every outbound-HTTP-capable class in the module"
+      - "trace the origin of each destination URL: deploy-time config, or request-supplied?"
+    outcome: refuted
+    note: "both destinations are deploy-time config only; the subscription payload carries an expression string, not a URL. No webhook shape exists."
+
+  - id: H-telemetry-authz
+    from_signal: "HTTP API surface, no internal auth layer apparent on first read"
+    pattern: "bola.broken-object-level-authz"
+    hypothesis: "the HTTP API has an authz mechanism that fails to enforce correctly somewhere"
+    oracle_plan:
+      - "read every file in the API package for any authentication/authorization logic"
+    outcome: needs_review
+    note: >
+      no internal auth mechanism exists at all — a different bug class than "a check exists but
+      doesn't enforce" (the F1 shape). Architecturally plausible as expecting an external fronting
+      gateway, but not confirmable from this project's own documentation; recorded as an open
+      assumption rather than a proven-safe verdict.
+
+  - id: H-metricslib-regex-dos
+    from_signal: "opt-in introspection endpoint compiles client-supplied strings as regex with no bound"
+    pattern: "candidate:unbounded-regex-introspection-dos"
+    hypothesis: "a catastrophically-backtracking client-supplied pattern causes unbounded CPU consumption when matched against the live registry"
+    oracle_plan:
+      - "read the endpoint's parameter handling for any length/complexity/timeout guard"
+      - "confirm the compiled pattern is matched against every entry in a live, potentially large registry"
+    outcome: confirmed_but_excluded
+    note: >
+      mechanism is unambiguous from source alone; no PoC built since the finding is policy-excluded
+      (DoS/resource-exhaustion) regardless of proof quality — same disposition as H-h2-downgrade-smuggling.
+
+  - id: H-metricslib-orphaned-sanitizer
+    from_signal: "a fully-built, tested defensive class has zero production call sites"
+    pattern: "n/a — routing/verification lesson"
+    hypothesis: "the sanitizer is unused because a live gap exists where it should be called but isn't"
+    oracle_plan:
+      - "trace the real call graph of the input path the sanitizer would apply to"
+      - "confirm whether any live call site could reach that path with an unsanitized value"
+    outcome: refuted
+    note: >
+      the real tag-setting API only ever accepts pre-resolved structured values from the embedding
+      application's service-discovery layer — no call site exists today where a raw, unsanitized
+      value could reach a tag. Orphaned/reserved code, not a live gap.

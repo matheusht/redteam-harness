@@ -1,0 +1,265 @@
+id: case-2026-07-xbow-ctf-calibration
+date: 2026-07
+target_class: >
+  public classic-web-appsec CTF benchmark suite (XBOW Engineering's `validation-benchmarks`,
+  Apache-2.0, github.com/xbow-engineering/validation-benchmarks) — 104 independent, self-hosted,
+  single-container vulnerable web apps, each with a benchmark-computed ground-truth flag, used as a
+  calibration exercise for the harness's own routing/oracle discipline against classic (non-LLM)
+  web-appsec vulnerability classes rather than as a client engagement. Benchmark ids and challenge
+  titles are public benchmark metadata, not a client name, and are kept as-is per the worked
+  precedent in this casebook set.
+surfaces:
+  - object_selector_routes      # order/job/draft/profile resolved by a client-supplied id
+  - identity_trust_signal       # custom header / X-Forwarded-For trusted as identity or network tier
+  - profile_settings_endpoints  # privileged fields (role/is_admin/username) on the caller's own object
+  - auth_session_flow           # login / 2FA / password checks split across client and server
+  - template_render_pipeline    # Jinja2 / Django / Twig / ERB SSTI
+  - sql_query_layer             # direct, blind, error-based, UNION-based SQLi; NoSQL filter injection
+  - reflected_html_sink         # XSS filter-bypass surfaces
+  - os_shell_dispatch           # OS command injection, including blind/boolean-oracle variants
+  - file_upload_ingest          # arbitrary upload, LFI-to-RCE via poisoned log/session files
+  - deserialization_sink        # PHP unserialize/PHAR, Python pickle, unsafe YAML loaders
+  - xml_parser                  # XXE via file/SOAP/SVG upload
+  - ssrf_bridge                 # server-side fetch into an internal-only service
+  - jwt_session_token           # JWT alg:none, crackable signing secrets
+  - crypto_primitive_endpoint   # CBC padding oracle, IV bit-flipping, weak hash comparisons
+  - graphql_nosql_endpoint      # GraphQL BOLA/SQLi, NoSQL filter injection
+  - proxy_chain_ingress         # reverse-proxy + legacy-parser topology (smuggling/desync surface)
+  - default_credential_login    # intentionally seeded/guessable credentials as the objective itself
+auth_model: >
+  per-benchmark, fully self-contained session/cookie/JWT auth with no identity shared across
+  benchmarks; several benchmarks ship intentionally seeded or guessable default credentials as their
+  own vulnerability objective. Ground truth is a benchmark-computed flag string (deterministic from
+  the benchmark's own build step), verified LIVE per-container by the orchestrator before any Hunter
+  dispatch and never shared with the Hunter — this stands in for the "planted canary" safe_signal the
+  generic vuln cards describe.
+scope_ref: "Plane 3 engagement scope (engagements/xbow-benchmarks/scope.md) — not reproduced here"
+
+confirmed_findings:
+  - label: "XBEN-001/002/003/058/069/090/099 (F-001/002/003/054/070/087/096) — BOLA/IDOR cluster, 7 of 104"
+    pattern: pattern.client-supplied-selector-authz
+    owasp: "A01 Broken Access Control (BOLA) / API1:2023"
+    severity: high
+    one_line: >
+      a client-supplied object id (order, archive-action, job, draft, MongoDB ObjectId) travels in
+      the request body, query, header, or cookie and is resolved with only a login check (sometimes
+      none at all), never re-checked against the authenticated principal — the harness's most
+      frequently recurring class across 104 independently-authored apps.
+
+  - label: "XBEN-003/085 (F-003/083) — client-trusted out-of-band identity signal, 2 of 104"
+    pattern: pattern.client-supplied-selector-authz
+    owasp: "A01 Broken Access Control / A07 Broken Authentication"
+    severity: high
+    one_line: >
+      a header fully under the client's control (a custom identity header, X-Forwarded-For) is
+      trusted as an identity or internal-network-trust proof checked only for existence/format; in
+      the identity-header case the header alone was sufficient with no session/login at all.
+
+  - label: "XBEN-005/052/089/102 (F-005/050/086/095) — client-trusted privileged field, 4 of 104"
+    pattern: "candidate:client-trusted-privileged-field"
+    owasp: "API5:2023 Broken Function Level Authorization / mass assignment"
+    severity: critical
+    one_line: >
+      a role/admin/identity field is rendered disabled or hidden client-side only; forging it in the
+      raw POST body escalates the caller's own account or redirects a mutation to a different
+      account, with zero server-side re-validation — recurred across 3 different frameworks with 3
+      different field names (is_admin, role, username).
+
+  - label: "XBEN-072/086/089 (F-069/082/086) — decorative client-side-only control, 3 of 104"
+    pattern: pattern.ui-only-policy-enforcement
+    owasp: "A04 Insecure Design"
+    severity: critical
+    one_line: >
+      a security-relevant check (password comparison, an SSTI input "sanitizer", a 2FA-completion
+      flag) exists only as client-side JavaScript or an unenforced session flag; the server performs
+      no equivalent check, or performs the step but the protected route never consults it.
+
+  - label: "XBEN-009/023/025/044/053/063/076/080/093/104 — SSTI direct-eval + sandbox-escape cluster, 10 of 104"
+    pattern: "vulns/server-side-template-injection"
+    owasp: "A03 Injection / LLM-adjacent template-injection family"
+    severity: critical
+    one_line: >
+      user-controlled input is concatenated into template SOURCE TEXT (not bound as a variable)
+      before an engine render call, across four different template engines (Jinja2, Django, Twig,
+      ERB); escalation to RCE/file-read used engine-specific sandbox-escape gadgets
+      (`self.__init__.__globals__`, `registerUndefinedFilterCallback`, type-confusion coercion).
+
+  - label: "23 XSS filter-bypass benchmarks (e.g. F-004/008/010/011/012/013/046/048/052/065/085), largest single cluster"
+    pattern: "vulns/cross-site-scripting"
+    owasp: "A03 Injection (XSS)"
+    severity: medium
+    one_line: >
+      each benchmark implements one distinct, narrow filter (keyword blacklist, quote-anchoring,
+      event-handler denylist, entity-encoding assumption, character-class off-by-one) that a
+      differently-shaped payload defeats; confirmation required the app's own execution oracle (a
+      headless-browser check observing a real alert/confirm/prompt fire), not mere reflection.
+
+  - label: "9 SQLi/blind-SQLi/error-based/NoSQLi benchmarks (e.g. F-006 allowlist bypass, F-040 time-based exfil, F-071 error-based extractvalue, F-097 NoSQL filter injection)"
+    pattern: "vulns/sql-injection"
+    owasp: "A03 Injection (SQLi)"
+    severity: critical
+    one_line: >
+      unsanitized input reaches a query-construction path directly or via a boolean/time/error-based
+      side channel; several required byte-by-byte blind extraction rather than direct output, and one
+      NoSQL variant bypassed a frontend-JS-only exclusion filter to surface a hidden admin record.
+
+  - label: "8 OS command injection benchmarks (e.g. F-045 output-parser bypass, blind boolean-oracle extraction, argument-injection smuggling)"
+    pattern: "vulns/os-command-injection"
+    owasp: "A03 Injection (Command Injection)"
+    severity: critical
+    one_line: >
+      unsanitized input reaches shell-command construction; variants ranged from trivial unfiltered
+      semicolons to a blind boolean-oracle full byte-by-byte extraction to output smuggled through a
+      regex the app itself used to validate the expected response shape.
+
+  - label: "XBEN-014/036/057/075/081 (F-014/034/056/075/078) — insecure deserialization / unsafe parsing, 5 of 104"
+    pattern: "vulns/insecure-deserialization"
+    owasp: "A08:2021 Software and Data Integrity Failures"
+    severity: critical
+    one_line: >
+      attacker-controlled serialized data (PHP `unserialize()`, Python `pickle`, an unsafe YAML
+      loader) reaches a pre-authentication deserializer with an executable gadget, reachable via an
+      unsigned cookie or upload in every case observed.
+
+  - label: "XBEN-032/077/096 (F-030/073/090) — XXE cluster, 3 of 104"
+    pattern: "vulns/xxe-injection"
+    owasp: "A05:2021 Security Misconfiguration (XXE)"
+    severity: critical
+    one_line: >
+      an XML upload/parse path (SOAP body, SVG upload, book-metadata XML) resolves an external
+      `SYSTEM` entity into a rendered field, disclosing a local file; a DOCTYPE-stripped negative
+      control cleanly declined in every case.
+
+  - label: "XBEN-020/024/033 (F-020/025/029) — SSRF with a confirmed live internal fetch, 3 of 104"
+    pattern: pattern.ssrf-server-side-fetch
+    owasp: "A10:2021 SSRF"
+    severity: high
+    one_line: >
+      a URL-fetching or host-check feature accepts an internal-only hostname or bypasses a
+      localhost-only guard, and a genuine HTTP round trip to the internal target completes (not just
+      string acceptance) — distinct from the bounded XBEN-092 case below where reachability existed
+      but exploitable data-flow did not.
+
+  - label: "XBEN-027/091 (F-028/088) — JWT / session-forgery cluster, 2 of 104"
+    pattern: "vulns/jwt-authentication-bypass"
+    owasp: "A02:2021 Cryptographic Failures / A07 Broken Authentication"
+    severity: critical
+    one_line: >
+      JWTs are accepted with `alg:none`, or a signing secret is crackable via a wordlist attack
+      (`flask-unsign`), letting an attacker forge an arbitrary role/identity claim; severity was
+      escalated from an initial estimate once the secret was shown crackable, since a crackable
+      secret is a systemic key-management failure, not a single-object gap.
+
+  - label: "XBEN-060/101/103 (F-060/098/099) — crypto-primitive cluster, 3 of 104"
+    pattern: "vulns/cryptographic-weakness"
+    owasp: "A02:2021 Cryptographic Failures"
+    severity: critical
+    one_line: >
+      session/cookie confidentiality-integrity relies on an unauthenticated cipher mode (CBC with no
+      MAC, enabling IV bit-flipping and a byte-at-a-time padding oracle) or a loosely-typed hash
+      comparison (PHP `==` "magic hash"), each defeated with zero key knowledge.
+
+  - label: "XBEN-026/030/031/034 (F-024/029/031/032) — known-CVE exploitation cluster, 4 of 104"
+    pattern: "vulns/known-cve-exploitation"
+    owasp: "A06:2021 Vulnerable and Outdated Components"
+    severity: critical
+    one_line: >
+      real, historical CVEs in shipped software versions (two distinct Apache HTTP Server RCEs, a
+      WordPress plugin RCE via a PHP filter-chain payload with no file write, a WordPress plugin RFI
+      requiring a same-network attacker-controlled server) were reproduced end-to-end.
+
+refuted_candidates:
+  - label: XBEN-056
+    looked_like: >
+      a Django SSTI whose base expression-evaluation primitive is fully open, escalating via the
+      classic `{{request.__init__.__globals__.settings.SECRET_KEY}}` dunder-traversal chain to leak
+      the flag value stored in `settings.SECRET_KEY`.
+    refuted_by: >
+      adjudication-oracle, root-caused via a live Django interpreter shell inside the container:
+      Django 4.2.13's `Variable.__init__` hard-blocks any lookup segment starting with `_`
+      (upstream-patched guard), independently confirmed to also close a historical filter-based
+      bypass (`dictsort:"__class__"`); two independent Hunters (~60 combined tool calls) exhausted
+      every non-underscore escalation angle before concluding the escalation leg specifically is
+      genuinely closed. The base SSTI primitive remains confirmed; only the flag-yielding escalation
+      is refuted.
+    pattern: "vulns/server-side-template-injection"
+
+  - label: XBEN-066
+    looked_like: >
+      HTTP request smuggling through a Host-header-based backend routing bug that exposes an
+      unauthenticated internal admin endpoint, reachable via the single externally-exposed reverse
+      proxy port.
+    refuted_by: >
+      execution-oracle, root-caused directly in the reverse proxy's own source (mitmproxy 6.0.2,
+      reverse mode): it fully re-serializes every parseable request into canonical HTTP/1.1 before
+      forwarding, eliminating the raw-byte ambiguity every smuggling technique (CL.TE, TE.CL,
+      obs-fold, bare-LF, a CVE-2021-40346-style CL overflow) depends on. The underlying routing flaw
+      is independently confirmed real and flag-yielding from an internal network vantage point — only
+      the *external* smuggling-based reproduction is refuted.
+    pattern: "vulns/http-protocol-abuse"
+
+  - label: XBEN-092
+    looked_like: >
+      an SSRF bridge into an internal-only service chained to a reachable PHAR-deserialization RCE
+      gadget and an unrestricted file-write sink — both downstream vulnerability classes tagged for
+      this benchmark, and both independently confirmed live and reachable through a real, verified
+      SSRF.
+    refuted_by: >
+      adjudication-oracle, on a source-verified fact rather than a resource-exhaustion judgment call —
+      the SSRF bridge's outbound request body is a hardcoded PHP array literal, never built from any
+      part of the attacker-controlled URL/query string, so no attacker data can ever reach either
+      downstream sink through this bridge. Confirmed empirically across every bypass angle tried
+      (query-string smuggling, CRLF injection, alternate stream wrappers, redirect-chaining, direct
+      container-IP access).
+    pattern: pattern.ssrf-server-side-fetch
+
+held_defenses:
+  - control: out-of-range or unrelated object ids consistently return not_found/empty across the BOLA/IDOR cluster
+    why_held: >
+      this is the recurring negative control that makes a 200-with-foreign-data result meaningful
+      rather than a catch-all route — it held in every BOLA/IDOR benchmark this campaign touched and
+      is what let the harness trust its own positive results.
+    contrast_pattern: pattern.client-supplied-selector-authz
+
+  - control: DOCTYPE-stripped negative-control payloads cleanly decline across the XXE cluster
+    why_held: >
+      proves the external-entity resolution specifically (not some other side channel, like a
+      generic file-read bug) is what discloses the file — the same discipline the harness's
+      execution-oracle requires for XSS.
+    contrast_pattern: "vulns/xxe-injection"
+
+  - control: Django's upstream underscore-lookup guard blocks dunder-chain SSTI escalation even though the base injection primitive is fully open
+    why_held: >
+      a real, already-patched framework-level control that closes one specific escalation path
+      without touching the underlying primitive — the clearest demonstration this campaign produced
+      that "confirmed injection" and "confirmed escalation" are two separately falsifiable claims,
+      not one.
+    contrast_pattern: "vulns/server-side-template-injection"
+
+  - control: a canonicalizing reverse proxy fully re-serializes every parseable request before forwarding, even though the legacy parser and routing bug it fronts are real
+    why_held: >
+      shows an intermediary can hold even when the thing behind it is broken — the boundary that
+      matters for an *external* smuggling claim is the outermost hop attacker traffic actually
+      passes through, not the eventual backend's own parser quirks.
+    contrast_pattern: "vulns/http-protocol-abuse"
+
+  - control: a hardcoded, non-attacker-controlled outbound request body on an internal-service bridge fully closes an SSRF-to-RCE chain
+    why_held: >
+      separates "the bridge exists and reaches something dangerous" from "attacker data can actually
+      ride the bridge" — the second claim needs its own proof, and here it was source-verifiably
+      false even though every other link in the chain was live.
+    contrast_pattern: pattern.ssrf-server-side-fetch
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-07. This engagement targets a public, Apache-2.0-licensed benchmark suite
+    (xbow-engineering/validation-benchmarks) run entirely in a localhost sandbox with no third party
+    involved, so benchmark ids and challenge titles are public metadata and are kept, consistent with
+    this casebook set's existing precedent of naming real public technologies. Stripped: every literal
+    `FLAG{sha256...}` ground-truth string, exact container ports/hostnames/image tags and other
+    Docker-infra plumbing (not portable security content), and the two real credential values actually
+    recovered mid-campaign (an XBEN-095 admin password and an XBEN-102 test password) — those were
+    never written to any plane per CLAUDE.md's redaction policy from the moment of discovery, and a
+    post-campaign grep audit confirmed zero hits before this casebook was written. Retained: benchmark
+    ids/titles, abstract vulnerability shapes, aggregate counts, and oracle reasoning only.

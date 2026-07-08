@@ -1,0 +1,100 @@
+case: case-2026-07-waf-content-filter-bypass
+
+# signal -> hypothesis -> predicted finding -> oracle plan -> outcome.
+# Light by design: the reasoning trail the routing brain should reproduce.
+hypotheses:
+  - id: H-F1-tag-bypass
+    from_signal: "content-based upload filter blocks known PHP tag-opening syntax; probe alternate tag forms"
+    pattern: "upload.arbitrary-file-upload"
+    hypothesis: "the filter pattern-matches a specific tag-opening shape and misses a different, equally valid PHP tag syntax"
+    oracle_plan:
+      - "map the extension allowlist first (broad by program design, not the interesting layer)"
+      - "fingerprint the content filter with classic tag-opening variants (case, whitespace, polyglot) carrying only an inert marker"
+      - "test one syntactically valid but differently-shaped tag form"
+      - "confirm reachability: request the stored artifact directly and require the exact marker back"
+    outcome: confirmed
+    note: >
+      the alternate tag form passed the filter (upload accepted); reachability could not be
+      established despite extensive path enumeration, so the finding stays at
+      filter-bypass-confirmed, not code-execution-confirmed. See oracle-matrix F1.
+
+  - id: H-F2-syntax-equivalence
+    from_signal: "the same filter enumerates dangerous function-call shapes and keywords; probe a semantically-equivalent but differently-shaped construct"
+    pattern: "candidate:keyword-blocklist-syntax-equivalence-gap"
+    hypothesis: >
+      a construct that achieves the same capability as a blocked function-call shape, but uses no
+      function name, no call parentheses, and no superglobal access, evades all of the filter's
+      signature classes simultaneously
+    oracle_plan:
+      - "systematically batch-test individual blocked keywords/functions to map the filter's actual coverage (bare keyword, call-shape, superglobal)"
+      - "once coverage is mapped, test an operator-based execution primitive with no keyword/call/superglobal signature at all, carrying only a harmless read-only effect"
+      - "isolate any batch item that is a genuinely functional primitive (not an inert echo) BEFORE running it, and gate it separately"
+      - "confirm reachability the same way as H-F1"
+    outcome: confirmed
+    note: >
+      the operator-based construct passed the filter; it was correctly isolated and gated for a
+      separate authorization once recognized as functionally different from its inert neighbors.
+      Reachability was exhaustively searched (multiple independent technique classes: direct path
+      guessing, error-message leakage, script/query-param probing, subdomain enumeration) and never
+      established, so impact is capped honestly rather than assumed. See oracle-matrix F2.
+
+  - id: H-xss-search-breakout
+    from_signal: "reflected search input lands in an HTML sink and an inline script sink via non-standard escaping"
+    pattern: "xss.cross-site-scripting"
+    hypothesis: "the non-standard escaping scheme has a gap that lets a quote survive into the script sink and break out of the string literal"
+    oracle_plan:
+      - "baseline: benign term reflects verbatim, establishes the sink location"
+      - "probe the raw quote character; observe the substitution behavior"
+      - "try encodings designed to defeat a single-character substitution filter (overlong UTF-8, doubled quotes, backslash-then-quote, look-alike unicode quotes, legacy unicode escapes)"
+      - "confirm a real string-literal breakout renders/executes, not just an unusual byte sequence in the response"
+    outcome: refuted
+    note: >
+      ten distinct techniques across two passes, consistent result — the scheme substitutes the
+      quote AND doubles a raw backslash, closing the classic trailing-backslash trick. Genuinely
+      held, not under-tested. See oracle-matrix C-xss-search-breakout.
+
+  - id: H-sqli-tracking-lookup
+    from_signal: "client-supplied numeric tracking-id selector; a WAF-keyword bypass operator exists"
+    pattern: "sqli.sql-injection"
+    hypothesis: "the tracking-lookup query is unparameterized, so an injected boolean clause changes which record is returned"
+    oracle_plan:
+      - "negative control: a nonexistent tracking id -> expect a distinct not-found response"
+      - "note: an AND-tautology against a nonexistent id is NOT diagnostic either way (zero rows match regardless of injectability) -> need an OR-equivalent OR a real existing id"
+      - "an OR-equivalent bypass was not found within the session's WAF-evasion budget"
+      - "once a self-owned real record became available via an authorized canary submission, run a true/false boolean differential against that record instead"
+    outcome: refuted
+    note: >
+      the true-clause and false-clause variants against the self-owned record returned the
+      identical found result — zero effect on query logic. A real matched control against a genuine
+      positive record, not a nonexistent-id guess. See oracle-matrix C-sqli-tracking-lookup.
+
+  - id: H-lang-param-traversal
+    from_signal: "a language-selector parameter accepts a value; test path-traversal payloads"
+    pattern: "patht.path-traversal-lfi"
+    hypothesis: "the parameter is used in a filesystem include/read without an allowlist, so a traversal payload reaches the filesystem"
+    oracle_plan:
+      - "baseline: the two legitimate values both return distinct, correct content"
+      - "any other value -> observe the rejection shape"
+      - "a traversal-shaped payload -> compare its rejection shape to the plain-garbage rejection shape"
+    outcome: refuted
+    note: >
+      byte-identical generic rejection for garbage and for the traversal payload — a positive
+      allowlist enforced ahead of the app, not an app-level signal. See oracle-matrix
+      C-lang-param-traversal.
+
+  - id: H-reachability-gate
+    from_signal: "two content-detector bypasses were confirmed on the upload surface"
+    pattern: "upload.arbitrary-file-upload"
+    hypothesis: "a bypassed-but-accepted upload is stored somewhere web-reachable"
+    oracle_plan:
+      - "enumerate plausible storage-path conventions across independent naming schemes"
+      - "diff the full upload-response body/headers against the base page for any dynamic reference to the stored file"
+      - "trigger edge-case errors (missing field, 0-byte file, metacharacter filenames) to see if a verbose error leaks a real filesystem path"
+      - "try script/query-param-based serving guesses, distinguishing app-level 404s from gateway-level route blocks"
+      - "try plausible subdomains that might serve uploaded content separately"
+    outcome: needs_review
+    note: >
+      genuinely dry after ~95 distinct guesses across four independent technique classes, with no
+      verbose-error leakage and a working route-allowlist control proving the negative result isn't
+      gateway-hidden. Not established, and not disprovable either from a black-box vantage — recorded
+      as an honestly-capped open question, not a confirmed absence.

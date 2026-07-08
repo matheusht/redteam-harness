@@ -1,0 +1,97 @@
+id: case-2026-07-postgrest-admin-authz-sweep
+date: 2026-07
+target_class: >
+  Brazilian sports-betting / trading-operations SaaS (subscription paid tier + affiliate/referral
+  program), React SPA talking directly to a self-hosted Supabase/PostgREST backend; anon key and a
+  per-user JWT shipped to the browser; ~57-table public schema plus a ~97-function RPC surface,
+  including a large homogeneous family of admin-prefixed SECURITY DEFINER RPCs. Black-box,
+  recon-first, single owned account, production environment.
+surfaces:
+  - postgrest_data_api       # direct table reads with client-supplied tenant/owner filters
+  - security_definer_rpc     # ~97 RPCs incl. a large admin_* family + affiliate + p2p-payout
+  - entitlement_gated_rpc    # paid dataset RPCs vs. a separate advisory entitlement-check RPC
+  - storage_bucket           # receipt uploads + signed URLs (untested — infra outage)
+  - realtime_channel         # untested — infra outage
+  - auth_signup              # native signup vs. a protected signup edge function + bot gate
+  - pricing_coupon_edge_fn   # server-side coupon/pricing computation
+  - client_trust_headers     # request headers naming a tier/environment
+  - affiliate_referral_rpc   # self-referral / attribution RPCs
+auth_model: >
+  Supabase GoTrue session JWT + a browser-shipped anon key; role/admin status resolved client-side
+  for UI purposes only (a whoami-style call) but intended to be enforced server-side via an
+  is_admin()-style check inside each privileged RPC body, plus Postgres RLS as the table-level
+  boundary across the whole schema.
+scope_ref: "Plane 3 engagement scope (target repo) — not reproduced here"
+
+confirmed_findings:
+  - label: F-001
+    pattern: "candidate:rpc-family-guard-contrast"
+    owasp: "API5:2023 Broken Function Level Authorization (+ API3 excessive data exposure, + account enumeration)"
+    severity: high
+    one_line: >
+      one admin-only investigative RPC shipped without the in-body admin guard that every other
+      member of its ~30-strong sibling family enforced, so any authenticated non-admin could submit
+      arbitrary emails and receive that account's full PII plus a cross-user anti-fraud correlation
+      graph, with a real-vs-empty response differential doubling as an account-existence oracle.
+
+refuted_candidates:
+  - label: C-header-trust
+    looked_like: >
+      the backend appeared to vary its response depending on client-suppliable request headers naming
+      a subscription tier and an app environment, which read as a forgeable-trust-header privilege/tier
+      bypass during the first recon pass.
+    refuted_by: >
+      execution oracle, replayed with a direct non-browser client (CORS/browser confound ruled out) —
+      the header value was byte-identical whether forged to a privileged tier or left at baseline, and
+      the anon/forged-header request was still denied exactly like the unmodified one. The original
+      "vary" signal was an artifact of the first test rig, not a live behavior difference.
+    pattern: pattern.ui-only-policy-enforcement
+
+held_defenses:
+  - control: Postgres RLS enforced across the full ~57-table schema
+    why_held: >
+      unfiltered, foreign-tenant-scoped reads issued directly against PostgREST (bypassing the app's own
+      client-side filters) returned zero cross-tenant rows on every relation actually tested; every
+      non-empty user-scoped table returned exactly one row (the caller's own). A same-shape misconfigured
+      table would have looked exactly like F6/F7/F8 in a sibling engagement — none was found here.
+    contrast_pattern: pattern.client-supplied-selector-authz
+  - control: the admin RPC family enforces an in-body admin check uniformly, except one outlier
+    why_held: >
+      ~30 sibling admin-prefixed RPCs (read-only and money-moving alike) raised a consistent
+      database-level permission error for the same non-admin session across two independent testing
+      rungs. This uniformity is itself the positive control that made the one outlier (F-001) legible
+      as a missing-guard bug rather than an intentional design choice.
+    contrast_pattern: "candidate:rpc-family-guard-contrast"
+  - control: money-moving admin/financial RPCs held under a contained error-differential probe
+    why_held: >
+      ~16 mutating (approve/process/payout/delete/toggle) RPCs were called with well-formed but
+      nonexistent target ids specifically so no mutation could complete; all were denied pre-execution,
+      and pre/post state reads confirmed zero rows created, modified, or deleted. This is the technique
+      that safely resolves "is a mutating action gated" without ever performing the mutation.
+    contrast_pattern: "candidate:rpc-family-guard-contrast"
+  - control: coupon/pricing RPC recomputes price and entitlement server-side
+    why_held: >
+      tampering with the client-supplied expected-price field was rejected server-side (the server
+      recomputes and compares independently); a promotional code was not independently shareable/
+      redeemable as a higher entitlement than the server's own resolution.
+    contrast_pattern: pattern.client-supplied-selector-authz
+  - control: password-reset and login responses are indistinguishable for a real vs. a fabricated email
+    why_held: >
+      both the password-reset endpoint and the credentials-grant login endpoint returned identical
+      generic responses regardless of whether the probed (fabricated-only) email existed — an
+      anti-enumeration control at the auth layer, in direct contrast to F-001's own differential leak.
+    contrast_pattern: "candidate:rpc-family-guard-contrast"
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-07: stripped the real company/brand name and its parent organization (only
+    the abstract target_class is kept), the production hostname and both API/DB gateway subdomains, a
+    sibling-brand referral domain, every real email address encountered (the tester's own account, an
+    operator-authorized third-party probe address, and a disposable inbox reserved but never used), the
+    real referral code, the anon key and all bearer/session JWTs, edge/CDN request ids, and an unrelated
+    prompt-injection artifact that leaked into one tool run and was never engagement data. RPC/table/
+    field names are kept only where they are generic technical shape (e.g. an `admin_`-prefixed
+    function family, a `p_user_id`/`p_emails`-style argument); the one paid-dataset RPC name that
+    embedded a brand-derived abbreviation was replaced with a generic description ("the primary paid-
+    dataset RPC"). Only abstract surfaces, API/field-level shape, and oracle reasoning are retained.

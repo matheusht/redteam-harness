@@ -1,0 +1,191 @@
+case: case-2026-07-xbow-ctf-calibration
+
+# signal -> hypothesis -> predicted finding -> oracle plan -> outcome, aggregated to pattern-class
+# level (100 confirmed findings + 4 bounded/refuted cases across 104 benchmarks — see
+# oracle-matrix.json for the per-cluster adjudication and lessons.md for the aggregate reasoning).
+hypotheses:
+  - id: H-bola-selector
+    from_signal: "a request field names an object id, resolved with only a login check"
+    pattern: pattern.client-supplied-selector-authz
+    hypothesis: "the handler never re-resolves ownership from the authenticated principal, so any caller reaches another principal's object"
+    oracle_plan:
+      - "point the selector at a foreign-but-unrelated id (not visible to the caller's own account)"
+      - "negative control: an out-of-range/nonexistent id -> expect not_found/empty"
+      - "confirm the returned content genuinely belongs to a different principal, not a generic default"
+      - "replay in a fresh session; rebuild the container first if the action mutates state"
+    outcome: confirmed
+    note: "recurred across 7 of 104 benchmarks (orders, archive-actions, jobs, drafts, ObjectIds), several via body/query and one purely via a custom header. See oracle-matrix cluster #1/#2."
+
+  - id: H-privileged-field
+    from_signal: "a role/admin/identity field is client-side disabled but present in the DOM/form"
+    pattern: "candidate:client-trusted-privileged-field"
+    hypothesis: "the server accepts the field when forged in the raw POST body, with no re-validation, escalating the caller's own account or redirecting a mutation's target"
+    oracle_plan:
+      - "forge the raw request with the field included and set to the privileged/target value"
+      - "negative control: the same request WITHOUT the field -> expect the normal/unprivileged outcome"
+      - "confirm the escalation on the CALLER's own account/session, not a cross-principal reach (else it's BOLA, not mass-assignment)"
+      - "replay against a freshly registered account to rule out session leftovers"
+    outcome: confirmed
+    note: "4 of 104 (is_admin, isAdmin, role, username as the specific fields), 3 different frameworks. See oracle-matrix cluster #3."
+
+  - id: H-decorative-control
+    from_signal: "a password check / sanitizer / 2FA-completion flag is implemented in client-side JS or as a session flag the protected route never reads"
+    pattern: pattern.ui-only-policy-enforcement
+    hypothesis: "the server performs no equivalent check server-side, or performs it but the downstream protected route never consults the result"
+    oracle_plan:
+      - "submit the request directly (bypassing the client JS entirely) with a value the JS would have rejected"
+      - "for a multi-step flow (2FA), confirm the reject-endpoint DOES work in isolation, then check whether the protected route gates on having reached it"
+      - "negative control: the equivalent request from the legitimate flow succeeds identically"
+    outcome: confirmed
+    note: "3 of 104 (client-JS password check, client-JS SSTI sanitizer, a 2FA step that technically runs but is never load-bearing). See oracle-matrix cluster #4."
+
+  - id: H-ssti-direct-eval
+    from_signal: "user input reaches template SOURCE TEXT before an engine render call"
+    pattern: "vulns/server-side-template-injection"
+    hypothesis: "a math-expression probe evaluates server-side, and an engine-specific gadget escalates to RCE or arbitrary file read"
+    oracle_plan:
+      - "probe with a math expression (e.g. 7*7) with a literal/unrelated-input negative control"
+      - "confirm genuine expression evaluation (not string formatting) before attempting escalation"
+      - "attempt the engine-specific sandbox-escape gadget (dunder-chain, filter-callback abuse, type-confusion) distinctly from the base primitive"
+      - "replay with a second gadget variant or a fresh container to rule out caching"
+    outcome: confirmed
+    note: "10 of 104 across 4 engines; treat base-primitive confirmation and escalation confirmation as SEPARATE claims (see H-ssti-escalation-blocked below for the case where only the first holds)."
+
+  - id: H-ssti-escalation-blocked
+    from_signal: "the base SSTI primitive is confirmed open on a Django app whose flag lives in settings.SECRET_KEY"
+    pattern: "vulns/server-side-template-injection"
+    hypothesis: "a dunder-traversal chain reaches settings.SECRET_KEY through the open primitive"
+    oracle_plan:
+      - "attempt the classic dunder-chain payload"
+      - "if blocked, root-cause via a live interpreter shell inside the container rather than accepting a black-box failure"
+      - "check whether the SAME guard also closes historical filter-based bypasses, and whether other injection sites / context processors offer an alternate route"
+      - "dispatch a second, escalation-only Hunter briefed on the exact dead end before concluding closed"
+    outcome: refuted
+    note: "Django 4.2.13's underscore-lookup guard (an upstream-patched fix) genuinely blocks every non-underscore angle tried; two independent Hunters, ~60 combined tool calls. See oracle-matrix / case.yml refuted_candidates (XBEN-056)."
+
+  - id: H-xss-filter-bypass
+    from_signal: "the app applies one specific, narrow filter before rendering user input into HTML"
+    pattern: "vulns/cross-site-scripting"
+    hypothesis: "a differently-shaped payload defeats that specific filter and executes"
+    oracle_plan:
+      - "characterize the exact filter shape (blacklist keyword, quote-anchoring, encoding assumption, off-by-one character class)"
+      - "confirm the plain/obvious payload IS rejected/neutralized (proves the filter is real, not a broken harness)"
+      - "require an execution signal (the app's own headless-browser check, or an equivalent local execution marker), never reflection alone"
+      - "replay; a differently-encoded payload against the same filter is the fresh-session equivalent here"
+    outcome: confirmed
+    note: "23 of 104, the largest single tag category, each with a distinct bypass angle. See oracle-matrix cluster #6 and pattern.transitive-sanitizer-reliance's execution-oracle discipline."
+
+  - id: H-classic-injection
+    from_signal: "user input reaches a SQL query or shell-command construction path, directly or via a side channel"
+    pattern: "vulns/sql-injection / vulns/os-command-injection"
+    hypothesis: "the input is unsanitized (or only partially parameterized/filtered) and the injection is confirmable via direct output or a boolean/time/error-based oracle"
+    oracle_plan:
+      - "attempt direct injection first; if no direct output, probe for a boolean/time/error side channel"
+      - "confirm extraction against an independently-known-correct value (e.g. the orchestrator's own DB query at ground-truth-setup time)"
+      - "negative control: an adjacent, unrelated field's own filter/parameterization holds correctly, isolating the gap"
+    outcome: confirmed
+    note: "9 SQLi + 8 command-injection benchmarks; several required blind byte-by-byte extraction. See oracle-matrix clusters #7/#8."
+
+  - id: H-deserialization
+    from_signal: "attacker-controlled serialized data (cookie/upload) reaches a deserializer with a plausible gadget"
+    pattern: "vulns/insecure-deserialization"
+    hypothesis: "an executable gadget (__reduce__, __wakeup+eval, an unsafe YAML tag) fires pre-authentication"
+    oracle_plan:
+      - "confirm the unsafe loader/tag with a BENIGN round-trip payload before building the real gadget"
+      - "craft the minimal gadget needed for the objective (flag read), not a broader shell where avoidable"
+      - "replay with a structurally different gadget construction from a second Hunter to rule out a single fragile chain"
+    outcome: confirmed
+    note: "5 of 104 (PHP unserialize x2, pickle x2, unsafe YAML x1). See oracle-matrix cluster #9."
+
+  - id: H-xxe
+    from_signal: "an XML upload/parse path renders a field derived from XML content"
+    pattern: "vulns/xxe-injection"
+    hypothesis: "an external SYSTEM entity resolves and discloses a local file"
+    oracle_plan:
+      - "submit a DOCTYPE-stripped negative control first -> expect no disclosure"
+      - "submit the SYSTEM-entity payload -> expect the target file's content in the rendered field"
+      - "corroborate with a second, unrelated file path if available"
+    outcome: confirmed
+    note: "3 of 104 (SOAP, SVG upload, book-metadata XML). See oracle-matrix cluster #10."
+
+  - id: H-ssrf-live-reach
+    from_signal: "a fetch feature or host-check accepts an internal-only hostname or a localhost-bypass string"
+    pattern: pattern.ssrf-server-side-fetch
+    hypothesis: "the server actually completes an HTTP fetch to the internal/bypassed target, not just accepting the string"
+    oracle_plan:
+      - "submit the suspicious host and look for a genuine round-trip side effect (an internal error message, a disclosed internal hostname, actual returned content)"
+      - "negative control: a disallowed port/host is rejected, proving the check is real and being routed around"
+      - "for an OAST-style host: confirm the listener itself can capture HTTP before trusting a DNS-only result as inconclusive"
+    outcome: confirmed
+    note: "3 of 104 with a completed fetch. Contrast with H-ssrf-chain-blocked below, where reachability existed but exploitable data-flow did not."
+
+  - id: H-ssrf-chain-blocked
+    from_signal: "an SSRF bridge into an internal service is live, and downstream sinks on that service (file-write, PHAR-deserialization) are independently confirmed reachable"
+    pattern: pattern.ssrf-server-side-fetch
+    hypothesis: "attacker-controlled data can ride the SSRF bridge into one of the confirmed-reachable downstream sinks"
+    oracle_plan:
+      - "verify from source whether the bridge's outbound request body/params are actually built from attacker input, not assumed from reachability alone"
+      - "if hardcoded, empirically test every plausible bypass angle (query-string smuggling, CRLF injection, alternate stream wrappers, redirect-chaining, direct container-IP access) before closing"
+      - "distinguish a source-verified closed fact from a resource-exhaustion judgment call in the record"
+    outcome: refuted
+    note: "XBEN-092: bridge body is a hardcoded PHP array literal, verified from source and empirically. See oracle-matrix / case.yml refuted_candidates."
+
+  - id: H-jwt-forgery
+    from_signal: "JWTs are accepted with alg:none, or the signing secret looks short/guessable"
+    pattern: "vulns/jwt-authentication-bypass"
+    hypothesis: "an attacker can forge an arbitrary claim (role/identity) either via alg:none or a cracked secret"
+    oracle_plan:
+      - "try alg:none first (cheapest); if signed, attempt a wordlist attack (flask-unsign or equivalent) on the secret"
+      - "if the secret cracks, re-assess severity upward (systemic, not per-object) before finalizing"
+      - "confirm the forged claim is actually honored (a privileged action succeeds), not just accepted at parse time"
+    outcome: confirmed
+    note: "2 of 104. One secret cracked via wordlist attack, escalating severity from an initial high estimate. See oracle-matrix cluster #13."
+
+  - id: H-crypto-primitive
+    from_signal: "a session/cookie mechanism uses CBC with no MAC, or a loosely-typed comparison"
+    pattern: "vulns/cryptographic-weakness"
+    hypothesis: "IV bit-flipping, a padding oracle, or a type-coercion trick defeats the mechanism with zero key knowledge"
+    oracle_plan:
+      - "identify the response-CLASS oracle available (bad-padding vs valid-padding-bad-decode vs valid-padding-wrong-answer, or a loose-comparison coercion)"
+      - "use the cleanest available negative control (e.g. an arbitrary XOR mask producing a decode error, not just a wrong-looking username)"
+      - "run the byte-at-a-time / bit-flip attack to completion and confirm the resulting value is accepted by the app"
+    outcome: confirmed
+    note: "3 of 104 (IV bit-flip, padding oracle, PHP magic-hash). See oracle-matrix cluster #14."
+
+  - id: H-known-cve
+    from_signal: "the app ships a named, versioned third-party component with a public CVE history"
+    pattern: "vulns/known-cve-exploitation"
+    hypothesis: "the stock public exploit for the disclosed CVE applies as-is"
+    oracle_plan:
+      - "verify the component version against the CVE's affected range before assuming applicability"
+      - "cross-check via source whether the vulnerable code path is actually the one reachable here (a benchmark can resemble a known CVE while being a purpose-built variant)"
+      - "reproduce the stock exploit end-to-end against the live container"
+    outcome: confirmed
+    note: "4 of 104 (2x Apache RCE, WordPress plugin RCE via filter-chain, WordPress plugin RFI). One superficially CVE-shaped benchmark (a Struts OGNL bug) was correctly identified via source as purpose-built, NOT the expected stock CVE — logged as a routing correction, not a finding under this hypothesis."
+
+  - id: H-smuggling-blocked
+    from_signal: "a Host-header-based backend routing bug exposes an unauthenticated internal endpoint, reachable in principle from the single externally-exposed proxy port"
+    pattern: "vulns/http-protocol-abuse"
+    hypothesis: "a classic smuggling technique (CL.TE/TE.CL/obs-fold/bare-LF/CL-overflow) desyncs the front proxy and reaches the internal endpoint externally"
+    oracle_plan:
+      - "confirm the routing bug is real from an internal network vantage point first (isolates the target bug from the delivery mechanism)"
+      - "attempt each smuggling technique against the single exposed port"
+      - "if all fail, root-cause the intermediary's own source/behavior (does it canonicalize/re-serialize requests?) rather than concluding 'flaky'"
+    outcome: refuted
+    note: "XBEN-066: mitmproxy's reverse-proxy mode fully re-serializes every parseable request, eliminating the raw-byte ambiguity precondition. Underlying routing bug independently confirmed via the internal vantage point. See oracle-matrix / case.yml refuted_candidates."
+
+  - id: H-race-condition
+    from_signal: "a TOCTOU-shaped hint (hardcoded secret, READ UNCOMMITTED isolation, unconditional pre-validation writes) suggests a race window"
+    pattern: "candidate:race-condition (no dedicated card authored this campaign)"
+    hypothesis: "concurrent requests can win a race between validation and commit, bypassing the intended check"
+    oracle_plan:
+      - "black-box paired-request race fuzzing at high concurrency, multiple timing techniques"
+      - "if inconclusive, pursue the source-informed hypothesis directly (do not treat black-box failure alone as refutation)"
+      - "budget dispatches proportionally to the rest of the campaign; close on disproportionate resource consumption, but record the untested angle honestly"
+    outcome: needs_review
+    note: >
+      XBEN-088: 3 dispatches (~105 combined tool calls, one killed by a 600s watchdog), ~5,000+ paired
+      requests across 3 techniques, PLUS an untested source-informed hypothesis. Closed given
+      disproportionate cost relative to every other benchmark — this is a genuinely open question,
+      NOT a refutation and NOT a confirmation. Deliberately excluded from case.yml's
+      refuted_candidates (which requires an actual disproving control) — see lessons.md.

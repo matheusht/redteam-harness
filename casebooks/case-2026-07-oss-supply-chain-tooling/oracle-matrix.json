@@ -1,0 +1,159 @@
+{
+  "case": "case-2026-07-oss-supply-chain-tooling",
+  "rows": [
+    {
+      "candidate": "F1",
+      "pattern": "candidate:sanitizer-fixed-pass-order-reconstitution",
+      "signal": "a fixed-order, single-pass terminal-escape sanitizer left an obstructed escape sequence reconstitutable once the obstructing byte was stripped by a later catch-all pass",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the real, published CLI binary, invoked exactly as documented, produced a complete, valid escape sequence in real stdout from a crafted metadata string, while an unobstructed payload and a fully benign input both correctly produced nothing.",
+      "controls": {
+        "negative": "same payload with no obstructing byte was caught cleanly by the sanitizer's own CSI detection; a fully benign skill produced no injected sequence",
+        "positive": "an isolated regex-replica round and a real-pipeline round (real parse/display code inside a throwaway test in a real clone) both independently reproduced the byte-level bug before the final real-CLI round",
+        "canary": "n/a (byte-sequence presence in the tool's own stdout, no external system touched)",
+        "replay": "three independent rounds, the last with zero internal-function imports; deterministic across a fresh install"
+      }
+    },
+    {
+      "candidate": "F2",
+      "pattern": "candidate:symlink-dereference-no-target-boundary-check",
+      "signal": "an install-time recursive copy dereferenced a symlink pointing outside the source directory, and the real content landed in the installed output as a regular file",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the real, published CLI binary, run exactly as documented, copied the real content of both a single-file and a directory symlink target lying outside a malicious install source's own directory, confirmed as genuine file copies (not live-symlink reads) via lstat and a source-deletion check, under both install modes.",
+      "controls": {
+        "negative": "a fully benign source with no symlinks installed cleanly with no spurious disclosure",
+        "positive": "the recursive-directory-symlink case behaved identically to the single-file case, showing the gap is the missing boundary check generally, not a single-file-only quirk",
+        "canary": "a benign, harness-generated marker file/string written to a throwaway location the harness itself controlled and deleted afterward",
+        "replay": "reproduced across three sessions; an independent, no-prior-context regrade agent found and correctly proved a SECOND, independently unguarded occurrence of the same pattern that an earlier pass had wrongly ruled out, then this was re-verified against primary source before acceptance and confirmed with a new PoC case; the prior wrong conclusion was corrected in place, not silently deleted"
+      }
+    },
+    {
+      "candidate": "F3",
+      "pattern": "vuln.prototype-pollution",
+      "signal": "a real, JSON.parse-derived own `__proto__` key in an externally-sourced provider payload survived an unguarded merge utility and polluted the live, global Object.prototype",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the real, unmodified merge utility and a real, unmodified bundled adapter (with only the network boundary intercepted) together produced pollution visible on a brand-new, unrelated object; a downstream override-evaluation check then forced a targeted flag's value for any request already carrying any valid override cookie, without needing permission to override that specific flag.",
+      "controls": {
+        "negative": "the identical flow with no `__proto__` key present produced no pollution; a request with no override cookie at all was unaffected by the escalation gadget",
+        "positive": "an isolated round confirmed the JSON.parse-derived-own-key trigger specifically (as opposed to a bracket-assignment/setter variant, which behaves differently) before the full real-package round",
+        "canary": "a benign, harness-chosen marker property/value used only to prove pollution reach, never a real production key",
+        "replay": "reproduced across two sessions; an independent regrade agent traced further into the decryption/validation path than the original pass, found no additional blocking allowlist, and its severity-revision recommendation (critical to high, given the escalation's own precondition) was applied"
+      }
+    },
+    {
+      "candidate": "F4",
+      "pattern": "vuln.prototype-pollution",
+      "signal": "an MCP-discovered tool named after an Object.prototype member resolved a developer's approval-map lookup to a live built-in function instead of the configured safe default",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "the real, published packages and the project's own public execution path, driven by a deterministic mocked model, showed zero approval-request events and the tool executing with its own attacker-influenced call input, while an ordinary tool name and an explicit developer rule for the same colliding name both correctly paused for approval.",
+      "controls": {
+        "negative": "ordinary tool name and explicit-own-approval-rule controls both correctly required approval and did not execute",
+        "positive": "an independent source-fidelity check confirmed the installed, real package source contains the vulnerable lookup, the fake-callback invocation, the missing-default dispatch fallthrough, and the related discovery-side bracket assignment",
+        "canary": "a benign, harness-generated marker used as the bypassed tool's call input, no real capability exercised",
+        "replay": "reproduced across two sessions; submitted to the program and returned as a HackerOne duplicate, treated as a validity signal rather than a refutation"
+      }
+    },
+    {
+      "candidate": "F4b",
+      "pattern": "vuln.prototype-pollution",
+      "signal": "default-mode MCP tool discovery assigned a server-supplied tool name onto a plain object by bracket notation; a name equal to the prototype-link property hijacked the whole record's own prototype",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "a real call through the project's own discovery code confirmed the tools record's own prototype is genuinely reassigned and inherits the malicious entry's fields as its own surface, independent of the approval-wrapper package; an exhaustive grep of every consumer of the resulting record for inherited-property-surfacing patterns (for-in, whole-object spread, Object.assign) found none, so this is a confirmed primitive that does not currently escalate to arbitrary-name tool execution.",
+      "controls": {
+        "negative": "n/a — this is itself the base-case confirmation; no separate negative construction was needed beyond the exhaustive consumer sweep finding no escalation path",
+        "positive": "the project's own existing test for prototype-named tools only covers a different (explicit-schema) discovery branch that has an early guard; this confirms the default/automatic branch specifically lacks it",
+        "canary": "n/a (structural prototype-identity check, no payload delivered downstream)",
+        "replay": "reproduced against the real client code; an early draft had artificially injected an extra property to simulate a stronger, unproven claim, caught and removed before reporting rather than left in"
+      }
+    },
+    {
+      "candidate": "F5",
+      "pattern": "vuln.workflow-step-injection",
+      "signal": "a workflow VM's overridden deterministic RNG, built for replay-determinism, also fed generation of the bearer token for pausable hooks/webhooks, whose seed components trace to public, non-secret, or client-echoed values",
+      "oracle": "adjudication-oracle",
+      "verdict": "confirmed",
+      "why": "reproducing the token using the real, pinned RNG/id-generation dependencies in the exact call order the real project uses derived a byte-identical token from the same seed on the current beta/head line, and found the equivalent token on the current stable line via a narrow, bounded search; every seed component was traced to a public, non-secret, or client-generated-and-echoed-back source, closing the authorization-boundary chain at same-run-caller scope.",
+      "controls": {
+        "negative": "a wrong seed component, a wrong RNG call order, and (for the stable line) an out-of-window timestamp guess all failed to derive a working token",
+        "positive": "the reimplemented seed-construction and RNG-call shape was independently checked against the real published package's compiled source and confirmed identical, not just assumed correct by construction",
+        "canary": "a benign, local marker delivered through the predicted token to a local mock webhook route, never a real production-operated endpoint",
+        "replay": "reproduced across two sessions and re-verified after a packaging/hardening pass; submitted to the program and returned as a HackerOne duplicate, treated as a validity signal rather than a refutation; cross-tenant (genuinely unrelated third-party) reach was checked for and honestly not claimed"
+      }
+    },
+    {
+      "candidate": "C-workflow-ownerid-stub",
+      "pattern": "vuln.workflow-step-injection",
+      "signal": "a self-hosted backend implementation writes literal empty-string tenant-scoping fields with an explicit TODO-stub comment on entity creation",
+      "oracle": "adjudication-oracle",
+      "verdict": "needs_review",
+      "why": "the stub is real and verbatim, independently re-verified against primary source, but no code in this backend reads either field and the real hosted production backend has no equivalent code at all, so this is currently write-only unused metadata, not a proven access-control gap — a real observation with unproven impact, not a confirmed finding and not fully refuted either.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "traced every call site that reads either field name across the backend implementation; none found",
+        "canary": "n/a",
+        "replay": "n/a — closed pending resumption if a read site is ever added or found"
+      }
+    },
+    {
+      "candidate": "C-workflow-step-completion-forgery",
+      "pattern": "vuln.workflow-step-injection",
+      "signal": "step-correlation identifiers use the identical seeded/deterministic RNG as the confirmed-predictable hook/webhook tokens",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "step completion is dispatched through an internal message queue, not a public, token-only HTTP endpoint, and no public API accepts a bare step id plus a claimed result — forging a completion would require enqueueing into the underlying queue infrastructure itself, a separate access-control boundary a predicted id does not grant.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "confirmed directly via an architecture read of the dispatch code path, not assumed from the token finding's mechanism alone",
+        "canary": "n/a",
+        "replay": "n/a — architecture-level negative, checked once and considered exhausted"
+      }
+    },
+    {
+      "candidate": "C-git-transport-rce",
+      "pattern": "os-command-injection",
+      "signal": "an install CLI's accept-any-git-URL fallback appeared to permit exotic git transport schemes",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "the locally installed git binary refuses the exotic transport by default as part of its own hardened protocol allowlist, an authoritative negative from the dependency itself rather than a self-built harness result.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "confirmed by directly attempting the transport locally and observing git's own refusal message and exit code",
+        "canary": "n/a",
+        "replay": "deterministic, dependency-version-pinned behavior"
+      }
+    },
+    {
+      "candidate": "C-ms-redos",
+      "pattern": "known-cve-exploitation",
+      "signal": "an open public GitHub issue claimed a ReDoS timing reproduction against the exact currently-published version of a small utility library",
+      "oracle": "execution-oracle",
+      "verdict": "refuted",
+      "why": "the issue's own claimed proof-of-concept input, run directly against the real currently-published package, returned roughly two orders of magnitude faster than the claimed timing, because the package already carries the length-cap guard the issue's own suggested fix proposes; the value regex also lacks any nested/overlapping-quantifier shape that would cause true catastrophic backtracking.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "eight further adversarial input shapes at the maximum allowed length were also sub-millisecond, showing the negative isn't an artifact of the one tested input",
+        "canary": "n/a",
+        "replay": "deterministic against the pinned, currently-published version"
+      }
+    },
+    {
+      "candidate": "C-staticroute-fw",
+      "pattern": "legacy-route-differential",
+      "signal": "a sibling framework's route-rule/prerender pipeline is a named, high-priority program focus area with a very recently merged, CVE-citing fix",
+      "oracle": "execution-oracle",
+      "verdict": "held",
+      "why": "the project's own existing regression-test fixture matrix, purpose-built for exactly these bypass classes, was run directly against this checkout and passed in full; the traversal path was independently traced from the literal check string to the exact string later used in the filesystem join, plus confirming the join helper itself never decodes percent-sequences, so even a check-bypassing encoding trick can't reach a real traversal downstream.",
+      "controls": {
+        "negative": "n/a",
+        "positive": "ran the project's real test suite (not a re-implementation) for the basicAuth-ordering focus area on this exact checkout, both dev and production presets, full pass",
+        "canary": "n/a",
+        "replay": "deterministic against this checkout's HEAD; recorded recommendation not to sink further budget into this asset's named focus areas absent a genuinely different angle"
+      }
+    }
+  ]
+}

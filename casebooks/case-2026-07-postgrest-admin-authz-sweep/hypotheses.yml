@@ -1,0 +1,107 @@
+case: case-2026-07-postgrest-admin-authz-sweep
+
+# signal -> hypothesis -> predicted finding -> oracle plan -> outcome.
+# Light by design: the reasoning trail the routing brain should reproduce.
+hypotheses:
+  - id: H-F001
+    from_signal: "a large admin-prefixed RPC family is reachable on the public PostgREST endpoint; role is only resolved client-side"
+    pattern: "candidate:rpc-family-guard-contrast"
+    hypothesis: "at least one member of the family is missing the in-body admin guard the rest share"
+    oracle_plan:
+      - "enumerate the FULL RPC catalog via the authed schema/OpenAPI doc (not just what the client bundle organically calls)"
+      - "call every admin-prefixed RPC from a non-admin session, read-only first"
+      - "diff the denial signature across the family; the one that returns data instead of a permission error is the lead"
+      - "negative control: confirm ~30 siblings deny identically, independently, on a second pass"
+      - "replay: reproduce the outlier's success on a fresh call, independently of the first hunter run"
+    outcome: confirmed
+    note: "one investigative RPC returned live account PII + a cross-user correlation graph for a non-admin caller, with a real-vs-empty differential; every sibling denied. See oracle-matrix F-001."
+
+  - id: H-F001-xuser
+    from_signal: "F-001's mechanism accepts an arbitrary batch of subject identifiers (emails), so a third party's row is reachable in principle"
+    pattern: "candidate:rpc-family-guard-contrast"
+    hypothesis: "the confirmed sink can retrieve a real non-consenting third party's PII, escalating severity"
+    oracle_plan:
+      - "the tester's own account's cross-user correlation fields were all empty/zero (clean account), so self-query cannot show the aggregate leak"
+      - "operator provides ONE real, consented third-party identifier to test with, under review-gate"
+      - "call the RPC with that identifier and observe whether a populated row (not just an existence bit) returns"
+    outcome: needs_review
+    note: >
+      the identifier provided by the operator turned out not to be registered on the target, so a
+      real third-party row could not be retrieved. The existence-oracle behavior (registered vs. not)
+      was independently confirmed cross-account, which proves the enumeration leg but not the PII leg
+      against a genuine third party. Severity stays capped at the self-account-demonstrated finding until
+      a registered third-party identifier is available under review-gate.
+
+  - id: H-header-trust
+    from_signal: "backend response appears to vary on a client-suppliable tier/environment header"
+    pattern: pattern.ui-only-policy-enforcement
+    hypothesis: "a paywall/tier/feature gate trusts the client-supplied header value directly"
+    oracle_plan:
+      - "replay the same request with a non-browser client to rule out a CORS/browser confound"
+      - "forge the header to a privileged value; compare the full response body/headers to baseline"
+      - "negative control: unmodified header on the same endpoint"
+    outcome: refuted
+    note: "byte-identical response with the header forged vs. unmodified; the original 'vary' signal was a first-test-rig artifact, not a live behavior difference. Kept as the card's refutation for this shape."
+
+  - id: H-rls-crosstenant
+    from_signal: "direct PostgREST reads are scoped only by a client-chosen owner/tenant filter"
+    pattern: pattern.client-supplied-selector-authz
+    hypothesis: "dropping or changing the filter returns another tenant's rows if RLS is permissive"
+    oracle_plan:
+      - "re-issue the app's own organic queries with the filter removed or set to a foreign id, across the full schema"
+      - "negative control: an out-of-range / clearly-foreign id on a table expected to be empty for the caller"
+      - "contain to a single row read, redact, no bulk dump"
+    outcome: held
+    note: "zero cross-tenant rows returned across every relation actually tested; every non-empty user-scoped table returned exactly the caller's own row. See oracle-matrix C-rls-crosstenant."
+
+  - id: H-mutating-rpc-errordiff
+    from_signal: "the admin RPC family includes money-moving (approve/process/payout/delete/toggle) functions"
+    pattern: "candidate:rpc-family-guard-contrast"
+    hypothesis: "read-gate holding does not prove the mutating siblings are gated the same way"
+    oracle_plan:
+      - "call each mutating RPC with a well-formed but NONEXISTENT target id, so no action can complete regardless of the guard's presence"
+      - "read the error: a role/permission error means the guard fired before data validation; a not-found/no-op means data validation fired first and the guard is unproven"
+      - "verify via pre/post state reads that nothing was created, modified, or deleted"
+    outcome: held
+    note: "all mutating RPCs tested denied via a role/permission error before touching data; pre/post state identical. Technique kept as the safe way to probe a mutating RPC's guard without ever completing the mutation."
+
+  - id: H-entitlement-gate
+    from_signal: "the paywall/entitlement check is a separate advisory RPC from the RPCs serving the paid dataset"
+    pattern: "candidate:decoupled-entitlement-gate"
+    hypothesis: "a caller who skips the advisory check still gets the full paid dataset from the data RPCs directly"
+    oracle_plan:
+      - "confirm the data RPCs take no entitlement parameter and are not observed calling the entitlement RPC internally"
+      - "negative control needed: replay the same calls from a genuinely non-entitled (free / expired) session"
+      - "if the unentitled session gets full data -> confirmed bypass; if denied/empty -> gated elsewhere (RLS/grant), refuted"
+    outcome: needs_review
+    note: "mechanism (decoupled gate, no server-side re-check) is observed and consistent, but the decisive negative control could not be run — no non-entitled account was available, and automated account creation was blocked by a bot gate. Stays needs_review; do not treat as confirmed."
+
+  - id: H-coupon-pricing
+    from_signal: "a coupon/pricing function accepts client-supplied economics fields (interval, expected price, an entitlement-duration flag)"
+    pattern: pattern.client-supplied-selector-authz
+    hypothesis: "the server trusts the client-supplied price/entitlement fields instead of recomputing them"
+    oracle_plan:
+      - "vary the expected-price field away from the server's true price; expect a reject if the server recomputes"
+      - "check whether a promotional code is independently redeemable for a higher entitlement than the server resolves"
+    outcome: held
+    note: "tampered price fields were rejected server-side; entitlement duration is server-derived, not client-set. Held control, no finding."
+
+  - id: H-signup-hardening
+    from_signal: "signup has a bot/anti-automation gate in front of account creation, plus one auto-confirmed identity factor"
+    pattern: pattern.ui-only-policy-enforcement
+    hypothesis: "the native signup endpoint or the protecting function can be reached/abused to auto-create accounts (trial-abuse farm) or accept privileged fields"
+    oracle_plan:
+      - "call the native signup endpoint directly; expect a server-side block forcing the protecting function"
+      - "analyze the protecting function's accepted fields for privileged/mass-assignment values, without completing a full signup"
+    outcome: held
+    note: "native signup is blocked at the database layer, forcing the protecting function; that function's completion is gated behind a working bot challenge. Mass-assignment on the signup body specifically stayed UNTESTED (blocked by the same gate) — recorded as a coverage gap, not a held claim, and NOT rolled up into case.yml's held_defenses for that reason."
+
+  - id: H-self-referral
+    from_signal: "referral attribution RPCs accept a client-supplied referral code and source"
+    pattern: pattern.client-supplied-selector-authz
+    hypothesis: "a user can attribute their own referral code to themselves for a self-referral reward"
+    oracle_plan:
+      - "call the attribution RPC with the caller's own real referral code"
+      - "expect a server-side rejection if a self-referral guard exists"
+    outcome: held
+    note: "explicit self_referral rejection server-side. Held control, no finding."

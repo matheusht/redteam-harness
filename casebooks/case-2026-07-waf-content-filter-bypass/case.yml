@@ -1,0 +1,134 @@
+id: case-2026-07-waf-content-filter-bypass
+date: 2026-07
+target_class: >
+  Public bug-bounty sandbox pairing (a) a vendor-branded web-application gateway/WAF product's own
+  file-upload testing surface, and (b) a separately hosted, off-the-shelf-style public CMS with
+  query-routed content pages and contact/complaint forms — both fronted by the same WAF/gateway
+  layer. Black-box, fully unauthenticated testing; a sibling admin route exists behind separate auth
+  not exercised this engagement.
+surfaces:
+  - upload_surface          # public multipart upload form behind a content-based filter
+  - admin_route             # auth-gated sibling of the upload surface, not exercised
+  - cms_query_routes        # query-parameter-routed CMS content pages
+  - cms_search              # search form reflecting input into two sinks
+  - cms_contact_form        # public contact form, CSRF-token gated
+  - cms_complaint_form      # public complaint form with a numeric tracking-lookup field
+  - waf_gateway_layer       # cross-cutting WAF/gateway fingerprinting and blocking
+auth_model: >
+  fully unauthenticated black-box testing; no login used anywhere in this engagement; a separate
+  admin route exists behind its own auth, not accessed this engagement; the WAF/gateway layer
+  performs request-fingerprint-based access shaping (beyond a simple User-Agent check) ahead of the
+  application itself.
+scope_ref: "Plane 3 engagement scope (target repo) — not reproduced here"
+
+confirmed_findings:
+  - label: F1
+    pattern: "upload.arbitrary-file-upload"
+    owasp: "A04:2021 Insecure Design / OWASP File Upload"
+    severity: medium
+    one_line: >
+      a content-based upload filter blocked known PHP tag-opening syntax and a broad set of
+      RCE-primitive function-call/keyword/superglobal signatures, but missed one syntactically valid
+      alternate PHP tag form, letting PHP-tagged content through the filter with no confirmed
+      web-reachable storage path (filter-bypass-confirmed, not code-execution-confirmed).
+  - label: F2
+    pattern: "candidate:keyword-blocklist-syntax-equivalence-gap"
+    owasp: "A04:2021 Insecure Design / OWASP File Upload (content-detector signature gap)"
+    severity: medium
+    one_line: >
+      the same filter's function-call-shape and superglobal-access signature classes were evaded
+      entirely by a shell-exec operator syntax carrying a genuinely functional (if reachable)
+      command — not merely inert content — but reachability of the uploaded artifact could not be
+      established after exhaustive path/route/subdomain enumeration, so impact stays honestly capped
+      at filter-bypass-confirmed; it would be critical if reachability were ever separately shown.
+
+refuted_candidates:
+  - label: C-xss-search-breakout
+    looked_like: >
+      a raw single-quote reaching two reflection sinks from one search input (an HTML text sink and
+      an inline script variable assignment) looked like a classic quote-breakout for reflected XSS.
+    refuted_by: >
+      ten distinct encoding/technique variants (overlong UTF-8, doubled quotes, a backslash
+      immediately before the quote, fullwidth/typographic quote look-alikes, a legacy unicode
+      escape) all failed against a custom escaping scheme that both character-substitutes the quote
+      and separately doubles a raw backslash — a deliberate, competent scheme (it specifically closes
+      the classic trailing-backslash-escapes-the-closing-quote trick), not an accidental one-off miss.
+    pattern: "xss.cross-site-scripting"
+  - label: C-sqli-tracking-lookup
+    looked_like: >
+      a WAF-keyword-filter bypass (an alternate boolean operator standing in for the blocked
+      AND/OR keywords) on a numeric record-lookup field looked like a live SQL-injection primitive.
+    refuted_by: >
+      a matched true/false boolean differential against a real, self-owned record (not a
+      nonexistent id, which is not diagnostic either way) returned the identical "found" result
+      regardless of the injected clause's truth value — zero effect on query logic, consistent with
+      parameterization or integer casting of a numeric field.
+    pattern: "sqli.sql-injection"
+  - label: C-lang-param-traversal
+    looked_like: >
+      a content-language selector parameter that accepted a value at all looked like a
+      path-traversal/LFI candidate.
+    refuted_by: >
+      a path-traversal-shaped payload received the exact same generic gateway-level block as any
+      other value outside a two-item allowlist — a positive allowlist enforced ahead of the app, not
+      app logic, holding identically for garbage input and a crafted traversal string alike.
+    pattern: "patht.path-traversal-lfi"
+
+held_defenses:
+  - control: >
+      extension allowlist backed by two independent filename-anomaly rules (one for the literal
+      blocked extension family, a second dedicated to double-extension/null-byte tricks)
+    why_held: >
+      every scripting-extension variant tried (case variants, alternate scripting extensions,
+      double-extension, null-byte) hit one of the two rules; no gap found across the technique class.
+    contrast_pattern: "upload.arbitrary-file-upload"
+  - control: >
+      content-based filter covering three independent signature classes: a bare-keyword blocklist
+      for recon-flavored function names, a broad function-call-shape detector, and PHP-superglobal-
+      access detection
+    why_held: >
+      essentially every common RCE-primitive function-call form tried was caught by the call-shape
+      detector alone — the filter is genuinely broad and mostly well designed; the gap found (F2) is
+      one narrow alternate-syntax construct carrying no keyword, no call shape, and no superglobal
+      access at all, not a wholesale filter failure.
+    contrast_pattern: "candidate:keyword-blocklist-syntax-equivalence-gap"
+  - control: >
+      custom input-escaping scheme on the search reflection sink that both character-substitutes a
+      raw quote and separately doubles a raw backslash
+    why_held: >
+      the backslash-doubling specifically defeats the classic trailing-backslash-escapes-the-sink's-
+      closing-quote technique — a sign of deliberate, competent escaping, evaluated across ten
+      distinct encoding attempts before being recorded as held.
+    contrast_pattern: "xss.cross-site-scripting"
+  - control: gateway-level positive allowlist on a content-language parameter
+    why_held: >
+      only two values pass; every other value, garbage or a crafted traversal string alike, receives
+      a byte-identical generic rejection from the gateway layer itself.
+    contrast_pattern: "patht.path-traversal-lfi"
+  - control: >
+      non-browser request-fingerprint gating ahead of the application (survives a spoofed browser
+      User-Agent header)
+    why_held: >
+      a command-line request carrying a full browser User-Agent still received a direct rejection
+      with no gateway page ever rendered, indicating a deeper fingerprint (TLS/header-shape) than a
+      single spoofable header.
+  - control: gateway-level route allowlist independent of the upload content filter
+    why_held: >
+      script/query-param serving guesses made during a reachability search were intercepted by a
+      distinct gateway route-block class, separate from the plain not-found responses on real path
+      guesses — this is what let the reachability search trust its own negative result instead of
+      wondering whether the gateway was silently hiding a real path.
+    contrast_pattern: "upload.arbitrary-file-upload"
+
+sanitization:
+  scrubbed: true
+  attestation: >
+    operator-scrubbed 2026-07: stripped the client/program name, the vendor gateway product name and
+    the CMS product name (kept only the abstract target_class), both real hostnames and all
+    subdomains, all internal WAF/gateway rule-id codes and error-code numbers (kept only the
+    generalizable technique of fingerprinting a WAF via its rule-id taxonomy, not the literal codes),
+    every uploaded-artifact filename and every canary/marker literal (kept as "a benign distinctive
+    marker, literal scrubbed"), the real self-owned tracking-number value obtained via an authorized
+    canary submission, the reproduction-target domain referenced in program policy, and all
+    file:line/remediation detail (those stay in Plane 3 / the engagement's own report). Only abstract
+    shapes, filter/signature-class detail, and oracle reasoning retained.
