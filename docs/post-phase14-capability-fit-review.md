@@ -354,16 +354,15 @@ failure modes, and why a smaller alternative is insufficient.
 
 ### Exact next decision to write, if any
 
-**None is required to *stay paused*.** If the project wants to unfreeze the cheapest item, the next
-decision to author is a **narrow Decision 0005 — "Harness-native workflow manifest + thin casebook
-retrieval index (sensors, not judges)"** that:
-- authorizes **only** spikes **A** and **B** above;
-- restates that both are read-only, produce no verdicts, hold no mutable/self-rewriting state, add no
+**None is required to *stay paused*.** If the project wants to unfreeze the cheapest item, a later
+narrow decision should cover **"Harness-native workflow manifest + thin casebook retrieval index
+(sensors, not judges)"**. It should:
+- authorize **only** spikes **A** and **B** above;
+- restate that both are read-only, produce no verdicts, hold no mutable/self-rewriting state, add no
   external dependency, and are deletable;
-- makes each spike's acceptance gate (measured context drop for A; firewall test for B) a hard
+- make each spike's acceptance gate (measured context drop for A; firewall test for B) a hard
   precondition for keeping the code;
-- explicitly does **not** authorize Tollbooth, Carbonyl, Fortémi, the sealed evaluator, or the
-  controller.
+- explicitly **not** authorize Tollbooth, Carbonyl, Fortémi, the sealed evaluator, or the controller.
 
 Tollbooth (C) and the sealed evaluator (D) each warrant their **own** later design-review decision; do
 not bundle them.

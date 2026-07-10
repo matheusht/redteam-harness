@@ -41,7 +41,10 @@ replay-before-accept) riding a frozen eval slice; UCB; pack/multi-account concur
 Durable product choices live in `docs/decisions/`. Start with
 `docs/decisions/0001-casebooks-patterns-routing.md` for the casebook / pattern-card /
 recon-routing layer that bridges engagement evidence into reusable harness knowledge without
-turning Plane 1 into raw target memory.
+turning Plane 1 into raw target memory. Read
+`docs/decisions/0005-reasoning-directed-evidence-constrained-research.md` for the canonical
+live-research policy: model reasoning remains flexible while authority, state, evidence, persistence,
+memory, and calibration receive explicit contracts.
 
 ## Provenance
 Merged from: the engineer's plan (structural base), a research-convergence brainstorm, a
