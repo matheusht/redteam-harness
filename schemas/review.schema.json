@@ -4,12 +4,13 @@
   "title": "Decision 0005 immutable typed review",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "review_id", "engagement_id", "review_type", "recorded_at", "entity_ref", "finding_revision", "input_refs", "input_hash", "evidence_refs", "rationale", "conflicting_evidence", "verdict", "corrections", "required_next_actions", "independence"],
+  "required": ["schema_version", "review_id", "engagement_id", "review_type", "proposed_finding_id", "recorded_at", "entity_ref", "finding_revision", "input_refs", "input_hash", "evidence_refs", "rationale", "conflicting_evidence", "verdict", "corrections", "required_next_actions", "independence"],
   "properties": {
     "schema_version": {"const": 1},
     "review_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
     "engagement_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
     "review_type": {"enum": ["signal", "claim_adjudication", "coverage", "regrade", "pocinator", "operator"]},
+    "proposed_finding_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
     "recorded_at": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
     "entity_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
     "finding_revision": {"type": ["integer", "null"], "minimum": 1},
@@ -43,7 +44,7 @@
   },
   "allOf": [
     {"if": {"properties": {"review_type": {"const": "signal"}}, "required": ["review_type"]}, "then": {"properties": {"verdict": {"enum": ["strong", "weak", "negative", "inconclusive"]}}}},
-    {"if": {"properties": {"review_type": {"const": "claim_adjudication"}}, "required": ["review_type"]}, "then": {"required": ["control_applicability"], "properties": {"verdict": {"enum": ["supported", "confirmed", "needs_review", "contaminated", "refuted"]}, "control_applicability": {"minItems": 1}}}},
+    {"if": {"properties": {"review_type": {"const": "claim_adjudication"}}, "required": ["review_type"]}, "then": {"required": ["control_applicability", "proposed_finding_id"], "properties": {"verdict": {"enum": ["supported", "confirmed", "needs_review", "contaminated", "refuted"]}, "control_applicability": {"minItems": 1}}}},
     {"if": {"properties": {"review_type": {"const": "coverage"}}, "required": ["review_type"]}, "then": {"required": ["bounded_space", "hypothesis_dispositions", "omitted_branch_challenge", "residual_uncertainty"], "properties": {"verdict": {"enum": ["continue", "coverage_dry", "blocked"]}, "independence": {"properties": {"fresh_context": {"const": true}}}}}},
     {"if": {"properties": {"review_type": {"const": "regrade"}}, "required": ["review_type"]}, "then": {"properties": {"verdict": {"enum": ["confirmed", "confirmed_with_correction", "escalation_found", "needs_more_evidence", "refuted", "blocked"]}, "independence": {"properties": {"fresh_context": {"const": true}}}}}},
     {"if": {"properties": {"review_type": {"const": "pocinator"}}, "required": ["review_type"]}, "then": {"required": ["claim_tuple_hash", "high_value"], "properties": {"verdict": {"enum": ["verified", "needs_rework", "claim_mismatch", "reward_hacked", "blocked"]}}}},

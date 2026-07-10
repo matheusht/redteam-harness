@@ -215,10 +215,8 @@
           "type": "string"
         },
         "reopening_condition": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string",
+          "minLength": 1
         },
         "strength": {
           "enum": [
@@ -556,8 +554,43 @@
               }
             }
           }
+        },
+        "finding_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "adjudication_review_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "adjudication_review_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "adjudication_event_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "supersedes_revision": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "change_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "review_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "review_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "reopen_hypothesis_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
         }
       }
+    },
+    "finding_refs": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
     }
   },
   "allOf": [
@@ -627,9 +660,8 @@
         "properties": {
           "payload": {
             "required": [
-              "record_id",
-              "record_path",
-              "record_digest"
+              "environment_ref",
+              "status"
             ]
           }
         }
@@ -848,7 +880,13 @@
             "required": [
               "finding_id",
               "finding_revision",
-              "status"
+              "status",
+              "finding_digest",
+              "adjudication_review_ref",
+              "adjudication_review_digest",
+              "adjudication_event_ref",
+              "supersedes_revision",
+              "change_reason"
             ]
           }
         }
@@ -934,7 +972,9 @@
           "payload": {
             "required": [
               "entity_id",
-              "status"
+              "status",
+              "review_ref",
+              "review_digest"
             ]
           }
         }

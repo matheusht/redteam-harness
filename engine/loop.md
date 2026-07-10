@@ -13,7 +13,7 @@ for objective in scope.active_objectives:          # benign, safe_signal-gated
      a = run_hunter(rung, bounded=True)            # live target, SERIALIZED -> emit attempt
      s = signal_oracle(a)
      if s and adjudication_oracle(a, controls, contamination, replay):
-        emit finding(confirmed); winners += rung; break       # coverage++
+        emit claim review; operator may file a revision-bound finding; winners += rung; break
      else:
         record attempt; continue                   # refusal = input to next rung
   stop_objective when: covered  OR  K≈3 dry rounds  OR  budget
@@ -47,3 +47,12 @@ for objective in scope.active_objectives:          # benign, safe_signal-gated
   what worked. No UCB until cross-engagement stats exist.
 - **Stop conditions per family** (set in the vuln card / scope): max attempts, max dry streak,
   cooldown after a confirmed finding, min evidence before escalation.
+
+## Decision-0005 record boundary
+
+The loop proposes semantic observations, candidates, hypotheses, and attempts. Record authority lives in
+`python3 tools/run-engagement.py`: immutable attempts/artifacts and append-only events reduce into the
+claim/search/coverage views. A routing signal or operator prior may select or reopen search but cannot
+change claim state. Claim adjudication requires a committed independent review; only an operator can
+file a contiguous finding revision. These contracts constrain evidence and authority, not the model's
+research reasoning.

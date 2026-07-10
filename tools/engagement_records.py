@@ -214,7 +214,17 @@ def _error_detail(error: Any) -> dict[str, Any]:
 
 
 def _semantic_record_errors(record: Any, schema_name: str) -> list[dict[str, Any]]:
-    if schema_name != "finding-v3" or not isinstance(record, dict):
+    if not isinstance(record, dict):
+        return []
+    if schema_name == "review":
+        independence = record.get("independence", {})
+        errors: list[dict[str, Any]] = []
+        if independence.get("reviewer_run_id") == independence.get("originating_run_id"):
+            errors.append({"code": "review_not_independent", "instance_path": "/independence", "schema_path": "/semantic", "message": "reviewer and originating runs must differ"})
+        if record.get("review_type") in {"claim_adjudication", "coverage", "regrade", "pocinator"} and independence.get("fresh_context") is not True:
+            errors.append({"code": "fresh_review_required", "instance_path": "/independence/fresh_context", "schema_path": "/semantic", "message": "this review type requires fresh context"})
+        return errors
+    if schema_name != "finding-v3":
         return []
     claims = record.get("claims", {})
     proof = record.get("proof", {})
@@ -346,6 +356,10 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
                 entity_id, kind, revision = identity
                 entry = {"type": kind, "engagement_id": record.get("engagement_id") or record.get("engagement"), "revision": revision, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at") or record.get("created_at")}
                 index.setdefault(entity_id, []).append(entry)
+            if record.get("event_type") == "scope.attested" and isinstance(record.get("engagement_id"), str):
+                entries = index.setdefault(record["engagement_id"], [])
+                if not any(entry["type"] == "engagement" for entry in entries):
+                    entries.append({"type": "engagement", "engagement_id": record["engagement_id"], "revision": None, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at")})
             if record.get("event_type") in {"candidate.proposed", "hypothesis.created"}:
                 payload = record.get("payload", {})
                 key = "candidate_id" if record["event_type"] == "candidate.proposed" else "hypothesis_id"
@@ -396,12 +410,11 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("supersedes_artifact_id",), {"artifact"}),
         ],
         "review": [
-            (("entity_ref",), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement"}),
             (("input_refs",), {"attempt", "finding", "artifact", "review", "environment"}),
             (("evidence_refs",), {"attempt", "artifact"}), (("conflicting_evidence",), {"attempt", "artifact"}),
         ],
         "engagement-event": [
-            (("evidence_refs",), {"attempt", "artifact"}), (("review_refs",), {"review"}),
+            (("evidence_refs",), {"attempt", "artifact"}), (("review_refs",), {"review"}), (("finding_refs",), {"finding"}),
         ],
         "report-manifest": [
             (("finding_id",), {"finding"}), (("adjudication_review_ref",), {"review"}),
@@ -423,6 +436,8 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
         if isinstance(legacy, dict):
             dynamic_specs.append((("legacy_import", "source_artifact_ref"), legacy.get("source_artifact_ref"), {"artifact"}))
     elif schema_name == "review":
+        if not (record.get("review_type") == "claim_adjudication" and record.get("entity_ref") == record.get("proposed_finding_id")):
+            dynamic_specs.append((("entity_ref",), record.get("entity_ref"), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement"}))
         for index_number, control in enumerate(record.get("control_applicability", [])):
             dynamic_specs.append((("control_applicability", str(index_number), "attempt_ref"), control.get("attempt_ref"), {"attempt"}))
         for index_number, disposition in enumerate(record.get("hypothesis_dispositions", [])):
@@ -436,11 +451,15 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
     elif schema_name == "engagement-event":
         payload = record.get("payload", {})
         dynamic_specs.extend([
+            (("payload", "environment_ref"), payload.get("environment_ref"), {"environment"}),
             (("payload", "source_observation_ref"), payload.get("source_observation_ref"), {"event", "attempt"}),
             (("payload", "routing_review_ref"), payload.get("routing_review_ref"), {"event", "review"}),
             (("payload", "candidate_ref"), payload.get("candidate_ref"), {"candidate"}),
             (("payload", "origin_ref"), payload.get("origin_ref"), {"candidate", "event", "review", "finding", "hypothesis"}),
             (("payload", "coverage_review_ref"), payload.get("coverage_review_ref"), {"event"}),
+            (("payload", "review_ref"), payload.get("review_ref"), {"review"}),
+            (("payload", "adjudication_review_ref"), payload.get("adjudication_review_ref"), {"review"}),
+            (("payload", "adjudication_event_ref"), payload.get("adjudication_event_ref"), {"event"}),
             (("payload", "experiment_refs"), payload.get("experiment_refs", []), {"event", "attempt"}),
             (("payload", "control_refs"), payload.get("control_refs", []), {"attempt"}),
             (("payload", "supporting_evidence_refs"), payload.get("supporting_evidence_refs", []), {"attempt", "artifact"}),

@@ -350,7 +350,10 @@
         "additionalProperties": false,
         "required": [
           "revision",
-          "status"
+          "status",
+          "digest",
+          "adjudication_review_ref",
+          "change_reason"
         ],
         "properties": {
           "revision": {
@@ -358,10 +361,23 @@
             "minimum": 1
           },
           "status": {
-            "type": [
-              "string",
-              "null"
+            "enum": [
+              "needs_review",
+              "supported",
+              "confirmed",
+              "contaminated",
+              "refuted"
             ]
+          },
+          "digest": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "adjudication_review_ref": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "change_reason": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
