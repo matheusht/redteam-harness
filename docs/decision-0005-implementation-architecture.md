@@ -104,12 +104,15 @@ python3 tools/run-engagement.py <subcommand> ...
 Initial subcommands:
 
 ```text
-init                 create new record files after the signed-scope gate
+init                 attest the signed scope and create records after the scope gate
 validate             validate schemas, hashes, references, and transition invariants
 register-artifact    hash and append an immutable artifact-manifest entry
 append-attempt       validate and append one immutable attempt
 append-event         validate and append one transition/decision event
-revise-finding       validate and add a new immutable finding revision
+record-review        validate, hash, and write one immutable review plus its commit event
+revise-finding       validate, hash, and add one immutable finding revision plus its commit event
+bind-report          validate and bind report bytes to an exact finding revision
+record-memory        validate and commit the terminal memory disposition
 reduce               deterministically rebuild state.snapshot.json
 check-resume         compare the tracked snapshot/views with a fresh reduction
 render               regenerate progress, coverage, and claim-to-proof views
@@ -140,10 +143,11 @@ write a `confirmed` event around a failed gate.
 The trusted command:
 
 1. validates the proposed record;
-2. resolves and hashes referenced artifacts;
+2. resolves and hashes referenced artifacts and every authoritative non-ledger record;
 3. checks scope, environment, transition, independence, and report-link invariants;
 4. appends the record or rejects it with machine-readable reason codes;
-5. regenerates derived state.
+5. commits immutable file records by digest in an append-only event;
+6. regenerates derived state.
 
 The command does not decide whether unfamiliar code is vulnerable. It checks whether the semantic
 judgment is supported by the required record types and authority sources.
@@ -189,6 +193,34 @@ provenance, but correctness must not depend on a clean worktree or Git history b
 
 Concurrency remains one by default. If scope later permits multiple live workers, append operations
 must still serialize through this ledger; that requirement does not authorize parallel target work.
+
+### 4.2 Immutable file records and interruption recovery
+
+Environment preflights, finding revisions, reviews, report manifests, memory dispositions, and
+migration manifests are canonicalized and hashed. Their creating event records the relative path,
+schema version, record ID/revision, and SHA-256 digest. Validation recomputes every committed digest;
+editing a file in place fails even if its JSON still validates. A superseding record receives a new
+path/revision and commit event. Artifact bytes remain committed through `artifacts.jsonl`.
+
+An append command holds one engagement lock and follows a declared order. Attempts and artifacts are
+authoritative in their own hash-chained ledgers and are reduced directly; no mirror event is required
+to make them exist. Decision/transition events may reference them only after their ledger append is
+fsynced. Immutable file records are written atomically to a new path, fsynced, then committed by an
+event. An uncommitted new file is an orphan: validation reports it, reduction ignores it, and an
+idempotent retry may commit the identical digest or quarantine it with operator review. An event that
+references a missing/unhashed record always fails. Tests interrupt every write boundary and require
+the same reduced state after repair/retry; no historical line or committed file is rewritten.
+
+### 4.3 Scope attestation and amendments
+
+The active scope hash is SHA-256 over the exact UTF-8 bytes of `scope.md`; the CLI does not normalize
+or rewrite it. `init` requires the template's operator and date fields to be non-placeholder, the
+signed checkbox to be checked, and `record_kernel: decision-0005-v1`. It appends a `scope.attested`
+event containing the hash, non-secret operator label, signed date, kernel selection, and optional
+superseded scope hash. This is a human attestation plus tamper-evident binding, not a cryptographic
+identity claim. Any amendment preserves the prior Git/file history externally and appends a new
+attestation before records use the new hash. Dependent records cite the exact scope hash; scope drift
+blocks new writes until re-attested.
 
 ## 5. Engagement record layout
 
@@ -290,6 +322,13 @@ Every impact claim is atomic enough to bind evidence separately. “Arbitrary co
 cross-tenant takeover” must be split if the proof establishes only one. Severity is revisioned
 judgment, not an event-truth field.
 
+A version-3 `legacy_import` profile is conditional on `claim_state: needs_review`. It identifies the
+source artifact/hash and represents unavailable scope, environment, attempt, control, replay, or
+adjudication facts with typed `missing_legacy_evidence` entries rather than fabricated refs. Such a
+revision cannot transition to `supported` or `confirmed`; a later ordinary revision must supply the
+full current proof contract. This profile makes transparent migration schema-valid without weakening
+the ordinary finding contract.
+
 ### 6.2 Attempt version 2: immutable event evidence across domains
 
 Add `schemas/attempt-v2.schema.json`. Required fields:
@@ -322,6 +361,8 @@ Add `schemas/artifact.schema.json`. Each artifact entry records:
 - target/environment refs;
 - sensitivity/redaction status;
 - whether it contains executable capability;
+- advisory Zone classification (`clear_local`, `review_required`, or `unknown`);
+- fresh `escalation.confirmed` event and cleanup-obligation refs when Zone-2/review-required;
 - cleanup-ledger reference where relevant;
 - immutable/supersedes relationship.
 
@@ -356,6 +397,7 @@ review.pocinator_completed        review.coverage_completed
 coverage.status_changed           report.generated
 operator.review_recorded          submission.recorded
 cleanup.updated                   memory.disposition_recorded
+escalation.confirmed              legacy.record_imported
 engagement.blocked                engagement.reopened
 ```
 
@@ -381,9 +423,17 @@ Typed outcomes remain distinct:
 - Pocinator: `verified`, `needs_rework`, `claim_mismatch`, `reward_hacked`, `blocked`;
 - coverage: `continue`, `coverage_dry`, `blocked`.
 
-A regrade requires fresh-context metadata. A definite `reward_hacked` outcome on a high-value finding
-requires a second independent Pocinator record before terminal treatment. Non-verified Pocinator
-outcomes route back; they do not automatically refute the vulnerability.
+A regrade requires fresh-context metadata: reviewer/run ID, immutable input-set hash, prior-verdict
+visibility, fresh-context attestation, reviewer/model identity, and disconfirming objective. Mechanical
+validation rejects reuse of the originating or prior review run ID and rejects two purportedly
+independent reviews with the same reviewer run and input transcript. It cannot prove cognitive
+independence; that residual is explicit reviewer/operator judgment. Control applicability and replay
+freshness likewise require typed attempt refs and rationale while semantic applicability remains an
+adjudication judgment.
+
+A definite `reward_hacked` outcome on a high-value finding requires a second independent Pocinator
+record before terminal treatment. Non-verified Pocinator outcomes route back; they do not automatically
+refute the vulnerability.
 
 ### 6.6 Environment preflight
 
@@ -402,7 +452,11 @@ Add `schemas/environment-preflight.schema.json`. It records:
 - advisory Zone classification: `clear_local`, `review_required`, or `unknown`.
 
 No preflight field may say `authorized`. A target/version drift creates a new preflight revision and
-invalidates attempts that claim the old environment while using the new one.
+invalidates attempts that claim the old environment while using the new one. An
+`escalation.confirmed` event is valid only when created by an operator for the same engagement, active
+scope hash, environment ref, bounded action/artifact class, and cleanup obligation. It expires after
+the stated one-shot action or explicit time bound and cannot be reused across engagements or scope/
+environment revisions.
 
 ### 6.7 Report manifest and memory disposition
 
@@ -457,8 +511,9 @@ integrity errors (empty for a valid snapshot)
 ```
 
 The snapshot never embeds artifact bodies, report prose, or rewritten attempts. It is safe to delete
-and regenerate. `check-resume` fails if the committed snapshot or generated views differ from a fresh
-reduction.
+and regenerate. Canonical key/list ordering is specified by the reducer, and snapshots/views contain
+source-ledger hashes rather than wall-clock generation timestamps. `check-resume` fails if the
+committed snapshot or generated views differ from a fresh reduction.
 
 ### 7.3 Transition invariants
 
@@ -480,7 +535,12 @@ Mechanical invariants include:
 - a non-verified Pocinator result prevents advisory-ready state but does not change finding truth by
   itself;
 - scope/environment changes invalidate only dependent current decisions; they do not rewrite history;
-- engagement closure requires cleanup disposition and memory disposition.
+- engagement closure requires cleanup disposition and memory disposition;
+- `cleanup.updated` carries structured obligation IDs, statuses, operator/date, active scope hash, and
+  artifact refs; `close` requires every live-artifact obligation to be `completed`, `not_applicable`
+  with rationale, or explicitly `blocked`, while `cleanup.md` remains the human ledger;
+- any review-required/Zone-2 artifact requires a same-engagement, active-scope/environment, unexpired
+  `escalation.confirmed` event created before artifact registration, plus a cleanup obligation.
 
 These rules validate evidence obligations and state coherence. They do not decide whether a call graph
 is realistic, whether a protocol invariant is violated, or whether impact is novel.
@@ -602,7 +662,10 @@ A manifest lists:
 Initial manifests may cover `llm-application`, `web-api`, `source-audit`, `supply-chain`, and
 `blockchain-consensus`, while referring to existing `skills/` cards. A pack proposes semantic
 vocabulary; it does not become an oracle. Unknown domains can still use the core finding contract with
-free domain identifiers and structured claims.
+free domain identifiers and structured claims. Version 1 keeps governed core records closed: a domain
+pack may add namespaced taxonomy/schema references and separate registered artifacts, not arbitrary
+unchecked keys inside the core record. A demonstrated need for inline extension data requires a later
+versioned schema contract; it may not bypass `additionalProperties: false`.
 
 ## 12. Safety and operational controls
 
@@ -613,7 +676,9 @@ The new machinery must make existing gates harder to bypass, never broader:
 - The orchestrator still does not drive the target beyond establishing a session; a bounded Hunter
   performs authorized target actions and returns attempts.
 - Before any Zone-2 artifact is **created**, stop for fresh explicit human confirmation and append the
-  confirmation/cleanup refs. Engagement-local standing language cannot override the root gate.
+  confirmation/cleanup refs. Engagement-local standing language cannot override the root gate. The
+  record kernel can reject registration/use of an unconfirmed artifact but cannot prevent bytes made
+  outside it; pre-creation prevention remains an orchestrator/action-broker responsibility.
 - Review remains required before moving self -> stored/persistent -> cross-user.
 - Advisory Zone output is only `clear_local`, `review_required`, or `unknown`, never `authorized`.
 - Credentials may be present for a run but are represented only as booleans/non-secret account labels.
@@ -626,7 +691,10 @@ The new machinery must make existing gates harder to bypass, never broader:
 ## 13. Implementation program: thin vertical slices
 
 Every slice must add an invariant, remove or internalize an ambiguity, and close with tests. No slice
-claims improved vulnerability discovery merely because it passes.
+claims improved vulnerability discovery merely because it passes. Before implementation, each slice
+records the invariant, authority path replaced/internalized, new failure modes and loaded-context cost,
+smaller alternative considered, and removal/rollback path. This is the Decision-0004 complexity gate,
+not post-hoc accounting.
 
 ### Slice A — Authority and full schema validation
 
@@ -663,9 +731,10 @@ withheld, do not claim full JSON Schema conformance and do not hand-roll a parti
 **Acceptance:**
 
 - identical ledgers reduce byte-identically across fresh runs;
-- changed historical lines, bad hashes, unknown events, duplicate IDs, stale snapshots, and invalid
-  transitions fail;
-- interruption after any append resumes to the same state;
+- changed historical lines, bad hashes, unknown events, duplicate IDs, stale snapshots, invalid
+  transitions, modified committed file records, and orphan/missing commit records fail;
+- interruption after every ledger/file/event write boundary resumes to the same state through
+  idempotent retry or explicit orphan handling;
 - original attempts and artifacts are never rewritten during reduction;
 - current narrative-only engagements remain readable and untouched.
 
@@ -796,8 +865,7 @@ The inventory hashes every source file and classifies it as structured-valid, st
 narrative-only, artifact, report, submission-like, or unknown. Applying an approved migration:
 
 1. registers the original file as an immutable legacy artifact;
-2. appends `legacy_record_imported` provenance through an explicitly versioned migration event if
-   that event type is accepted for the migration release;
+2. appends `legacy.record_imported` provenance through the versioned migration event;
 3. creates a version-3 finding revision only from reconstructable fields;
 4. marks unavailable attempt history and controls as missing;
 5. defaults claim state to `needs_review` when adjudication cannot be reconstructed;
@@ -1198,7 +1266,7 @@ evaluator, labels, budgets, or holdouts to rescue the treatment. UCB/bandit rout
 
 ### 18.2 Feature rollout
 
-Use an engagement-level flag in the signed scope or initialization manifest:
+Use an engagement-level flag in the signed scope (the authoritative choice):
 
 ```text
 record_kernel: legacy | decision-0005-v1
@@ -1216,6 +1284,12 @@ or rewrite it to look successful. A reducer/version bug blocks the engagement un
 operator approves a documented compatibility path.
 
 ## 19. Required implementation evidence
+
+The accepted Decision 0005 plus the explicit implementation goal authorize this post-Phase-14 work;
+that authorization does not enable any deferred controller, live-target action, or promotion power.
+The experiment lifecycle command and engagement-record command are separate public surfaces: the first
+owns candidate evaluation, while the second owns Plane-3 records. Neither may call itself through a
+hidden duplicate authority path.
 
 Every slice's completion report must include:
 
