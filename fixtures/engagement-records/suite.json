@@ -1897,6 +1897,646 @@
       },
       "schema": "finding-v3",
       "valid": false
+    },
+    {
+      "id": "engagement-event-minimum",
+      "record": {
+        "actor": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "engagement_id": "eng-1",
+        "entity_refs": [
+          "eng-1"
+        ],
+        "event_id": "event-scope-1",
+        "event_type": "scope.attested",
+        "evidence_refs": [],
+        "ex_ante": null,
+        "payload": {
+          "operator_id": "operator-1",
+          "record_kernel": "decision-0005-v1",
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "scope_snapshot_path": "scope-attestations/0000000000000000000000000000000000000000000000000000000000000000.md",
+          "signed_date": "2026-07-10",
+          "supersedes_scope_hash": null
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "rationale": "Signed scope bytes attested.",
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "review_refs": [],
+        "schema_version": 1,
+        "sequence": 1,
+        "state_changes": [
+          {
+            "current": "active",
+            "dimension": "engagement",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "active",
+            "dimension": "coverage",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "pending",
+            "dimension": "memory",
+            "entity_id": "eng-1",
+            "previous": null
+          }
+        ]
+      },
+      "schema": "engagement-event",
+      "valid": true
+    },
+    {
+      "id": "engagement-event-rich",
+      "record": {
+        "actor": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "engagement_id": "eng-1",
+        "entity_refs": [
+          "eng-1"
+        ],
+        "event_id": "event-observation-1",
+        "event_type": "observation.recorded",
+        "evidence_refs": [],
+        "ex_ante": {
+          "ordinal": "strong",
+          "probability": 0.6,
+          "recorded_before_outcome": true
+        },
+        "payload": {
+          "entity_id": "observation-1",
+          "entity_type": "observation",
+          "reason": "bounded fixture",
+          "status": "recorded"
+        },
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "rationale": "Observation captured with an ex ante expectation.",
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "review_refs": [],
+        "schema_version": 1,
+        "sequence": 2,
+        "state_changes": []
+      },
+      "schema": "engagement-event",
+      "valid": true
+    },
+    {
+      "id": "engagement-event-unknown-type",
+      "record": {
+        "actor": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "engagement_id": "eng-1",
+        "entity_refs": [
+          "eng-1"
+        ],
+        "event_id": "event-scope-1",
+        "event_type": "free.form",
+        "evidence_refs": [],
+        "ex_ante": null,
+        "payload": {
+          "operator_id": "operator-1",
+          "record_kernel": "decision-0005-v1",
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "signed_date": "2026-07-10",
+          "supersedes_scope_hash": null
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "rationale": "Signed scope bytes attested.",
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "review_refs": [],
+        "schema_version": 1,
+        "sequence": 1,
+        "state_changes": [
+          {
+            "current": "active",
+            "dimension": "engagement",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "active",
+            "dimension": "coverage",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "pending",
+            "dimension": "memory",
+            "entity_id": "eng-1",
+            "previous": null
+          }
+        ]
+      },
+      "schema": "engagement-event",
+      "valid": false
+    },
+    {
+      "id": "state-snapshot-minimum",
+      "record": {
+        "active_blockers": [],
+        "active_environment_ref": null,
+        "artifact_count": 0,
+        "attempt_count": 0,
+        "candidates": {},
+        "cleanup": {
+          "obligations": [],
+          "open_count": 0
+        },
+        "coverage": "active",
+        "engagement_id": "eng-1",
+        "event_count": 1,
+        "findings": {},
+        "hypotheses": {},
+        "integrity_errors": [],
+        "last_event_id": "event-scope-1",
+        "ledger_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "memory_disposition": null,
+        "operator_priors": [],
+        "outstanding_reviews": [],
+        "report_refs": [],
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "source_hashes": {
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "submission_refs": []
+      },
+      "schema": "state-snapshot",
+      "valid": true
+    },
+    {
+      "id": "state-snapshot-rich",
+      "record": {
+        "active_blockers": [
+          "review pending"
+        ],
+        "active_environment_ref": "preflight-1",
+        "artifact_count": 1,
+        "attempt_count": 2,
+        "candidates": {
+          "candidate-1": {
+            "rationale": "selected fixture",
+            "status": "selected"
+          }
+        },
+        "cleanup": {
+          "obligations": [],
+          "open_count": 0
+        },
+        "coverage": "blocked",
+        "engagement_id": "eng-1",
+        "event_count": 5,
+        "findings": {
+          "F-1": {
+            "revision": 1,
+            "status": "needs_review"
+          }
+        },
+        "hypotheses": {
+          "hypothesis-1": {
+            "rationale": "running fixture",
+            "status": "running"
+          }
+        },
+        "integrity_errors": [],
+        "last_event_id": "event-scope-1",
+        "ledger_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "memory_disposition": null,
+        "operator_priors": [],
+        "outstanding_reviews": [],
+        "report_refs": [],
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "source_hashes": {
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "submission_refs": []
+      },
+      "schema": "state-snapshot",
+      "valid": true
+    },
+    {
+      "id": "state-snapshot-unknown-property",
+      "record": {
+        "active_blockers": [],
+        "active_environment_ref": null,
+        "artifact_count": 0,
+        "attempt_count": 0,
+        "candidates": {},
+        "cleanup": {
+          "obligations": [],
+          "open_count": 0
+        },
+        "coverage": "active",
+        "engagement_id": "eng-1",
+        "event_count": 1,
+        "findings": {},
+        "hypotheses": {},
+        "integrity_errors": [],
+        "last_event_id": "event-scope-1",
+        "ledger_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "manual_note": "forbidden",
+        "memory_disposition": null,
+        "operator_priors": [],
+        "outstanding_reviews": [],
+        "report_refs": [],
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "source_hashes": {
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "submission_refs": []
+      },
+      "schema": "state-snapshot",
+      "valid": false
+    },
+    {
+      "id": "environment-preflight-minimum",
+      "record": {
+        "engagement_id": "eng-1",
+        "fidelity_complete": false,
+        "identity": {
+          "account_role": null,
+          "build_identity": null,
+          "configuration_hash": null,
+          "dependency_lock_hash": null,
+          "dirty_tree_hash": null,
+          "endpoint_identity": null,
+          "feature_flags": [],
+          "git_commit": null,
+          "runtime_identity": null,
+          "source_identity": null
+        },
+        "missing_fidelity": [
+          {
+            "field": "source_identity",
+            "reason": "legacy fixture"
+          }
+        ],
+        "preflight_id": "preflight-1",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "target_refs": []
+      },
+      "schema": "environment-preflight",
+      "valid": true
+    },
+    {
+      "id": "environment-preflight-rich",
+      "record": {
+        "engagement_id": "eng-1",
+        "fidelity_complete": true,
+        "identity": {
+          "account_role": "owner",
+          "build_identity": "build-1",
+          "configuration_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "dependency_lock_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "dirty_tree_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "endpoint_identity": "local",
+          "feature_flags": [
+            "flag-a"
+          ],
+          "git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runtime_identity": "python",
+          "source_identity": "repo"
+        },
+        "missing_fidelity": [],
+        "preflight_id": "preflight-2",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "target_refs": []
+      },
+      "schema": "environment-preflight",
+      "valid": true
+    },
+    {
+      "id": "environment-preflight-unknown-property",
+      "record": {
+        "engagement_id": "eng-1",
+        "fidelity_complete": false,
+        "identity": {
+          "account_role": null,
+          "build_identity": null,
+          "configuration_hash": null,
+          "dependency_lock_hash": null,
+          "dirty_tree_hash": null,
+          "endpoint_identity": null,
+          "feature_flags": [],
+          "git_commit": null,
+          "runtime_identity": null,
+          "source_identity": null
+        },
+        "missing_fidelity": [
+          {
+            "field": "source_identity",
+            "reason": "legacy fixture"
+          }
+        ],
+        "preflight_id": "preflight-1",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "target_refs": [],
+        "unknown": "forbidden"
+      },
+      "schema": "environment-preflight",
+      "valid": false
+    },
+    {
+      "id": "report-manifest-minimum",
+      "record": {
+        "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "adjudication_review_ref": "review-1",
+        "engagement_id": "eng-1",
+        "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "finding_id": "F-1",
+        "finding_revision": 1,
+        "generated_at": "2026-07-10T12:00:00Z",
+        "operator_status": "draft",
+        "renderer_version": "v1",
+        "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "report_id": "report-1",
+        "report_path": "reports/report-1.md",
+        "schema_version": 1,
+        "template_version": "v1"
+      },
+      "schema": "report-manifest",
+      "valid": true
+    },
+    {
+      "id": "report-manifest-rich",
+      "record": {
+        "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "adjudication_review_ref": "review-1",
+        "engagement_id": "eng-1",
+        "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "finding_id": "F-1",
+        "finding_revision": 2,
+        "generated_at": "2026-07-10T12:00:00Z",
+        "operator_status": "accepted",
+        "renderer_version": "v1",
+        "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "report_id": "report-2",
+        "report_path": "reports/report-1.md",
+        "schema_version": 1,
+        "template_version": "v1"
+      },
+      "schema": "report-manifest",
+      "valid": true
+    },
+    {
+      "id": "report-manifest-unknown-property",
+      "record": {
+        "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "adjudication_review_ref": "review-1",
+        "engagement_id": "eng-1",
+        "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "finding_id": "F-1",
+        "finding_revision": 1,
+        "generated_at": "2026-07-10T12:00:00Z",
+        "operator_status": "draft",
+        "renderer_version": "v1",
+        "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "report_id": "report-1",
+        "report_path": "reports/report-1.md",
+        "schema_version": 1,
+        "template_version": "v1",
+        "unknown": "forbidden"
+      },
+      "schema": "report-manifest",
+      "valid": false
+    },
+    {
+      "id": "memory-disposition-minimum",
+      "record": {
+        "disposition": "no_novel_lesson",
+        "disposition_id": "memory-1",
+        "engagement_id": "eng-1",
+        "finding_refs": [
+          "F-1"
+        ],
+        "lesson_summary": null,
+        "rationale": "No reusable lesson survived review.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "reviewer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "schema_version": 1
+      },
+      "schema": "memory-disposition",
+      "valid": true
+    },
+    {
+      "id": "memory-disposition-rich",
+      "record": {
+        "disposition": "promote",
+        "disposition_id": "memory-2",
+        "engagement_id": "eng-1",
+        "finding_refs": [
+          "F-1"
+        ],
+        "lesson_summary": "A scrubbed domain-neutral control pattern.",
+        "rationale": "No reusable lesson survived review.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "reviewer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "schema_version": 1
+      },
+      "schema": "memory-disposition",
+      "valid": true
+    },
+    {
+      "id": "memory-disposition-unknown-property",
+      "record": {
+        "disposition": "no_novel_lesson",
+        "disposition_id": "memory-1",
+        "engagement_id": "eng-1",
+        "finding_refs": [
+          "F-1"
+        ],
+        "lesson_summary": null,
+        "rationale": "No reusable lesson survived review.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "reviewer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "schema_version": 1,
+        "unknown": "forbidden"
+      },
+      "schema": "memory-disposition",
+      "valid": false
+    },
+    {
+      "id": "migration-manifest-minimum",
+      "record": {
+        "engagement_id": "eng-1",
+        "entries": [],
+        "migration_id": "migration-1",
+        "operator": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "outcome_counts": {
+          "errors": 0,
+          "imported": 0,
+          "needs_review": 0,
+          "skipped": 0
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "source_inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "schema": "migration-manifest",
+      "valid": true
+    },
+    {
+      "id": "migration-manifest-rich",
+      "record": {
+        "engagement_id": "eng-1",
+        "entries": [
+          {
+            "imported_finding_id": "F-legacy-1",
+            "imported_revision": 1,
+            "missing_legacy_evidence": [
+              "attempts",
+              "controls"
+            ],
+            "source_artifact_ref": "artifact-legacy-1",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "source_path": "legacy/F-1.json"
+          }
+        ],
+        "migration_id": "migration-2",
+        "operator": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "outcome_counts": {
+          "errors": 0,
+          "imported": 1,
+          "needs_review": 1,
+          "skipped": 0
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "source_inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "schema": "migration-manifest",
+      "valid": true
+    },
+    {
+      "id": "migration-manifest-unknown-property",
+      "record": {
+        "engagement_id": "eng-1",
+        "entries": [],
+        "migration_id": "migration-1",
+        "operator": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "outcome_counts": {
+          "errors": 0,
+          "imported": 0,
+          "needs_review": 0,
+          "skipped": 0
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "source_inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "unknown": "forbidden"
+      },
+      "schema": "migration-manifest",
+      "valid": false
     }
   ],
   "schema_version": 1

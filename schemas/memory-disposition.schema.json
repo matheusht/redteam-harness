@@ -1,0 +1,5 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://llm-redteam-harness.local/schemas/memory-disposition.schema.json","title":"Decision 0005 mandatory memory disposition","type":"object","additionalProperties":false,
+  "required":["schema_version","disposition_id","engagement_id","recorded_at","disposition","lesson_summary","rationale","reviewer","finding_refs"],
+  "properties":{"schema_version":{"const":1},"disposition_id":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},"engagement_id":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},"recorded_at":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},"disposition":{"enum":["promote","defer","no_novel_lesson"]},"lesson_summary":{"type":["string","null"]},"rationale":{"type":"string","minLength":1},"reviewer":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"},"finding_refs":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"}}
+}

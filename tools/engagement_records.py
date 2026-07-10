@@ -44,12 +44,24 @@ NEW_SCHEMA_FILES = (
     "attempt-v2.schema.json",
     "artifact.schema.json",
     "review.schema.json",
+    "engagement-event.schema.json",
+    "state-snapshot.schema.json",
+    "environment-preflight.schema.json",
+    "report-manifest.schema.json",
+    "memory-disposition.schema.json",
+    "migration-manifest.schema.json",
 )
 RECORD_SCHEMA_FILES = {
     "finding-v3": "finding-v3.schema.json",
     "attempt-v2": "attempt-v2.schema.json",
     "artifact": "artifact.schema.json",
     "review": "review.schema.json",
+    "engagement-event": "engagement-event.schema.json",
+    "state-snapshot": "state-snapshot.schema.json",
+    "environment-preflight": "environment-preflight.schema.json",
+    "report-manifest": "report-manifest.schema.json",
+    "memory-disposition": "memory-disposition.schema.json",
+    "migration-manifest": "migration-manifest.schema.json",
     "finding-v2-legacy": "finding.schema.json",
 }
 
@@ -267,6 +279,18 @@ def infer_schema_name(record: Any) -> str | None:
         return "artifact"
     if "review_id" in record and version == 1:
         return "review"
+    if "event_id" in record and version == 1:
+        return "engagement-event"
+    if "last_event_id" in record and "ledger_hash" in record and version == 1:
+        return "state-snapshot"
+    if "preflight_id" in record and version == 1:
+        return "environment-preflight"
+    if "report_id" in record and "finding_revision" in record and version == 1:
+        return "report-manifest"
+    if "disposition_id" in record and version == 1:
+        return "memory-disposition"
+    if "migration_id" in record and version == 1:
+        return "migration-manifest"
     if "id" in record and version in (None, 2):
         return "finding-v2-legacy"
     return None
@@ -323,7 +347,8 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
                 index.setdefault(entity_id, []).append(entry)
             if record.get("event_type") in {"candidate.proposed", "hypothesis.created"}:
                 payload = record.get("payload", {})
-                entity_id = payload.get("entity_id") if isinstance(payload, dict) else None
+                key = "candidate_id" if record["event_type"] == "candidate.proposed" else "hypothesis_id"
+                entity_id = payload.get(key) if isinstance(payload, dict) else None
                 if isinstance(entity_id, str):
                     kind = "candidate" if record["event_type"] == "candidate.proposed" else "hypothesis"
                     index.setdefault(entity_id, []).append({"type": kind, "engagement_id": record.get("engagement_id"), "revision": None, "path": path.relative_to(root).as_posix()})
@@ -373,6 +398,9 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("entity_ref",), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement"}),
             (("input_refs",), {"attempt", "finding", "artifact", "review", "environment"}),
             (("evidence_refs",), {"attempt", "artifact"}), (("conflicting_evidence",), {"attempt", "artifact"}),
+        ],
+        "engagement-event": [
+            (("evidence_refs",), {"attempt", "artifact"}), (("review_refs",), {"review"}),
         ],
     }
     dynamic_specs: list[tuple[tuple[str, ...], Any, set[str]]] = []
