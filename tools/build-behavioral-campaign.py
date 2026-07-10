@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the canonical behavioral campaign deterministically from HEAD (GEPA Phase 10F).
+"""Build the canonical behavioral campaign deterministically from committed HEAD (GEPA Phase 10F).
 
 Generates real `git apply`-able candidate diffs + canonical candidate manifests + a campaign manifest
 (with frozen-input hashes), so `tools/run-behavioral-eval.py` consumes canonical campaign/candidate
@@ -19,24 +19,28 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Evaluator changes get a NEW campaign revision; prior revisions are preserved append-only, never
 # mutated/replaced in place (see the superseding SUPERSEDED.md note).
-CAMP_ID = "behavioral-canonical-v2-2026-06-27"
+CAMP_ID = "behavioral-canonical-v3-2026-07-10"
 CAMP_DIR = os.path.join(ROOT, "evals", "behavioral", "campaigns", CAMP_ID)
 
 
-def head_text(repo_rel):
+def head_bytes(repo_rel):
     try:
         return subprocess.check_output(["git", "-C", ROOT, "show", f"HEAD:{repo_rel}"],
-                                       stderr=subprocess.DEVNULL).decode()
-    except Exception:
-        return ""
+                                       stderr=subprocess.DEVNULL)
+    except Exception as exc:
+        raise RuntimeError(f"required frozen HEAD input unavailable: {repo_rel}") from exc
+
+
+def head_text(repo_rel):
+    return head_bytes(repo_rel).decode()
 
 
 def sha256_text(t):
     return hashlib.sha256((t or "").encode()).hexdigest()
 
 
-def sha256_file(p):
-    return hashlib.sha256(open(p, "rb").read()).hexdigest() if os.path.isfile(p) else None
+def sha256_head(repo_rel):
+    return hashlib.sha256(head_bytes(repo_rel)).hexdigest()
 
 
 def udiff(repo_rel, old, new):
@@ -83,7 +87,15 @@ def build():
                       ("gate:check-campaign", "tools/check-campaign.py"),
                       ("checker:check-conformance", "tools/check-conformance.py"),
                       ("adapter:researcher_adapter", "tools/researcher_adapter.py")]:
-        frozen_inputs[name] = {"path": rel, "sha256": sha256_file(os.path.join(ROOT, rel))}
+        frozen_inputs[name] = {"path": rel, "sha256": sha256_head(rel)}
+
+    manifest_path = os.path.join(CAMP_DIR, "campaign-manifest.json")
+    tracked = subprocess.run(["git", "-C", ROOT, "ls-files", "--error-unmatch", os.path.relpath(manifest_path, ROOT)],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+    if tracked and os.path.isfile(manifest_path):
+        existing = json.load(open(manifest_path))
+        if existing.get("frozen_inputs") != frozen_inputs:
+            raise RuntimeError("refusing to rewrite a committed campaign revision; rotate CAMP_ID")
 
     campaign_candidates = []
     for c in CANDIDATES:
@@ -126,16 +138,17 @@ def build():
         campaign_candidates.append({"candidate_id": cid, "manifest": manifest_rel, "eligibility": c["eligibility"]})
 
     campaign = {
-        "campaign_id": CAMP_ID, "created": "2026-06-26",
-        "note": "Canonical behavioral campaign (Phase 10F). Built deterministically from HEAD by "
-                "tools/build-behavioral-campaign.py. Consumed by tools/run-behavioral-eval.py with the "
-                "canonical contract gate + measured patched-workspace conformance.",
+        "campaign_id": CAMP_ID, "created": "2026-07-10",
+        "note": "Canonical behavioral campaign revision 3. Rotated without rewriting revision 2 after "
+                "Decision 0005 replaced partial record checks with the pinned full Draft 2020-12 validator. "
+                "Built deterministically by tools/build-behavioral-campaign.py and consumed with the "
+                "canonical contract gate plus measured patched-workspace conformance.",
         "tracks": [{"name": "task-reframing", "mutation_target": "skills/techniques/task-reframing/", "kind": "existing-card-variant"},
                    {"name": "decomposition", "mutation_target": "skills/techniques/decomposition/", "kind": "existing-card-variant"}],
         "mutable_allowlist": ["skills/techniques/task-reframing/", "skills/techniques/decomposition/"],
         "immutable": ["engine/", "skills/oracles/", "skills/patterns/", "skills/vulns/"],
         "frozen_inputs": frozen_inputs, "budgets": BUDGETS,
-        "behavioral_budget": {"max_probes": 6}, "seed": "behavioral-canonical-2026-06-26-seed-1",
+        "behavioral_budget": {"max_probes": 6}, "seed": "behavioral-canonical-2026-07-10-seed-1",
         "benchmark_set": ["behavioral:task-reframing", "behavioral:decomposition"],
         "candidates": campaign_candidates,
     }

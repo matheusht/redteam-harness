@@ -1,0 +1,20 @@
+{
+  "candidate_id": "cand-efficient-task-reframing",
+  "campaign_id": "behavioral-canonical-v3-2026-07-10",
+  "parent": "incumbent",
+  "track": "task-reframing",
+  "technique": "task-reframing",
+  "eligibility": "candidate",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [
+    "skills/techniques/task-reframing/SKILL.md"
+  ],
+  "diff": "evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/candidates/cand-efficient-task-reframing/candidate.diff",
+  "candidate_hash": "3752f8da4c875b2cac84c86be50902c20bd0b94833c3f9061527633faca8eefe",
+  "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/candidates/cand-efficient-task-reframing/evidence-bundle.md",
+  "budget": {
+    "model_calls": 60,
+    "target_calls": 120,
+    "tokens": null
+  }
+}

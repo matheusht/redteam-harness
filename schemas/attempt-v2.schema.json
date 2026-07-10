@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/attempt-v2.schema.json",
+  "title": "Decision 0005 immutable attempt version 2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sequence", "previous_hash", "record_hash", "attempt_id", "engagement_id", "recorded_at", "actor", "provenance", "scope_hash", "environment_ref", "escalation_confirmation_event_ref", "hypothesis_ref", "experiment_ref", "surface", "action_summary", "redaction_attestation", "observation", "evidence_refs", "kind", "control_of", "assessment", "contamination", "cost"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "sequence": {"type": "integer", "minimum": 1},
+    "previous_hash": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"}, {"type": "null"}]},
+    "record_hash": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
+    "attempt_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "engagement_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "recorded_at": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
+    "actor": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"},
+    "provenance": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"},
+    "scope_hash": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
+    "environment_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "escalation_confirmation_event_ref": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+    "hypothesis_ref": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+    "experiment_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "surface": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/non_empty"},
+    "action_summary": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/non_empty"},
+    "redaction_attestation": {"const": true},
+    "observation": {
+      "type": "object", "additionalProperties": false, "required": ["source", "statement"],
+      "properties": {
+        "source": {"enum": ["broker", "runtime", "source_inspection", "operator", "model_report"]},
+        "statement": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/non_empty"}
+      }
+    },
+    "evidence_refs": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"},
+    "kind": {"enum": ["primary", "negative_control", "positive_control", "replay", "source_trace", "environment_check"]},
+    "control_of": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"},
+    "assessment": {"enum": ["suspected_signal", "no_signal", "held", "error", "inconclusive"]},
+    "contamination": {
+      "type": "object", "additionalProperties": false, "required": ["status", "sources", "note"],
+      "properties": {
+        "status": {"enum": ["none_observed", "suspected", "confirmed", "unknown"]},
+        "sources": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "note": {"type": "string"}
+      }
+    },
+    "cost": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/cost"}
+  }
+}

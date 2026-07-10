@@ -1,0 +1,20 @@
+{
+  "candidate_id": "cand-invalid-immutable",
+  "campaign_id": "behavioral-canonical-v3-2026-07-10",
+  "parent": "incumbent",
+  "track": "task-reframing",
+  "technique": "task-reframing",
+  "eligibility": "control",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [
+    "evals/routing/gold/case-a.gold.json"
+  ],
+  "diff": "evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/candidates/cand-invalid-immutable/candidate.diff",
+  "candidate_hash": "9fb948d1602a8f63c821bafd3919a737386fb03077353feeb9c80f9177074d03",
+  "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/candidates/cand-invalid-immutable/evidence-bundle.md",
+  "budget": {
+    "model_calls": 60,
+    "target_calls": 120,
+    "tokens": null
+  }
+}

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Conformance checker for the llm-redteam-harness (Phase 2.5A, baby version).
+"""Conformance checker for the llm-redteam-harness.
 
-Stdlib-only — no YAML/JSON-schema dependency, so it runs in any CI. It validates the structural
-contracts the orchestrator relies on, NOT semantics:
+The approved, pinned Draft 2020-12 validator checks governed JSON records; the existing lightweight
+parsers continue to check Markdown/YAML-like structural contracts. This validates contracts, NOT
+security semantics:
 
   - every card has a delimited front-matter block with id + type
   - pattern cards declare activation.strong / .weak / .negative
@@ -24,6 +25,14 @@ import json
 import os
 import re
 import sys
+
+from engagement_records import (
+    legacy_finding_inventory,
+    validate_fixture_suite,
+    validate_record,
+    validate_reference_fixture_suite,
+    validate_schema_documents,
+)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -564,7 +573,6 @@ FINDING_BASE_REQUIRED = [
     "id", "engagement", "owasp", "surface", "objective", "scope_class", "severity",
     "confidence", "attempt_id", "control_attempt_id", "oracle_verdict", "dedup_key", "status",
 ]
-CONTRACT_REQUIRED = ["negative_control", "replay", "contamination", "justification", "run_cost"]
 
 
 def load_json(path):
@@ -575,65 +583,6 @@ def load_json(path):
 def finding_is_new(f):
     d = f.get("recorded_date")
     return bool(d) and d >= POLICY_CUTOFF
-
-
-def _int_ge(v, lo):
-    return isinstance(v, int) and not isinstance(v, bool) and v >= lo
-
-
-def contract_problems(f):
-    """Deep validation of evidence_contract: nested required fields + types, not just top-level keys."""
-    ec = f.get("evidence_contract")
-    if not isinstance(ec, dict):
-        return ["evidence_contract missing or not an object"]
-    p = []
-
-    nc = ec.get("negative_control")
-    if not isinstance(nc, dict):
-        p.append("negative_control missing/not-object")
-    else:
-        if not isinstance(nc.get("ran"), bool):
-            p.append("negative_control.ran must be bool")
-        if nc.get("result") not in ("refused", "no_signal", "different_outcome", "n/a"):
-            p.append("negative_control.result invalid")
-
-    rp = ec.get("replay")
-    if not isinstance(rp, dict):
-        p.append("replay missing/not-object")
-    else:
-        if not _int_ge(rp.get("sessions"), 1):
-            p.append("replay.sessions must be int >= 1")
-        if not isinstance(rp.get("fresh_session"), bool):
-            p.append("replay.fresh_session must be bool")
-        if not isinstance(rp.get("deterministic"), bool):
-            p.append("replay.deterministic must be bool")
-
-    ct = ec.get("contamination")
-    if not isinstance(ct, dict):
-        p.append("contamination missing/not-object")
-    elif not isinstance(ct.get("ruled_out"), bool):
-        p.append("contamination.ruled_out must be bool")
-
-    j = ec.get("justification")
-    if not (isinstance(j, str) and j.strip()):
-        p.append("justification must be a non-empty string")
-
-    rc = ec.get("run_cost")
-    if not isinstance(rc, dict):
-        p.append("run_cost missing/not-object")
-    else:
-        for k in ("model_calls", "target_calls"):
-            if not _int_ge(rc.get(k), 0):
-                p.append(f"run_cost.{k} must be int >= 0")
-
-    pc = ec.get("positive_control")
-    if pc is not None and not isinstance(pc, dict):
-        p.append("positive_control must be an object when present")
-    return p
-
-
-def contract_complete(f):
-    return not contract_problems(f)
 
 
 def check_finding_fixtures():
@@ -650,13 +599,14 @@ def check_finding_fixtures():
         record(not missing, f"findings/{fn}: base required fields", f"missing {missing}" if missing else "")
         record("recorded_date" in f, f"findings/{fn}: recorded_date present (drives the migration gate)",
                "every finding must carry recorded_date so the cutoff is explicit, never defaulted" if "recorded_date" not in f else "")
-        problems = contract_problems(f)
+        schema_errors = validate_record(f, "finding-v2-legacy")
         if finding_is_new(f):
-            record(not problems, f"findings/{fn}: new finding carries complete, well-formed evidence contract",
+            problems = (["evidence_contract missing"] if "evidence_contract" not in f else []) + schema_errors
+            record(not problems, f"findings/{fn}: new finding carries complete, schema-valid evidence contract",
                    f"recorded >= {POLICY_CUTOFF} but: {problems}" if problems else "")
         else:
-            if problems:
-                print(f"  warn findings/{fn}: legacy finding (pre-{POLICY_CUTOFF}) contract gaps {problems} — advisory, not gated")
+            if schema_errors:
+                print(f"  warn findings/{fn}: legacy finding schema gaps {schema_errors} — advisory, not gated")
             record(True, f"findings/{fn}: legacy finding advisory-only")
 
     mr = os.path.join(base, "_must_reject")
@@ -666,9 +616,36 @@ def check_finding_fixtures():
             if not fn.endswith(".json"):
                 continue
             f = load_json(fp)
-            caught = finding_is_new(f) and bool(contract_problems(f))
-            record(caught, f"findings/_must_reject/{fn}: caught by the contract gate (invalid-accept guard)",
+            schema_errors = validate_record(f, "finding-v2-legacy")
+            caught = finding_is_new(f) and ("evidence_contract" not in f or bool(schema_errors))
+            record(caught, f"findings/_must_reject/{fn}: caught by full schema + policy gate (invalid-accept guard)",
                    "a new finding without a complete, well-formed contract slipped through" if not caught else "")
+
+
+def check_decision5_record_schemas():
+    print("\n[decision-0005] full Draft 2020-12 record validation")
+    schema_problems = validate_schema_documents()
+    record(not schema_problems, "Decision-0005 schemas pass metaschema + closed local refs",
+           str(schema_problems) if schema_problems else "")
+    suite = validate_fixture_suite()
+    record(not suite["failures"], f"engagement record fixtures: {suite['case_count']} expected outcomes",
+           str(suite["failures"]) if suite["failures"] else "")
+    ref_suite = validate_reference_fixture_suite()
+    record(not ref_suite["failures"], f"record-reference fixtures: {ref_suite['case_count']} expected outcomes",
+           str(ref_suite["failures"]) if ref_suite["failures"] else "")
+    corpus_root = os.path.join(ROOT, "fixtures", "engagement-records", "legacy-corpus")
+    produced = legacy_finding_inventory(corpus_root)
+    corpus_expected = load_json(os.path.join(ROOT, "fixtures", "engagement-records", "legacy-corpus-expected.json"))
+    record(produced == corpus_expected, "synthetic legacy corpus inventory matches exact counts, hashes, and root digest",
+           "regenerate only after intentional fixture review" if produced != corpus_expected else "")
+    expected = load_json(os.path.join(ROOT, "fixtures", "engagement-records", "legacy-drift-expected.json"))
+    counts = expected.get("expected_counts", {})
+    record(counts.get("total") == 124 and counts.get("schema_version_2") == 124,
+           "legacy inventory baseline exposes 124 version-2 findings")
+    record(counts.get("forbidden_base_model") == 116,
+           "legacy inventory baseline exposes 116 forbidden base_model fields")
+    record(counts.get("unsupported_scope_class") == 5,
+           "legacy inventory baseline exposes five unsupported scope_class values")
 
 
 def check_false_discovery_corpus():
@@ -724,6 +701,7 @@ def main():
     check_casebooks(pattern_ids)
     check_secrets()
     check_finding_fixtures()
+    check_decision5_record_schemas()
     check_false_discovery_corpus()
     check_adversarial_candidates()
 

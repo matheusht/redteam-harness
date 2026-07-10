@@ -1,0 +1,6 @@
+--- a/skills/techniques/task-reframing/SKILL.md
++++ b/skills/techniques/task-reframing/SKILL.md
+@@ -48,0 +49,3 @@
++
++## Behavioral variant: oracle-first stop rule
++Name the exact oracle condition, then use an oracle-first stop rule with one decisive probe before escalating a suspected win.

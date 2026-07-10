@@ -1,0 +1,560 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/finding-v3.schema.json",
+  "title": "Decision 0005 domain-neutral finding revision version 3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "finding_id",
+    "engagement_id",
+    "revision",
+    "supersedes_revision",
+    "recorded_at",
+    "change_reason",
+    "classification",
+    "scope_provenance",
+    "claim_state",
+    "claims",
+    "proof",
+    "adjudication",
+    "search_linkage"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 3
+    },
+    "finding_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "supersedes_revision": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "recorded_at": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+    },
+    "change_reason": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/non_empty"
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "weakness_identifiers",
+        "severity"
+      ],
+      "properties": {
+        "domain": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/non_empty"
+        },
+        "weakness_identifiers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "namespace",
+              "id"
+            ],
+            "properties": {
+              "namespace": {
+                "type": "string",
+                "minLength": 1
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "severity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "system",
+            "rationale"
+          ],
+          "properties": {
+            "label": {
+              "enum": [
+                "informational",
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "system": {
+              "type": "string",
+              "minLength": 1
+            },
+            "vector": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "scope_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_refs",
+        "provenance"
+      ],
+      "properties": {
+        "scope_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "environment_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "target_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "provenance": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"
+        }
+      }
+    },
+    "claim_state": {
+      "enum": [
+        "supported",
+        "confirmed",
+        "needs_review",
+        "contaminated",
+        "refuted"
+      ]
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attacker_model",
+        "preconditions",
+        "mechanism",
+        "reachability",
+        "impact_claims",
+        "uncertainty",
+        "conflicting_evidence"
+      ],
+      "properties": {
+        "attacker_model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "mechanism": {
+          "$ref": "#/$defs/atomic_claim"
+        },
+        "reachability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "claim_id",
+            "statement",
+            "causal_spine",
+            "evidence_refs"
+          ],
+          "properties": {
+            "claim_id": {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+            },
+            "statement": {
+              "type": "string",
+              "minLength": 1
+            },
+            "causal_spine": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "evidence_refs": {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs",
+              "minItems": 1
+            }
+          }
+        },
+        "impact_claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "claim_id",
+              "statement",
+              "status",
+              "evidence_refs"
+            ],
+            "properties": {
+              "claim_id": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "demonstrated",
+                  "inferred",
+                  "not_demonstrated"
+                ]
+              },
+              "evidence_refs": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "status": {
+                      "const": "demonstrated"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "evidence_refs": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "uncertainty": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conflicting_evidence": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        }
+      }
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_attempt_refs",
+        "negative_control_refs",
+        "positive_control_refs",
+        "replay_refs",
+        "fresh_state_properties",
+        "contamination_disposition",
+        "evidence_refs",
+        "claim_proofs",
+        "control_applicability"
+      ],
+      "properties": {
+        "primary_attempt_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "negative_control_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "positive_control_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "replay_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "fresh_state_properties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contamination_disposition": {
+          "enum": [
+            "ruled_out",
+            "present",
+            "unresolved",
+            "not_applicable"
+          ]
+        },
+        "evidence_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "claim_proofs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "claim_id",
+              "attempt_refs",
+              "artifact_refs",
+              "control_refs",
+              "replay_refs",
+              "applicability_rationale"
+            ],
+            "properties": {
+              "claim_id": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+              },
+              "attempt_refs": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+              },
+              "artifact_refs": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+              },
+              "control_refs": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+              },
+              "replay_refs": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+              },
+              "applicability_rationale": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "control_applicability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "negative",
+            "positive",
+            "replay",
+            "rationale"
+          ],
+          "properties": {
+            "negative": {
+              "enum": [
+                "required",
+                "not_applicable"
+              ]
+            },
+            "positive": {
+              "enum": [
+                "required",
+                "not_applicable"
+              ]
+            },
+            "replay": {
+              "enum": [
+                "required",
+                "not_applicable"
+              ]
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "justification"
+      ],
+      "properties": {
+        "review_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "justification": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "search_linkage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_refs",
+        "hypothesis_refs"
+      ],
+      "properties": {
+        "candidate_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "hypothesis_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        }
+      }
+    },
+    "legacy_import": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_artifact_ref",
+        "source_hash",
+        "missing_legacy_evidence"
+      ],
+      "properties": {
+        "source_artifact_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "source_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "missing_legacy_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "scope",
+              "environment",
+              "attempts",
+              "controls",
+              "replay",
+              "adjudication"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "atomic_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "statement",
+        "evidence_refs"
+      ],
+      "properties": {
+        "claim_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs",
+          "minItems": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "legacy_import"
+        ]
+      },
+      "then": {
+        "properties": {
+          "claim_state": {
+            "const": "needs_review"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "scope_provenance": {
+            "required": [
+              "scope_hash",
+              "environment_ref",
+              "target_refs",
+              "provenance"
+            ]
+          },
+          "proof": {
+            "properties": {
+              "primary_attempt_refs": {
+                "minItems": 1
+              },
+              "negative_control_refs": {
+                "minItems": 1
+              },
+              "replay_refs": {
+                "minItems": 1
+              },
+              "evidence_refs": {
+                "minItems": 1
+              },
+              "claim_proofs": {
+                "minItems": 1
+              }
+            }
+          },
+          "adjudication": {
+            "required": [
+              "review_ref",
+              "justification"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "revision": {
+            "const": 1
+          }
+        },
+        "required": [
+          "revision"
+        ]
+      },
+      "then": {
+        "properties": {
+          "supersedes_revision": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "supersedes_revision": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  ]
+}

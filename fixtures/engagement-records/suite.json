@@ -1,0 +1,1903 @@
+{
+  "cases": [
+    {
+      "id": "finding-v3-minimum",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": true
+    },
+    {
+      "id": "finding-v3-rich",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "narrow impact",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": [
+            "deployment prevalence unknown"
+          ]
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": [
+            {
+              "id": "CWE-862",
+              "namespace": "CWE"
+            }
+          ]
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 2,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": 1
+      },
+      "schema": "finding-v3",
+      "valid": true
+    },
+    {
+      "id": "finding-v3-legacy-import",
+      "record": {
+        "adjudication": {
+          "justification": "Historical evidence is incomplete."
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "needs_review",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "legacy_import": {
+          "missing_legacy_evidence": [
+            "scope",
+            "environment",
+            "attempts",
+            "controls",
+            "replay",
+            "adjudication"
+          ],
+          "source_artifact_ref": "legacy-artifact-1",
+          "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "Legacy source artifact only; live controls unavailable.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [],
+              "claim_id": "claim-mechanism",
+              "control_refs": [],
+              "replay_refs": []
+            },
+            {
+              "applicability_rationale": "Legacy source artifact only; live controls unavailable.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [],
+              "claim_id": "claim-reach",
+              "control_refs": [],
+              "replay_refs": []
+            },
+            {
+              "applicability_rationale": "Legacy source artifact only; live controls unavailable.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [],
+              "claim_id": "claim-impact",
+              "control_refs": [],
+              "replay_refs": []
+            }
+          ],
+          "contamination_disposition": "unresolved",
+          "control_applicability": {
+            "negative": "not_applicable",
+            "positive": "not_applicable",
+            "rationale": "Historical controls are unavailable.",
+            "replay": "not_applicable"
+          },
+          "evidence_refs": [],
+          "fresh_state_properties": [],
+          "negative_control_refs": [],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [],
+          "replay_refs": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "target_refs": []
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": true
+    },
+    {
+      "id": "finding-v3-unknown-property",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "base_model": "forbidden",
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "attempt-v2-minimum",
+      "record": {
+        "action_summary": "Inspected the pinned source path.",
+        "actor": {
+          "id": "hunter-1",
+          "role": "hunter"
+        },
+        "assessment": "suspected_signal",
+        "attempt_id": "attempt-1",
+        "contamination": {
+          "note": "",
+          "sources": [],
+          "status": "none_observed"
+        },
+        "control_of": [],
+        "cost": {
+          "cost_usd": null,
+          "human_review_seconds": 0,
+          "input_tokens": null,
+          "model_calls": 0,
+          "model_seconds": 0,
+          "output_tokens": null,
+          "target_calls": 0,
+          "tool_seconds": 1,
+          "wall_seconds": 1
+        },
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "experiment_ref": "experiment-1",
+        "hypothesis_ref": "hypothesis-1",
+        "kind": "source_trace",
+        "observation": {
+          "source": "source_inspection",
+          "statement": "The call path lacks the expected gate."
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "hunter-1",
+            "role": "hunter"
+          },
+          "card_versions": [
+            "card-v1"
+          ],
+          "model": "test-model",
+          "prompt_version": "p1",
+          "provider": "test",
+          "tool_versions": []
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "redaction_attestation": true,
+        "schema_version": 2,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "sequence": 1,
+        "surface": "local source"
+      },
+      "schema": "attempt-v2",
+      "valid": true
+    },
+    {
+      "id": "attempt-v2-rich",
+      "record": {
+        "action_summary": "Inspected the pinned source path.",
+        "actor": {
+          "id": "hunter-1",
+          "role": "hunter"
+        },
+        "assessment": "held",
+        "attempt_id": "attempt-2",
+        "contamination": {
+          "note": "",
+          "sources": [],
+          "status": "none_observed"
+        },
+        "control_of": [
+          "attempt-1"
+        ],
+        "cost": {
+          "cost_usd": null,
+          "human_review_seconds": 0,
+          "input_tokens": null,
+          "model_calls": 0,
+          "model_seconds": 0,
+          "output_tokens": null,
+          "target_calls": 0,
+          "tool_seconds": 1,
+          "wall_seconds": 1
+        },
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "experiment_ref": "experiment-1",
+        "hypothesis_ref": "hypothesis-1",
+        "kind": "negative_control",
+        "observation": {
+          "source": "runtime",
+          "statement": "The safe sibling rejected the same caller."
+        },
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "provenance": {
+          "actor": {
+            "id": "hunter-1",
+            "role": "hunter"
+          },
+          "card_versions": [
+            "card-v1"
+          ],
+          "model": "test-model",
+          "prompt_version": "p1",
+          "provider": "test",
+          "tool_versions": []
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "redaction_attestation": true,
+        "schema_version": 2,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "sequence": 2,
+        "surface": "local source"
+      },
+      "schema": "attempt-v2",
+      "valid": true
+    },
+    {
+      "id": "attempt-v2-confirmed-outcome",
+      "record": {
+        "action_summary": "Inspected the pinned source path.",
+        "actor": {
+          "id": "hunter-1",
+          "role": "hunter"
+        },
+        "assessment": "confirmed",
+        "attempt_id": "attempt-1",
+        "contamination": {
+          "note": "",
+          "sources": [],
+          "status": "none_observed"
+        },
+        "control_of": [],
+        "cost": {
+          "cost_usd": null,
+          "human_review_seconds": 0,
+          "input_tokens": null,
+          "model_calls": 0,
+          "model_seconds": 0,
+          "output_tokens": null,
+          "target_calls": 0,
+          "tool_seconds": 1,
+          "wall_seconds": 1
+        },
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "experiment_ref": "experiment-1",
+        "hypothesis_ref": "hypothesis-1",
+        "kind": "source_trace",
+        "observation": {
+          "source": "source_inspection",
+          "statement": "The call path lacks the expected gate."
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "hunter-1",
+            "role": "hunter"
+          },
+          "card_versions": [
+            "card-v1"
+          ],
+          "model": "test-model",
+          "prompt_version": "p1",
+          "provider": "test",
+          "tool_versions": []
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "redaction_attestation": true,
+        "schema_version": 2,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "sequence": 1,
+        "surface": "local source"
+      },
+      "schema": "attempt-v2",
+      "valid": false
+    },
+    {
+      "id": "artifact-minimum",
+      "record": {
+        "acquisition_method": "operator",
+        "advisory_zone": "clear_local",
+        "artifact_id": "artifact-1",
+        "cleanup_obligation_ref": null,
+        "contains_executable_capability": false,
+        "created_at": "2026-07-10T12:00:00Z",
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "immutable": true,
+        "media_type": "text/plain",
+        "previous_hash": null,
+        "producer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "redaction_status": "redacted",
+        "relative_path": "evidence/output.txt",
+        "schema_version": 1,
+        "sensitivity": "internal",
+        "sequence": 1,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "supersedes_artifact_id": null,
+        "target_refs": [
+          "target-1"
+        ]
+      },
+      "schema": "artifact",
+      "valid": true
+    },
+    {
+      "id": "artifact-rich",
+      "record": {
+        "acquisition_method": "operator",
+        "advisory_zone": "review_required",
+        "artifact_id": "artifact-2",
+        "cleanup_obligation_ref": "cleanup-1",
+        "contains_executable_capability": true,
+        "created_at": "2026-07-10T12:00:00Z",
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": "event-confirm-1",
+        "immutable": true,
+        "media_type": "text/plain",
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "producer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "redaction_status": "redacted",
+        "relative_path": "evidence/local-poc.txt",
+        "schema_version": 1,
+        "sensitivity": "internal",
+        "sequence": 2,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "supersedes_artifact_id": "artifact-1",
+        "target_refs": [
+          "target-1"
+        ]
+      },
+      "schema": "artifact",
+      "valid": true
+    },
+    {
+      "id": "artifact-missing-conditional",
+      "record": {
+        "acquisition_method": "operator",
+        "advisory_zone": "review_required",
+        "artifact_id": "artifact-2",
+        "cleanup_obligation_ref": "cleanup-1",
+        "contains_executable_capability": true,
+        "created_at": "2026-07-10T12:00:00Z",
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "immutable": true,
+        "media_type": "text/plain",
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "producer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "redaction_status": "redacted",
+        "relative_path": "evidence/local-poc.txt",
+        "schema_version": 1,
+        "sensitivity": "internal",
+        "sequence": 2,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "supersedes_artifact_id": "artifact-1",
+        "target_refs": [
+          "target-1"
+        ]
+      },
+      "schema": "artifact",
+      "valid": false
+    },
+    {
+      "id": "review-minimum",
+      "record": {
+        "conflicting_evidence": [],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "attempt-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": null,
+        "independence": {
+          "disconfirming_objective": "Try to refute the proposed signal.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-1",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-review-1"
+        },
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "input_refs": [
+          "attempt-1"
+        ],
+        "rationale": "The distinctive source signal is present.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "required_next_actions": [
+          "independent adjudication"
+        ],
+        "review_id": "review-1",
+        "review_type": "signal",
+        "schema_version": 1,
+        "verdict": "strong"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-rich",
+      "record": {
+        "bounded_space": "Two pinned entrypoints and their shared guard.",
+        "conflicting_evidence": [],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "eng-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": null,
+        "hypothesis_dispositions": [
+          {
+            "hypothesis_ref": "hypothesis-1",
+            "rationale": "Matched control rules out the mechanism.",
+            "status": "closed"
+          }
+        ],
+        "independence": {
+          "disconfirming_objective": "Try to refute the proposed signal.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-1",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-review-2"
+        },
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "input_refs": [
+          "attempt-1"
+        ],
+        "omitted_branch_challenge": "Cold review found no unmodeled sibling entrypoint.",
+        "rationale": "The distinctive source signal is present.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "required_next_actions": [
+          "independent adjudication"
+        ],
+        "residual_uncertainty": [
+          "future versions not assessed"
+        ],
+        "review_id": "review-2",
+        "review_type": "coverage",
+        "schema_version": 1,
+        "verdict": "coverage_dry"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-missing-conditional",
+      "record": {
+        "conflicting_evidence": [],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "eng-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": null,
+        "hypothesis_dispositions": [
+          {
+            "hypothesis_ref": "hypothesis-1",
+            "rationale": "Matched control rules out the mechanism.",
+            "status": "closed"
+          }
+        ],
+        "independence": {
+          "disconfirming_objective": "Try to refute the proposed signal.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-1",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-review-2"
+        },
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "input_refs": [
+          "attempt-1"
+        ],
+        "omitted_branch_challenge": "Cold review found no unmodeled sibling entrypoint.",
+        "rationale": "The distinctive source signal is present.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "required_next_actions": [
+          "independent adjudication"
+        ],
+        "residual_uncertainty": [
+          "future versions not assessed"
+        ],
+        "review_id": "review-2",
+        "review_type": "coverage",
+        "schema_version": 1,
+        "verdict": "coverage_dry"
+      },
+      "schema": "review",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-duplicate-claim-id",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-incomplete-claim-proof-map",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-required-positive-control-missing",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "required",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-empty-per-claim-proof",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [],
+              "attempt_refs": [],
+              "claim_id": "claim-mechanism",
+              "control_refs": [],
+              "replay_refs": []
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-positive-control-not-bound-per-claim",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "not_applicable",
+            "positive": "required",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [
+            "attempt-4"
+          ],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    }
+  ],
+  "schema_version": 1
+}
