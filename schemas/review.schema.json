@@ -35,7 +35,7 @@
     },
     "control_applicability": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["attempt_ref", "applicable", "rationale"], "properties": {"attempt_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, "applicable": {"type": "boolean"}, "rationale": {"type": "string", "minLength": 1}}}},
     "bounded_space": {"type": "string", "minLength": 1},
-    "hypothesis_dispositions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["hypothesis_ref", "status", "rationale"], "properties": {"hypothesis_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, "status": {"enum": ["closed", "deferred", "blocked"]}, "rationale": {"type": "string", "minLength": 1}}}},
+    "hypothesis_dispositions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["hypothesis_ref", "status", "rationale"], "properties": {"hypothesis_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, "status": {"enum": ["held", "exhausted", "closed", "deferred", "blocked"]}, "rationale": {"type": "string", "minLength": 1}}}},
     "omitted_branch_challenge": {"type": "string", "minLength": 1},
     "residual_uncertainty": {"type": "array", "items": {"type": "string"}},
     "claim_tuple_hash": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},

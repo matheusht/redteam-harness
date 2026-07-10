@@ -19,6 +19,7 @@ from engagement_records import (
     build_reference_index,
     canonical_json_bytes,
     load_json,
+    resolve_schema_name,
     sha256_bytes,
     sha256_file,
     validate_record,
@@ -32,7 +33,7 @@ LEDGERS = {
 }
 STATE_VALUES = {
     "claim": {"needs_review", "supported", "confirmed", "contaminated", "refuted"},
-    "search": {"queued", "selected", "running", "deferred", "blocked", "closed"},
+    "search": {"queued", "selected", "running", "held", "exhausted", "deferred", "blocked", "closed"},
     "coverage": {"active", "blocked", "coverage_dry"},
     "report": {"none", "draft", "accepted", "submitted"},
     "cleanup": {"open", "closed"},
@@ -74,7 +75,7 @@ COMMITTED_RECORD_SCHEMAS = {
 
 TRANSITIONS = {
     "claim": {None: {"needs_review", "supported"}, "needs_review": {"supported", "contaminated", "refuted"}, "supported": {"confirmed", "needs_review", "contaminated", "refuted"}, "confirmed": {"needs_review", "contaminated", "refuted"}, "contaminated": {"needs_review", "refuted"}, "refuted": {"needs_review"}},
-    "search": {None: {"queued"}, "queued": {"selected", "deferred", "blocked", "closed"}, "selected": {"running", "deferred", "blocked"}, "running": {"queued", "deferred", "blocked", "closed"}, "deferred": {"queued", "closed"}, "blocked": {"queued", "deferred", "closed"}, "closed": {"queued"}},
+    "search": {None: {"queued"}, "queued": {"selected", "deferred", "blocked", "closed"}, "selected": {"running", "deferred", "blocked"}, "running": {"queued", "held", "exhausted", "deferred", "blocked", "closed"}, "held": {"queued", "closed"}, "exhausted": {"queued", "closed"}, "deferred": {"queued", "closed"}, "blocked": {"queued", "deferred", "closed"}, "closed": {"queued"}},
     "coverage": {None: {"active"}, "active": {"blocked", "coverage_dry"}, "blocked": {"active", "coverage_dry"}, "coverage_dry": {"active"}},
     "report": {None: {"none", "draft"}, "none": {"draft"}, "draft": {"accepted", "none"}, "accepted": {"submitted", "draft"}, "submitted": {"draft"}},
     "cleanup": {None: {"open", "closed"}, "open": {"closed"}, "closed": {"open"}},
@@ -140,6 +141,7 @@ def _parse_ledger_data(data: bytes, relative: str, schema: str, identity: str) -
     records: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     previous: str | None = None
+    previous_time: datetime | None = None
     for line_number, raw_line in enumerate(physical_lines, 1):
         if not raw_line:
             raise RecordError("ledger_blank_line", f"{relative}:{line_number}")
@@ -158,6 +160,10 @@ def _parse_ledger_data(data: bytes, relative: str, schema: str, identity: str) -
         errors = validate_record(record, schema)
         if errors:
             raise RecordError("ledger_schema_invalid", f"{relative}:{line_number}", errors)
+        timestamp = datetime.fromisoformat(record["recorded_at"].replace("Z", "+00:00")) if "recorded_at" in record else datetime.fromisoformat(record["created_at"].replace("Z", "+00:00"))
+        if previous_time is not None and timestamp < previous_time:
+            raise RecordError("ledger_time_regression", f"{relative}:{line_number}")
+        previous_time = timestamp
         expected_sequence = len(records) + 1
         if record["sequence"] != expected_sequence:
             raise RecordError("ledger_sequence_gap", f"{relative}:{line_number} expected {expected_sequence}")
@@ -481,6 +487,21 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
         raise RecordError("event_actor_provenance_mismatch", event.get("event_id", "unknown"))
     if event_type == "record.committed" and event.get("actor", {}).get("role") not in {"operator", "broker", "migration"}:
         raise RecordError("file_commit_actor_unauthorized", event.get("event_id", "unknown"))
+    if event_type in {"candidate.proposed", "candidate.selected", "candidate.skipped", "candidate.deferred"} and event.get("actor", {}).get("role") not in {"orchestrator", "operator"}:
+        raise RecordError("candidate_actor_unauthorized", event.get("event_id", "unknown"))
+    if event_type == "candidate.proposed":
+        if payload.get("activation_strength") == "negative":
+            raise RecordError("negative_signal_not_candidate", "negative routing signals are controls, not candidates")
+        if event.get("ex_ante") is None or event["ex_ante"].get("recorded_before_outcome") is not True:
+            raise RecordError("candidate_ex_ante_missing", event.get("event_id", "unknown"))
+        required_refs = {payload.get("source_observation_ref"), payload.get("routing_review_ref")}
+        if None in required_refs or not required_refs.issubset(set(event.get("entity_refs", []))):
+            raise RecordError("candidate_provenance_refs_missing", event.get("event_id", "unknown"))
+    if event_type == "operator_prior.recorded" and event.get("actor", {}).get("role") != "operator":
+        raise RecordError("operator_prior_actor_unauthorized", event.get("event_id", "unknown"))
+    if event_type == "review.coverage_completed":
+        if event.get("actor", {}).get("role") != "reviewer" or not event.get("review_refs") or payload.get("review_type") != "coverage" or payload.get("verdict") not in {"continue", "coverage_dry", "blocked"}:
+            raise RecordError("coverage_review_event_invalid", event.get("event_id", "unknown"))
 
     if event_type == "scope.attested":
         if event.get("actor", {}).get("role") != "operator" or event.get("actor", {}).get("id") != payload.get("operator_id"):
@@ -539,7 +560,7 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
         change = by_dimension.get(dimension)
         if change is None or not isinstance(entity_id, str) or change["entity_id"] != entity_id or change["current"] != target:
             raise RecordError("event_state_entity_mismatch", f"{event_type} payload and state change disagree")
-        if payload.get("status") is not None and event_type.startswith("candidate.") and payload["status"] != target:
+        if payload.get("status") is not None and payload["status"] != target:
             raise RecordError("event_payload_state_mismatch", f"{event_type}:{payload['status']} != {target}")
 
 
@@ -557,12 +578,126 @@ def validate_transition(states: dict[str, dict[str, str]], change: dict[str, Any
     states[dimension][entity_id] = target
 
 
+def _index_entry(index: dict[str, list[dict[str, Any]]], entity_id: str, kind: str, engagement_id: str) -> dict[str, Any] | None:
+    return next((entry for entry in index.get(entity_id, []) if entry["type"] == kind and entry.get("engagement_id") == engagement_id), None)
+
+
+def validate_temporal_search_reference(event: dict[str, Any], seen_events: dict[str, dict[str, Any]], index: dict[str, list[dict[str, Any]]], engagement: Path) -> None:
+    payload = event["payload"]
+    event_type = event["event_type"]
+    if event_type == "routing.assessed":
+        source = seen_events.get(payload["source_observation_ref"])
+        if source is None or source["event_type"] != "observation.recorded":
+            raise RecordError("routing_source_not_prior_observation", event["event_id"])
+    elif event_type == "candidate.proposed":
+        source = seen_events.get(payload["source_observation_ref"])
+        if source is None or source["event_type"] != "observation.recorded":
+            raise RecordError("candidate_source_not_prior_observation", event["event_id"])
+        routing_ref = payload["routing_review_ref"]
+        routing_event = seen_events.get(routing_ref)
+        if routing_event is not None:
+            if routing_event["event_type"] != "routing.assessed":
+                raise RecordError("candidate_routing_not_prior_assessment", event["event_id"])
+        else:
+            entry = _index_entry(index, routing_ref, "review", event["engagement_id"])
+            if entry is None:
+                raise RecordError("candidate_routing_not_prior_assessment", event["event_id"])
+            review = load_json(engagement / entry["path"])
+            if review.get("review_type") != "signal" or datetime.fromisoformat(review["recorded_at"].replace("Z", "+00:00")) > datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")):
+                raise RecordError("candidate_routing_review_not_prior_signal", event["event_id"])
+
+
+def validate_reference_precedence(event: dict[str, Any], index: dict[str, list[dict[str, Any]]], committed_entity_ids: set[str]) -> None:
+    payload = event["payload"]
+    refs = set(event.get("review_refs", [])) | set(event.get("finding_refs", [])) | set(event.get("artifact_refs", []))
+    for key in ("routing_review_ref", "origin_ref"):
+        if payload.get(key):
+            refs.add(payload[key])
+    for key in ("experiment_refs", "control_refs", "supporting_evidence_refs", "conflicting_evidence_refs"):
+        refs.update(payload.get(key, []))
+    event_time = datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00"))
+    for reference in refs:
+        entries = [entry for entry in index.get(reference, []) if entry.get("engagement_id") == event["engagement_id"]]
+        for entry in entries:
+            if entry["type"] in {"review", "finding", "environment"} and reference not in committed_entity_ids:
+                raise RecordError("record_reference_precedes_commit", f"{event['event_id']}:{reference}")
+            timestamp = entry.get("recorded_at")
+            if entry["type"] in {"attempt", "artifact", "review", "finding"} and timestamp and datetime.fromisoformat(timestamp.replace("Z", "+00:00")) > event_time:
+                raise RecordError("record_reference_from_future", f"{event['event_id']}:{reference}")
+
+
+def validate_cross_ledger_causality(events: list[dict[str, Any]], attempts: list[dict[str, Any]], artifacts: list[dict[str, Any]]) -> None:
+    event_times = {event["event_id"]: datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")) for event in events}
+    hypothesis_times = {event["payload"]["hypothesis_id"]: event_times[event["event_id"]] for event in events if event["event_type"] == "hypothesis.created"}
+    artifact_times = {artifact["artifact_id"]: datetime.fromisoformat(artifact["created_at"].replace("Z", "+00:00")) for artifact in artifacts}
+    environment_commit_times = {event["payload"]["record_id"]: event_times[event["event_id"]] for event in events if event["event_type"] == "record.committed" and event["payload"]["record_type"] == "environment-preflight"}
+    seen_attempts: set[str] = set()
+    for attempt in attempts:
+        attempt_time = datetime.fromisoformat(attempt["recorded_at"].replace("Z", "+00:00"))
+        hypothesis_time = hypothesis_times.get(attempt["hypothesis_ref"])
+        if hypothesis_time is None or hypothesis_time > attempt_time:
+            raise RecordError("attempt_precedes_hypothesis", attempt["attempt_id"])
+        experiment_time = event_times.get(attempt["experiment_ref"])
+        if experiment_time is not None and experiment_time > attempt_time:
+            raise RecordError("attempt_precedes_experiment", attempt["attempt_id"])
+        for artifact_ref in attempt["evidence_refs"]:
+            if artifact_ref not in artifact_times or artifact_times[artifact_ref] > attempt_time:
+                raise RecordError("attempt_precedes_evidence", f"{attempt['attempt_id']}:{artifact_ref}")
+        environment_time = environment_commit_times.get(attempt["environment_ref"])
+        if environment_time is None or environment_time > attempt_time:
+            raise RecordError("attempt_precedes_environment_commit", attempt["attempt_id"])
+        if not set(attempt.get("control_of", [])).issubset(seen_attempts):
+            raise RecordError("attempt_control_precedes_primary", attempt["attempt_id"])
+        seen_attempts.add(attempt["attempt_id"])
+
+
+def _iter_internal_refs(value: Any, key: str = "") -> Iterator[str]:
+    if isinstance(value, dict):
+        for child_key, child in value.items():
+            if child_key.endswith("_ref") and isinstance(child, str):
+                yield child
+            elif child_key.endswith("_refs") and isinstance(child, list):
+                yield from (item for item in child if isinstance(item, str))
+            else:
+                yield from _iter_internal_refs(child, child_key)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _iter_internal_refs(child, key)
+
+
+def validate_committed_record_precedence(engagement: Path, event: dict[str, Any], index: dict[str, list[dict[str, Any]]], committed_entity_ids: set[str]) -> None:
+    payload = event["payload"]
+    record = load_json(engagement / payload["record_path"])
+    schema_name = resolve_schema_name(record)
+    reference_errors = validate_record_references(record, schema_name, index)
+    if reference_errors:
+        raise RecordError("committed_record_reference_invalid", payload["record_id"], reference_errors)
+    event_time = datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00"))
+    record_time_text = record.get("recorded_at") or record.get("generated_at") or record.get("created_at")
+    record_time = datetime.fromisoformat(record_time_text.replace("Z", "+00:00")) if record_time_text else event_time
+    if record_time > event_time:
+        raise RecordError("record_commit_precedes_record_time", payload["record_id"])
+    internal_refs = set(_iter_internal_refs(record))
+    if schema_name == "report-manifest":
+        internal_refs.add(record["finding_id"])
+    elif schema_name == "migration-manifest":
+        internal_refs.update(entry["imported_finding_id"] for entry in record["entries"])
+    for reference in internal_refs:
+        entries = [entry for entry in index.get(reference, []) if entry.get("engagement_id") == event["engagement_id"]]
+        for entry in entries:
+            if entry["type"] in {"review", "finding", "environment"} and reference not in committed_entity_ids:
+                raise RecordError("committed_record_reference_precedes_commit", f"{payload['record_id']}:{reference}")
+            timestamp = entry.get("recorded_at")
+            if timestamp and datetime.fromisoformat(timestamp.replace("Z", "+00:00")) > record_time:
+                raise RecordError("committed_record_reference_from_future", f"{payload['record_id']}:{reference}")
+
+
 def _initial_snapshot(engagement_id: str, scope_hash: str) -> dict[str, Any]:
     return {
         "schema_version": 1, "engagement_id": engagement_id, "scope_hash": scope_hash,
         "active_environment_ref": None, "last_event_id": None, "event_count": 0,
         "ledger_hash": "sha256:" + "0" * 64, "attempt_count": 0, "artifact_count": 0,
-        "active_blockers": [], "candidates": {}, "operator_priors": [], "hypotheses": {}, "findings": {},
+        "active_blockers": [], "candidates": {}, "control_candidates": [], "operator_priors": [], "hypotheses": {}, "findings": {},
         "outstanding_reviews": [], "coverage": "active", "report_refs": [], "submission_refs": [],
         "cleanup": {"open_count": 0, "obligations": []}, "memory_disposition": None, "source_hashes": {}, "integrity_errors": [],
     }
@@ -585,19 +720,85 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             reference_errors = validate_record_references(record, schema, index)
             if reference_errors:
                 raise RecordError("record_reference_invalid", f"stored {kind} references do not resolve", reference_errors)
+    validate_cross_ledger_causality(events, attempts, artifacts)
     verify_file_authority(engagement, events, artifacts, allowed_record_orphans=allowed_record_orphans, allowed_artifact_orphans=allowed_artifact_orphans)
     state = _initial_snapshot(engagement_id, scope_hash)
     states: dict[str, dict[str, str]] = {dimension: {} for dimension in STATE_VALUES}
+    seen_events: dict[str, dict[str, Any]] = {}
+    committed_entity_ids: set[str] = set()
+    active_scope_operator: str | None = None
     for event in events:
         if event["engagement_id"] != state["engagement_id"]:
             raise RecordError("cross_engagement_event", event["event_id"])
         if event["event_type"] == "scope.attested":
             validate_scope_event_snapshot(engagement, event)
+            active_scope_operator = event["payload"]["operator_id"]
         validate_event_semantics(event)
+        validate_temporal_search_reference(event, seen_events, index, engagement)
+        payload = event["payload"]
+        validate_reference_precedence(event, index, committed_entity_ids)
+        if event["event_type"] == "record.committed":
+            validate_committed_record_precedence(engagement, event, index, committed_entity_ids)
+        if event["event_type"] == "operator_prior.recorded" and event["actor"]["id"] != active_scope_operator:
+            raise RecordError("operator_prior_not_scope_authorized", event["event_id"])
+        if event["event_type"] == "candidate.proposed" and (states["coverage"].get(engagement_id) == "coverage_dry" or states["engagement"].get(engagement_id) == "closed"):
+            raise RecordError("candidate_after_closed_search", event["event_id"])
+        if event["event_type"] == "hypothesis.created":
+            origin_type, origin_ref = payload["origin_type"], payload["origin_ref"]
+            if origin_type == "candidate":
+                candidate = state["candidates"].get(origin_ref)
+                if not candidate or candidate.get("status") != "selected":
+                    raise RecordError("hypothesis_origin_candidate_not_selected", event["event_id"])
+                if not set(payload["card_ids"]).intersection(candidate["card_ids"]):
+                    raise RecordError("hypothesis_candidate_card_mismatch", event["event_id"])
+                if payload.get("candidate_ref") not in (None, origin_ref):
+                    raise RecordError("hypothesis_candidate_ref_mismatch", event["event_id"])
+            elif origin_type == "operator_prior":
+                if origin_ref not in seen_events or seen_events[origin_ref]["event_type"] != "operator_prior.recorded":
+                    raise RecordError("hypothesis_origin_not_prior_operator_event", event["event_id"])
+            elif origin_type == "reviewer_challenge":
+                if not ((origin_ref in seen_events and seen_events[origin_ref]["event_type"] == "review.challenge_recorded") or _index_entry(index, origin_ref, "review", engagement_id)):
+                    raise RecordError("hypothesis_origin_not_prior_challenge", event["event_id"])
+            elif origin_type == "confirmed_primitive":
+                origin_event = seen_events.get(origin_ref)
+                event_confirmed = origin_event is not None and origin_event["event_type"] in {"claim.adjudicated", "finding.revised"} and origin_event["payload"].get("status") == "confirmed"
+                finding_entry = _index_entry(index, origin_ref, "finding", engagement_id)
+                file_confirmed = False
+                if finding_entry is not None and origin_ref in committed_entity_ids:
+                    file_confirmed = load_json(engagement / finding_entry["path"]).get("claim_state") == "confirmed"
+                if not (event_confirmed or file_confirmed):
+                    raise RecordError("hypothesis_origin_not_confirmed_primitive", event["event_id"])
+            elif origin_type == "target_model":
+                if origin_ref not in seen_events or seen_events[origin_ref]["event_type"] != "observation.recorded":
+                    raise RecordError("hypothesis_origin_not_prior_target_model", event["event_id"])
+        if event["event_type"] == "review.coverage_completed":
+            if payload.get("review_type") != "coverage" or not event["review_refs"]:
+                raise RecordError("coverage_review_event_invalid", event["event_id"])
+            dispositions: dict[str, str] = {}
+            for review_ref in event["review_refs"]:
+                entry = _index_entry(index, review_ref, "review", engagement_id)
+                if entry is None:
+                    raise RecordError("coverage_review_record_missing", review_ref)
+                review = load_json(engagement / entry["path"])
+                if review.get("review_type") != "coverage" or review.get("independence", {}).get("fresh_context") is not True:
+                    raise RecordError("coverage_review_not_cold", review_ref)
+                for item in review.get("hypothesis_dispositions", []):
+                    if item["hypothesis_ref"] in dispositions:
+                        raise RecordError("coverage_review_duplicate_hypothesis", item["hypothesis_ref"])
+                    dispositions[item["hypothesis_ref"]] = item["status"]
+            current_dispositions = {key: value["status"] for key, value in state["hypotheses"].items()}
+            if dispositions != current_dispositions:
+                raise RecordError("coverage_review_hypothesis_state_mismatch", f"review={dispositions}; state={current_dispositions}")
+        if event["event_type"] == "coverage.status_changed" and payload.get("status") == "coverage_dry":
+            review_event = seen_events.get(payload["coverage_review_ref"])
+            if review_event is None or review_event["event_type"] != "review.coverage_completed" or review_event["payload"].get("verdict") != "coverage_dry":
+                raise RecordError("coverage_dry_without_cold_review", event["event_id"])
+            unresolved = {key: value["status"] for key, value in state["hypotheses"].items() if value["status"] not in {"exhausted", "closed"}}
+            if unresolved:
+                raise RecordError("coverage_dry_with_active_hypotheses", str(unresolved))
         for change in event["state_changes"]:
             validate_transition(states, change)
         event_type = event["event_type"]
-        payload = event["payload"]
         if event_type == "scope.attested":
             prior = state["scope_hash"]
             if event["sequence"] > 1 and payload.get("supersedes_scope_hash") != prior:
@@ -605,14 +806,21 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             state["scope_hash"] = payload["scope_hash"]
         elif event_type == "environment.preflight_recorded":
             state["active_environment_ref"] = payload.get("record_id") or payload.get("environment_ref")
+        elif event_type == "routing.assessed" and payload["activation_strength"] == "negative":
+            state["control_candidates"].append({"routing_event_id": event["event_id"], "source_observation_ref": payload["source_observation_ref"], "card_ids": payload["card_ids"], "status": "likely_held", "rationale": event["rationale"]})
         elif event_type == "candidate.proposed":
-            state["candidates"][payload["candidate_id"]] = {"status": payload.get("status", "proposed"), "rationale": event["rationale"]}
+            state["candidates"][payload["candidate_id"]] = {"status": payload["status"], "rationale": event["rationale"], "source_observation_ref": payload["source_observation_ref"], "routing_review_ref": payload["routing_review_ref"], "activation_strength": payload["activation_strength"], "card_ids": payload["card_ids"], "ex_ante": event["ex_ante"]}
+        elif event_type in {"candidate.selected", "candidate.skipped", "candidate.deferred"}:
+            candidate = state["candidates"].setdefault(payload["candidate_id"], {})
+            candidate["status"] = payload["status"]
+            candidate["rationale"] = event["rationale"]
         elif event_type == "operator_prior.recorded":
-            state["operator_priors"].append({"event_id": event["event_id"], "entity_refs": event["entity_refs"], "strength": payload.get("strength"), "rationale": event["rationale"]})
+            state["operator_priors"].append({"event_id": event["event_id"], "prior_id": payload["prior_id"], "prior_statement": payload["prior_statement"], "entity_refs": event["entity_refs"], "strength": payload.get("strength"), "rationale": event["rationale"]})
         elif event_type == "hypothesis.created":
-            state["hypotheses"][payload["hypothesis_id"]] = {"status": payload.get("status", "queued"), "rationale": event["rationale"]}
+            state["hypotheses"][payload["hypothesis_id"]] = {"status": payload["status"], "rationale": event["rationale"], "origin_type": payload["origin_type"], "origin_ref": payload["origin_ref"], "statement": payload["hypothesis_statement"], "suspected_invariant": payload["suspected_invariant"], "trust_boundary": payload["trust_boundary"], "attacker_path": payload["attacker_path"], "impact_ceiling": payload["impact_ceiling"], "bounded_space": payload["bounded_space"], "lens_ids": payload["lens_ids"], "card_ids": payload["card_ids"], "expected_confirming_evidence": payload["expected_confirming_evidence"], "decisive_falsifiers": payload["decisive_falsifiers"], "cost_estimate": payload["cost_estimate"], "constraints": payload["constraints"], "next_experiment": payload["next_experiment"], "completion_criteria": payload["completion_criteria"], "experiment_refs": [], "control_refs": [], "supporting_evidence_refs": [], "conflicting_evidence_refs": [], "unresolved_questions": [], "next_route": None}
         elif event_type == "hypothesis.status_changed":
-            state["hypotheses"].setdefault(payload["hypothesis_id"], {})["status"] = payload["status"]
+            hypothesis = state["hypotheses"].setdefault(payload["hypothesis_id"], {})
+            hypothesis.update({"status": payload["status"], "rationale": payload["disposition_rationale"], "experiment_refs": payload["experiment_refs"], "control_refs": payload["control_refs"], "supporting_evidence_refs": payload["supporting_evidence_refs"], "conflicting_evidence_refs": payload["conflicting_evidence_refs"], "unresolved_questions": payload["unresolved_questions"], "next_route": payload["next_route"]})
         elif event_type == "finding.revised":
             state["findings"][payload["finding_id"]] = {"revision": payload["finding_revision"], "status": payload.get("status")}
         elif event_type == "report.generated":
@@ -625,7 +833,10 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             state["active_blockers"].append(event["rationale"])
         elif event_type == "engagement.reopened":
             state["active_blockers"] = []
+        if event_type == "record.committed":
+            committed_entity_ids.add(payload["record_id"])
         state["last_event_id"] = event["event_id"]
+        seen_events[event["event_id"]] = event
     if not allow_scope_drift:
         metadata = _scope_metadata(engagement / "scope.md")
         latest_scope_event = next(event for event in reversed(events) if event["event_type"] == "scope.attested")
@@ -702,8 +913,17 @@ def append_event(engagement: Path, proposal: dict[str, Any]) -> dict[str, Any]:
                 validate_transition(states, change)
         for change in proposal.get("state_changes", []):
             validate_transition(states, change)
+        ledger_path = engagement / LEDGERS["event"][0]
+        verified_boundary = ledger_path.stat().st_size
         record = append_ledger_record(engagement, "event", proposal, lock_held=True)
-        snapshot = reduce_engagement(engagement)
+        try:
+            snapshot = reduce_engagement(engagement)
+        except Exception:
+            with open(ledger_path, "r+b") as handle:
+                handle.truncate(verified_boundary)
+                handle.flush()
+                os.fsync(handle.fileno())
+            raise
         write_snapshot(engagement, snapshot)
         from engagement_views import write_views
         write_views(engagement, snapshot)
@@ -729,8 +949,17 @@ def register_artifact(engagement: Path, file_path: Path, metadata: dict[str, Any
         reference_errors = validate_record_references(preview, "artifact", build_reference_index(engagement))
         if reference_errors:
             raise RecordError("record_reference_invalid", "artifact references do not resolve", reference_errors)
+        ledger_path = engagement / LEDGERS["artifact"][0]
+        verified_boundary = ledger_path.stat().st_size
         record = append_ledger_record(engagement, "artifact", proposal, lock_held=True)
-        snapshot = reduce_engagement(engagement)
+        try:
+            snapshot = reduce_engagement(engagement)
+        except Exception:
+            with open(ledger_path, "r+b") as handle:
+                handle.truncate(verified_boundary)
+                handle.flush()
+                os.fsync(handle.fileno())
+            raise
         write_snapshot(engagement, snapshot)
         from engagement_views import write_views
         write_views(engagement, snapshot)
@@ -745,8 +974,17 @@ def append_attempt(engagement: Path, proposal: dict[str, Any]) -> dict[str, Any]
         reference_errors = validate_record_references(preview, "attempt-v2", build_reference_index(engagement))
         if reference_errors:
             raise RecordError("record_reference_invalid", "attempt references do not resolve", reference_errors)
+        ledger_path = engagement / LEDGERS["attempt"][0]
+        verified_boundary = ledger_path.stat().st_size
         record = append_ledger_record(engagement, "attempt", proposal, lock_held=True)
-        snapshot = reduce_engagement(engagement)
+        try:
+            snapshot = reduce_engagement(engagement)
+        except Exception:
+            with open(ledger_path, "r+b") as handle:
+                handle.truncate(verified_boundary)
+                handle.flush()
+                os.fsync(handle.fileno())
+            raise
         write_snapshot(engagement, snapshot)
         from engagement_views import write_views
         write_views(engagement, snapshot)

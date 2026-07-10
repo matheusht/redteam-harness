@@ -310,6 +310,7 @@ def _record_identity(record: dict[str, Any]) -> tuple[str, str, int | None] | No
         ("attempt_id", "attempt"), ("artifact_id", "artifact"), ("review_id", "review"),
         ("preflight_id", "environment"), ("environment_id", "environment"),
         ("finding_id", "finding"), ("event_id", "event"), ("target_id", "target"),
+        ("report_id", "report"), ("disposition_id", "memory-disposition"), ("migration_id", "migration"),
     )
     for key, kind in identities:
         value = record.get(key)
@@ -343,7 +344,7 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
             identity = _record_identity(record)
             if identity:
                 entity_id, kind, revision = identity
-                entry = {"type": kind, "engagement_id": record.get("engagement_id") or record.get("engagement"), "revision": revision, "path": path.relative_to(root).as_posix()}
+                entry = {"type": kind, "engagement_id": record.get("engagement_id") or record.get("engagement"), "revision": revision, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at") or record.get("created_at")}
                 index.setdefault(entity_id, []).append(entry)
             if record.get("event_type") in {"candidate.proposed", "hypothesis.created"}:
                 payload = record.get("payload", {})
@@ -351,7 +352,7 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
                 entity_id = payload.get(key) if isinstance(payload, dict) else None
                 if isinstance(entity_id, str):
                     kind = "candidate" if record["event_type"] == "candidate.proposed" else "hypothesis"
-                    index.setdefault(entity_id, []).append({"type": kind, "engagement_id": record.get("engagement_id"), "revision": None, "path": path.relative_to(root).as_posix()})
+                    index.setdefault(entity_id, []).append({"type": kind, "engagement_id": record.get("engagement_id"), "revision": None, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at")})
     for entity_id, entries in index.items():
         seen: set[tuple[str, int | None]] = set()
         for entry in entries:
@@ -402,6 +403,11 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
         "engagement-event": [
             (("evidence_refs",), {"attempt", "artifact"}), (("review_refs",), {"review"}),
         ],
+        "report-manifest": [
+            (("finding_id",), {"finding"}), (("adjudication_review_ref",), {"review"}),
+        ],
+        "environment-preflight": [(("target_refs",), {"target"})],
+        "memory-disposition": [(("finding_refs",), {"finding"})],
     }
     dynamic_specs: list[tuple[tuple[str, ...], Any, set[str]]] = []
     if schema_name == "finding-v3":
@@ -421,6 +427,25 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             dynamic_specs.append((("control_applicability", str(index_number), "attempt_ref"), control.get("attempt_ref"), {"attempt"}))
         for index_number, disposition in enumerate(record.get("hypothesis_dispositions", [])):
             dynamic_specs.append((("hypothesis_dispositions", str(index_number), "hypothesis_ref"), disposition.get("hypothesis_ref"), {"hypothesis"}))
+    elif schema_name == "migration-manifest":
+        for index_number, entry in enumerate(record.get("entries", [])):
+            dynamic_specs.extend([
+                (("entries", str(index_number), "source_artifact_ref"), entry.get("source_artifact_ref"), {"artifact"}),
+                (("entries", str(index_number), "imported_finding_id"), entry.get("imported_finding_id"), {"finding"}),
+            ])
+    elif schema_name == "engagement-event":
+        payload = record.get("payload", {})
+        dynamic_specs.extend([
+            (("payload", "source_observation_ref"), payload.get("source_observation_ref"), {"event", "attempt"}),
+            (("payload", "routing_review_ref"), payload.get("routing_review_ref"), {"event", "review"}),
+            (("payload", "candidate_ref"), payload.get("candidate_ref"), {"candidate"}),
+            (("payload", "origin_ref"), payload.get("origin_ref"), {"candidate", "event", "review", "finding", "hypothesis"}),
+            (("payload", "coverage_review_ref"), payload.get("coverage_review_ref"), {"event"}),
+            (("payload", "experiment_refs"), payload.get("experiment_refs", []), {"event", "attempt"}),
+            (("payload", "control_refs"), payload.get("control_refs", []), {"attempt"}),
+            (("payload", "supporting_evidence_refs"), payload.get("supporting_evidence_refs", []), {"attempt", "artifact"}),
+            (("payload", "conflicting_evidence_refs"), payload.get("conflicting_evidence_refs", []), {"attempt", "artifact"}),
+        ])
 
     errors: list[dict[str, Any]] = []
     combined = [(path, _at(record, path), allowed) for path, allowed in specs.get(schema_name, [])] + dynamic_specs

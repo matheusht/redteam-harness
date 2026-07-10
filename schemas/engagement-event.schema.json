@@ -381,6 +381,181 @@
         },
         "scope_snapshot_path": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "source_observation_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "routing_review_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "activation_strength": {
+          "enum": [
+            "strong",
+            "weak",
+            "negative"
+          ]
+        },
+        "card_ids": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "vulnerability_ids": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "prior_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "prior_statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hypothesis_statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bounded_space": {
+          "type": "string",
+          "minLength": 1
+        },
+        "completion_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "candidate_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "expected_information_gain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "safety_class": {
+          "enum": [
+            "clear_local",
+            "review_required",
+            "unknown"
+          ]
+        },
+        "cost_estimate": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/cost"
+        },
+        "origin_type": {
+          "enum": [
+            "candidate",
+            "operator_prior",
+            "reviewer_challenge",
+            "confirmed_primitive",
+            "target_model"
+          ]
+        },
+        "origin_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "suspected_invariant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trust_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attacker_path": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "impact_ceiling": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lens_ids": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "next_experiment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "experiment_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "control_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "supporting_evidence_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "conflicting_evidence_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "disposition_rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unresolved_questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_route": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "coverage_review_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "decisive_falsifiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expected_confirming_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evidence_type",
+              "description",
+              "required"
+            ],
+            "properties": {
+              "evidence_type": {
+                "enum": [
+                  "primary",
+                  "control",
+                  "replay",
+                  "trace",
+                  "environment"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "type": "boolean"
+              }
+            }
+          }
         }
       }
     }
@@ -476,7 +651,20 @@
           "payload": {
             "required": [
               "candidate_id",
-              "status"
+              "source_observation_ref",
+              "routing_review_ref",
+              "activation_strength",
+              "card_ids",
+              "status",
+              "expected_information_gain",
+              "safety_class",
+              "cost_estimate"
+            ]
+          },
+          "ex_ante": {
+            "type": "object",
+            "required": [
+              "recorded_before_outcome"
             ]
           }
         }
@@ -498,7 +686,8 @@
           "payload": {
             "required": [
               "candidate_id",
-              "status"
+              "status",
+              "reason"
             ]
           }
         }
@@ -520,7 +709,8 @@
           "payload": {
             "required": [
               "candidate_id",
-              "status"
+              "status",
+              "reason"
             ]
           }
         }
@@ -542,7 +732,8 @@
           "payload": {
             "required": [
               "candidate_id",
-              "status"
+              "status",
+              "reason"
             ]
           }
         }
@@ -563,7 +754,10 @@
         "properties": {
           "payload": {
             "required": [
-              "strength"
+              "prior_id",
+              "prior_statement",
+              "strength",
+              "reason"
             ]
           }
         }
@@ -585,6 +779,22 @@
           "payload": {
             "required": [
               "hypothesis_id",
+              "origin_type",
+              "origin_ref",
+              "hypothesis_statement",
+              "suspected_invariant",
+              "trust_boundary",
+              "attacker_path",
+              "impact_ceiling",
+              "bounded_space",
+              "lens_ids",
+              "card_ids",
+              "expected_confirming_evidence",
+              "decisive_falsifiers",
+              "cost_estimate",
+              "constraints",
+              "next_experiment",
+              "completion_criteria",
               "status"
             ]
           }
@@ -607,7 +817,15 @@
           "payload": {
             "required": [
               "hypothesis_id",
-              "status"
+              "status",
+              "reason",
+              "experiment_refs",
+              "control_refs",
+              "supporting_evidence_refs",
+              "conflicting_evidence_refs",
+              "disposition_rationale",
+              "unresolved_questions",
+              "next_route"
             ]
           }
         }
@@ -738,7 +956,8 @@
           "payload": {
             "required": [
               "entity_id",
-              "status"
+              "status",
+              "coverage_review_ref"
             ]
           }
         }
@@ -829,6 +1048,76 @@
             "required": [
               "entity_id",
               "status"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "observation.recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "entity_id",
+              "entity_type",
+              "status"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "routing.assessed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "entity_id",
+              "source_observation_ref",
+              "activation_strength",
+              "card_ids",
+              "status"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "review.coverage_completed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "review_type",
+              "verdict"
             ]
           }
         }

@@ -16,6 +16,7 @@
     "artifact_count",
     "active_blockers",
     "candidates",
+    "control_candidates",
     "operator_priors",
     "hypotheses",
     "findings",
@@ -79,14 +80,63 @@
         "additionalProperties": false,
         "required": [
           "status",
-          "rationale"
+          "rationale",
+          "source_observation_ref",
+          "routing_review_ref",
+          "activation_strength",
+          "card_ids",
+          "ex_ante"
         ],
         "properties": {
           "status": {
-            "type": "string"
+            "enum": [
+              "queued",
+              "selected",
+              "closed",
+              "deferred"
+            ]
           },
           "rationale": {
             "type": "string"
+          },
+          "source_observation_ref": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "routing_review_ref": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "activation_strength": {
+            "enum": [
+              "strong",
+              "weak"
+            ]
+          },
+          "card_ids": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+          },
+          "ex_ante": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recorded_before_outcome"
+            ],
+            "properties": {
+              "probability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "ordinal": {
+                "enum": [
+                  "negative",
+                  "weak",
+                  "strong"
+                ]
+              },
+              "recorded_before_outcome": {
+                "const": true
+              }
+            }
           }
         }
       }
@@ -98,12 +148,20 @@
         "additionalProperties": false,
         "required": [
           "event_id",
+          "prior_id",
+          "prior_statement",
           "entity_refs",
           "strength",
           "rationale"
         ],
         "properties": {
           "event_id": {
+            "type": "string"
+          },
+          "prior_id": {
+            "type": "string"
+          },
+          "prior_statement": {
             "type": "string"
           },
           "entity_refs": {
@@ -113,9 +171,9 @@
             }
           },
           "strength": {
-            "type": [
-              "string",
-              "null"
+            "enum": [
+              "weak",
+              "strong"
             ]
           },
           "rationale": {
@@ -131,14 +189,156 @@
         "additionalProperties": false,
         "required": [
           "status",
-          "rationale"
+          "rationale",
+          "origin_type",
+          "origin_ref",
+          "statement",
+          "suspected_invariant",
+          "trust_boundary",
+          "attacker_path",
+          "impact_ceiling",
+          "bounded_space",
+          "lens_ids",
+          "card_ids",
+          "expected_confirming_evidence",
+          "decisive_falsifiers",
+          "cost_estimate",
+          "constraints",
+          "next_experiment",
+          "completion_criteria",
+          "experiment_refs",
+          "control_refs",
+          "supporting_evidence_refs",
+          "conflicting_evidence_refs",
+          "unresolved_questions",
+          "next_route"
         ],
         "properties": {
           "status": {
-            "type": "string"
+            "enum": [
+              "queued",
+              "selected",
+              "running",
+              "held",
+              "exhausted",
+              "deferred",
+              "blocked",
+              "closed"
+            ]
           },
           "rationale": {
             "type": "string"
+          },
+          "origin_type": {
+            "enum": [
+              "candidate",
+              "operator_prior",
+              "reviewer_challenge",
+              "confirmed_primitive",
+              "target_model"
+            ]
+          },
+          "origin_ref": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "suspected_invariant": {
+            "type": "string"
+          },
+          "trust_boundary": {
+            "type": "string"
+          },
+          "attacker_path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "impact_ceiling": {
+            "type": "string"
+          },
+          "bounded_space": {
+            "type": "string"
+          },
+          "lens_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "card_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decisive_falsifiers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "next_experiment": {
+            "type": "string"
+          },
+          "completion_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "experiment_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "control_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supporting_evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conflicting_evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unresolved_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "next_route": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cost_estimate": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/cost"
+          },
+          "expected_confirming_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
           }
         }
       }
@@ -272,6 +472,40 @@
     "integrity_errors": {
       "type": "array",
       "maxItems": 0
+    },
+    "control_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "routing_event_id",
+          "source_observation_ref",
+          "card_ids",
+          "status",
+          "rationale"
+        ],
+        "properties": {
+          "routing_event_id": {
+            "type": "string"
+          },
+          "source_observation_ref": {
+            "type": "string"
+          },
+          "card_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "const": "likely_held"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

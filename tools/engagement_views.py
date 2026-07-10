@@ -40,6 +40,10 @@ def render_views(snapshot: dict[str, Any]) -> dict[str, bytes]:
 
 {chr(10).join(candidate_lines) if candidate_lines else 'None.'}
 
+## Likely-held / control candidates
+
+{_bullets([item['routing_event_id'] for item in snapshot['control_candidates']])}
+
 ## Hypotheses
 
 {chr(10).join(hypothesis_lines) if hypothesis_lines else 'None.'}

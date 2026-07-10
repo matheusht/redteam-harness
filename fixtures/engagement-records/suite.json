@@ -2087,6 +2087,7 @@
           "obligations": [],
           "open_count": 0
         },
+        "control_candidates": [],
         "coverage": "active",
         "engagement_id": "eng-1",
         "event_count": 1,
@@ -2122,7 +2123,18 @@
         "attempt_count": 2,
         "candidates": {
           "candidate-1": {
+            "activation_strength": "strong",
+            "card_ids": [
+              "card-1"
+            ],
+            "ex_ante": {
+              "ordinal": "strong",
+              "probability": 0.6,
+              "recorded_before_outcome": true
+            },
             "rationale": "selected fixture",
+            "routing_review_ref": "event-routing-1",
+            "source_observation_ref": "event-observation-1",
             "status": "selected"
           }
         },
@@ -2130,6 +2142,7 @@
           "obligations": [],
           "open_count": 0
         },
+        "control_candidates": [],
         "coverage": "blocked",
         "engagement_id": "eng-1",
         "event_count": 5,
@@ -2141,8 +2154,60 @@
         },
         "hypotheses": {
           "hypothesis-1": {
+            "attacker_path": [
+              "entry",
+              "branch",
+              "state"
+            ],
+            "bounded_space": "One local path.",
+            "card_ids": [
+              "card-1"
+            ],
+            "completion_criteria": [
+              "matched control"
+            ],
+            "conflicting_evidence_refs": [],
+            "constraints": [
+              "local only"
+            ],
+            "control_refs": [],
+            "cost_estimate": {
+              "cost_usd": null,
+              "human_review_seconds": 0,
+              "input_tokens": null,
+              "model_calls": 0,
+              "model_seconds": 0,
+              "output_tokens": null,
+              "target_calls": 0,
+              "tool_seconds": 0,
+              "wall_seconds": 0
+            },
+            "decisive_falsifiers": [
+              "matched sibling also lacks check"
+            ],
+            "expected_confirming_evidence": [
+              {
+                "description": "guard trace and state transition",
+                "evidence_type": "trace",
+                "required": true
+              }
+            ],
+            "experiment_refs": [],
+            "impact_ceiling": "owned fixture only",
+            "lens_ids": [
+              "authz"
+            ],
+            "next_experiment": "trace branch",
+            "next_route": null,
+            "origin_ref": "candidate-1",
+            "origin_type": "candidate",
             "rationale": "running fixture",
-            "status": "running"
+            "statement": "Bounded test hypothesis.",
+            "status": "running",
+            "supporting_evidence_refs": [],
+            "suspected_invariant": "A check should dominate the state transition.",
+            "trust_boundary": "public entry to guarded state",
+            "unresolved_questions": []
           }
         },
         "integrity_errors": [],
@@ -2176,6 +2241,7 @@
           "obligations": [],
           "open_count": 0
         },
+        "control_candidates": [],
         "coverage": "active",
         "engagement_id": "eng-1",
         "event_count": 1,
