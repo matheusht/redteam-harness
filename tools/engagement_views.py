@@ -87,8 +87,8 @@ This view does not promote Plane-1 memory. Promotion remains an operator-reviewe
     return {
         "progress.md": progress.encode("utf-8"),
         "reviews/README.md": reviews.encode("utf-8"),
-        "reports/INDEX.md": reports.encode("utf-8"),
-        "submissions/INDEX.md": submissions.encode("utf-8"),
+        "views/report-index.md": reports.encode("utf-8"),
+        "views/submission-index.md": submissions.encode("utf-8"),
         "memory/README.md": memory.encode("utf-8"),
         "cleanup.generated.md": cleanup.encode("utf-8"),
     }

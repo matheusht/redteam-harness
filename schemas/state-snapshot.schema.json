@@ -23,6 +23,7 @@
     "outstanding_reviews",
     "proof_reviews",
     "coverage",
+    "reports",
     "report_refs",
     "submission_refs",
     "cleanup",
@@ -593,6 +594,46 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      }
+    },
+    "reports": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_id",
+          "finding_revision",
+          "status",
+          "manifest_digest",
+          "historical_reason"
+        ],
+        "properties": {
+          "finding_id": {
+            "type": "string"
+          },
+          "finding_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "accepted",
+              "submitted",
+              "historical"
+            ]
+          },
+          "manifest_digest": {
+            "type": "string"
+          },
+          "historical_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       }

@@ -595,6 +595,63 @@
         },
         "resolves_review_refs": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "report_manifest_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "submission_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "submission_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "program": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorship_note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "source_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "migration_disposition": {
+          "enum": [
+            "imported",
+            "needs_review",
+            "skipped"
+          ]
+        },
+        "source_artifact_ref": {
+          "oneOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "imported_finding_id": {
+          "oneOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "imported_revision": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
         }
       }
     },
@@ -916,7 +973,10 @@
         "properties": {
           "payload": {
             "required": [
-              "report_ref"
+              "report_ref",
+              "finding_id",
+              "finding_revision",
+              "report_manifest_digest"
             ]
           }
         }
@@ -938,7 +998,11 @@
           "payload": {
             "required": [
               "submission_ref",
-              "report_ref"
+              "report_ref",
+              "submission_path",
+              "submission_digest",
+              "program",
+              "authorship_note"
             ]
           }
         }
@@ -1218,6 +1282,56 @@
               "verdict",
               "claim_tuple_hash",
               "high_value"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "operator.review_recorded"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "report_ref",
+              "review_ref",
+              "status",
+              "reason"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "legacy.record_imported"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "source_path",
+              "source_hash",
+              "migration_disposition",
+              "source_artifact_ref",
+              "imported_finding_id",
+              "imported_revision"
             ]
           }
         }

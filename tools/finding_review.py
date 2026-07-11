@@ -46,6 +46,18 @@ def claim_rows(finding: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def render_internal_report(finding: dict[str, Any], included_claim_ids: list[str], omitted_claims: list[dict[str, str]]) -> str:
+    rows = {row["claim_id"]: row for row in claim_rows(finding)}
+    lines = [f"# Internal advisory — {finding['finding_id']} revision {finding['revision']}", "", f"Claim state: **{finding['claim_state']}**", "", "## Included claims", ""]
+    for claim_id in included_claim_ids:
+        row = rows[claim_id]
+        lines.extend([f"### {claim_id}", "", row["statement"], "", f"Claim status: {row['claim_status']}", f"Evidence: {', '.join(row['attempt_refs'] + row['artifact_refs'])}", f"Controls: {', '.join(row['control_refs']) or 'not applicable'}", f"Replays: {', '.join(row['replay_refs']) or 'not applicable'}", ""])
+    lines.extend(["## Intentionally omitted claims", ""])
+    lines.extend([f"- `{item['claim_id']}` — {item['rationale']}" for item in omitted_claims] or ["- None."])
+    lines.extend(["", "## Structured claim-to-proof matrix", "", render_claim_proof(finding)])
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _cell(value: Any) -> str:
     if isinstance(value, list):
         value = ", ".join(value) if value else "—"

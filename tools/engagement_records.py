@@ -318,9 +318,8 @@ def resolve_schema_name(record: Any, explicit: str | None = None) -> str:
 def _record_identity(record: dict[str, Any]) -> tuple[str, str, int | None] | None:
     identities = (
         ("attempt_id", "attempt"), ("artifact_id", "artifact"), ("review_id", "review"),
-        ("preflight_id", "environment"), ("environment_id", "environment"),
-        ("finding_id", "finding"), ("event_id", "event"), ("target_id", "target"),
-        ("report_id", "report"), ("disposition_id", "memory-disposition"), ("migration_id", "migration"),
+        ("preflight_id", "environment"), ("environment_id", "environment"), ("report_id", "report"),
+        ("finding_id", "finding"), ("event_id", "event"), ("target_id", "target"), ("disposition_id", "memory-disposition"), ("migration_id", "migration"),
     )
     for key, kind in identities:
         value = record.get(key)
@@ -413,7 +412,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("supersedes_artifact_id",), {"artifact"}),
         ],
         "review": [
-            (("input_refs",), {"attempt", "finding", "artifact", "review", "environment"}),
+            (("input_refs",), {"attempt", "finding", "artifact", "review", "environment", "report"}),
             (("evidence_refs",), {"attempt", "artifact"}), (("conflicting_evidence",), {"attempt", "artifact"}),
         ],
         "engagement-event": [
@@ -440,7 +439,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             dynamic_specs.append((("legacy_import", "source_artifact_ref"), legacy.get("source_artifact_ref"), {"artifact"}))
     elif schema_name == "review":
         if not (record.get("review_type") == "claim_adjudication" and record.get("entity_ref") == record.get("proposed_finding_id")):
-            dynamic_specs.append((("entity_ref",), record.get("entity_ref"), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement"}))
+            dynamic_specs.append((("entity_ref",), record.get("entity_ref"), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement", "report"}))
         dynamic_specs.append((("proof_profile_ref",), record.get("proof_profile_ref"), {"artifact"}))
         for index_number, control in enumerate(record.get("control_applicability", [])):
             dynamic_specs.append((("control_applicability", str(index_number), "attempt_ref"), control.get("attempt_ref"), {"attempt"}))

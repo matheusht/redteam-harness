@@ -2104,6 +2104,7 @@
         "outstanding_reviews": [],
         "proof_reviews": {},
         "report_refs": [],
+        "reports": {},
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "source_hashes": {
@@ -2225,6 +2226,7 @@
         "outstanding_reviews": [],
         "proof_reviews": {},
         "report_refs": [],
+        "reports": {},
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "source_hashes": {
@@ -2264,6 +2266,7 @@
         "outstanding_reviews": [],
         "proof_reviews": {},
         "report_refs": [],
+        "reports": {},
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "source_hashes": {
@@ -2408,11 +2411,30 @@
       "record": {
         "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "adjudication_review_ref": "review-1",
+        "claim_proof_matrix_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
         "engagement_id": "eng-1",
         "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "finding_id": "F-1",
         "finding_revision": 1,
         "generated_at": "2026-07-10T12:00:00Z",
+        "generator_provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": "report-v1",
+          "provider": null,
+          "tool_versions": [
+            "report-v1"
+          ]
+        },
+        "historical_reason": null,
+        "included_claim_ids": [
+          "claim-1"
+        ],
+        "omitted_claims": [],
         "operator_status": "draft",
         "renderer_version": "v1",
         "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -2429,11 +2451,30 @@
       "record": {
         "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "adjudication_review_ref": "review-1",
+        "claim_proof_matrix_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
         "engagement_id": "eng-1",
         "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "finding_id": "F-1",
         "finding_revision": 2,
         "generated_at": "2026-07-10T12:00:00Z",
+        "generator_provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": "report-v1",
+          "provider": null,
+          "tool_versions": [
+            "report-v1"
+          ]
+        },
+        "historical_reason": null,
+        "included_claim_ids": [
+          "claim-1"
+        ],
+        "omitted_claims": [],
         "operator_status": "accepted",
         "renderer_version": "v1",
         "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -2450,11 +2491,30 @@
       "record": {
         "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "adjudication_review_ref": "review-1",
+        "claim_proof_matrix_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
         "engagement_id": "eng-1",
         "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "finding_id": "F-1",
         "finding_revision": 1,
         "generated_at": "2026-07-10T12:00:00Z",
+        "generator_provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": "report-v1",
+          "provider": null,
+          "tool_versions": [
+            "report-v1"
+          ]
+        },
+        "historical_reason": null,
+        "included_claim_ids": [
+          "claim-1"
+        ],
+        "omitted_claims": [],
         "operator_status": "draft",
         "renderer_version": "v1",
         "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -2560,6 +2620,7 @@
         "engagement_id": "eng-1",
         "entries": [
           {
+            "disposition": "imported",
             "imported_finding_id": "F-legacy-1",
             "imported_revision": 1,
             "missing_legacy_evidence": [

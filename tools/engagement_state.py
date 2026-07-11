@@ -25,7 +25,7 @@ from engagement_records import (
     validate_record,
     validate_record_references,
 )
-from finding_review import claim_tuple_hash
+from finding_review import claim_rows, claim_tuple_hash, render_claim_proof, render_internal_report
 
 LEDGERS = {
     "event": ("events.jsonl", "engagement-event", "event_id"),
@@ -56,6 +56,7 @@ EVENT_STATE_RULES = {
     "review.pocinator_completed": (set(), set()),
     "coverage.status_changed": ({"coverage"}, {"coverage"}),
     "report.generated": ({"report"}, {"report"}),
+    "operator.review_recorded": ({"report"}, {"report"}),
     "submission.recorded": ({"report"}, {"report"}),
     "cleanup.updated": ({"cleanup"}, {"cleanup"}),
     "memory.disposition_recorded": ({"memory"}, {"memory"}),
@@ -348,6 +349,19 @@ def verify_file_authority(engagement: Path, events: list[dict[str, Any]], artifa
     orphan_records = sorted(governed_files - set(committed) - (allowed_record_orphans or set()))
     if orphan_records:
         raise RecordError("orphan_immutable_record", ", ".join(orphan_records))
+    bound_reports: set[str] = set()
+    for relative, payload in committed.items():
+        if payload["record_type"] == "report-manifest":
+            bound_reports.add(load_json(engagement / relative)["report_path"])
+    for relative in allowed_record_orphans or set():
+        if relative.endswith(".manifest.json") and (engagement / relative).is_file():
+            value = load_json(engagement / relative)
+            if value.get("report_path"):
+                bound_reports.add(value["report_path"])
+    report_files = {path.relative_to(engagement).as_posix() for path in (engagement / "reports").glob("**/*.md") if path.is_file()}
+    orphan_reports = sorted(report_files - bound_reports)
+    if orphan_reports:
+        raise RecordError("orphan_report_file", ", ".join(orphan_reports))
 
     artifact_paths: set[str] = set()
     for artifact in artifacts:
@@ -490,6 +504,8 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
     engagement_id = event.get("engagement_id")
     if event.get("provenance", {}).get("actor") != event.get("actor"):
         raise RecordError("event_actor_provenance_mismatch", event.get("event_id", "unknown"))
+    if event_type in {"report.generated", "operator.review_recorded", "submission.recorded"} and event.get("actor", {}).get("role") != "operator":
+        raise RecordError("report_lifecycle_not_operator", event.get("event_id", "unknown"))
     if event_type in {"review.regrade_completed", "review.pocinator_completed"} and event.get("actor", {}).get("role") != "reviewer":
         raise RecordError("typed_review_actor_invalid", event.get("event_id", "unknown"))
     if event_type == "claim.adjudicated" and event.get("actor", {}).get("role") != "reviewer":
@@ -548,6 +564,8 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
         binding = ("coverage", engagement_id, payload.get("status"))
     elif event_type == "report.generated":
         binding = ("report", payload.get("report_ref"), "draft")
+    elif event_type == "operator.review_recorded":
+        binding = ("report", payload.get("report_ref"), "accepted")
     elif event_type == "submission.recorded":
         binding = ("report", payload.get("report_ref"), "submitted")
     elif event_type == "cleanup.updated":
@@ -710,10 +728,10 @@ def compute_review_input_hash(engagement: Path, review: dict[str, Any], index: d
     committed_inputs: list[dict[str, str]] = []
     for reference in sorted(review["input_refs"]):
         candidates = [entry for entry in index.get(reference, []) if entry.get("engagement_id") == review["engagement_id"] and (not entry.get("recorded_at") or datetime.fromisoformat(entry["recorded_at"].replace("Z", "+00:00")) <= review_time)]
-        if review.get("finding_revision") is not None and reference == review.get("entity_ref"):
-            candidates = [entry for entry in candidates if entry.get("revision") == review["finding_revision"]]
+        if review.get("finding_revision") is not None and reference == review.get("entity_ref") and any(entry["type"] == "finding" for entry in candidates):
+            candidates = [entry for entry in candidates if entry["type"] != "finding" or entry.get("revision") == review["finding_revision"]]
         if not candidates:
-            raise RecordError("review_input_unresolved", f"{review['review_id']}:{reference}")
+            raise RecordError("review_input_unresolved", f"{review['review_id']}:{reference}:{index.get(reference, [])}")
         entry = max(candidates, key=lambda item: (item.get("revision") or 0, item.get("recorded_at") or ""))
         record = _indexed_record(engagement, entry, reference)
         digest = record.get("record_hash") or sha256_file(engagement / entry["path"])
@@ -763,7 +781,7 @@ def _initial_snapshot(engagement_id: str, scope_hash: str) -> dict[str, Any]:
         "active_environment_ref": None, "last_event_id": None, "event_count": 0,
         "ledger_hash": "sha256:" + "0" * 64, "attempt_count": 0, "artifact_count": 0,
         "active_blockers": [], "candidates": {}, "control_candidates": [], "operator_priors": [], "hypotheses": {}, "findings": {},
-        "outstanding_reviews": [], "proof_reviews": {}, "coverage": "active", "report_refs": [], "submission_refs": [],
+        "outstanding_reviews": [], "proof_reviews": {}, "coverage": "active", "reports": {}, "report_refs": [], "submission_refs": [],
         "cleanup": {"open_count": 0, "obligations": []}, "memory_disposition": None, "source_hashes": {}, "integrity_errors": [],
     }
 
@@ -838,6 +856,28 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                 raise RecordError("environment_preflight_not_usable", event["event_id"])
         if event["event_type"] == "candidate.proposed" and (states["coverage"].get(engagement_id) == "coverage_dry" or states["engagement"].get(engagement_id) == "closed"):
             raise RecordError("candidate_after_closed_search", event["event_id"])
+        if event["event_type"] == "report.generated":
+            report_ref = payload["report_ref"]; commitment = committed_records.get(report_ref)
+            finding_commitment = committed_records.get(payload["finding_id"]); current_finding = state["findings"].get(payload["finding_id"])
+            if event["actor"]["id"] != active_scope_operator or commitment is None or finding_commitment is None or current_finding is None or current_finding["revision"] != payload["finding_revision"] or report_ref not in event["entity_refs"]:
+                raise RecordError("report_generation_authority_invalid", event["event_id"])
+            manifest = load_json(engagement / commitment["record_path"]); finding = load_json(engagement / finding_commitment["record_path"])
+            report_path = engagement / manifest["report_path"]
+            claim_ids = {row["claim_id"] for row in claim_rows(finding)}; included = set(manifest["included_claim_ids"]); omitted = {item["claim_id"] for item in manifest["omitted_claims"]}
+            review_entry = _index_entry(index, manifest["adjudication_review_ref"], "review", engagement_id)
+            adjudication_review = load_json(engagement / review_entry["path"]) if review_entry else {}
+            expected_prior_revision = None if payload["finding_revision"] == 1 else payload["finding_revision"] - 1
+            if manifest.get("finding_id") != payload["finding_id"] or manifest.get("finding_revision") != payload["finding_revision"] or manifest.get("finding_digest") != finding_commitment["record_digest"] or manifest.get("report_id") != report_ref or sha256_file(engagement / commitment["record_path"]) != payload["report_manifest_digest"] or not report_path.is_file() or sha256_file(report_path) != manifest["report_digest"] or report_path.read_bytes() != render_internal_report(finding, manifest["included_claim_ids"], manifest["omitted_claims"]).encode("utf-8") or sha256_bytes(render_claim_proof(finding).encode("utf-8")) != manifest["claim_proof_matrix_hash"] or review_entry is None or manifest["adjudication_review_ref"] != finding.get("adjudication", {}).get("review_ref") or adjudication_review.get("review_type") != "claim_adjudication" or adjudication_review.get("proposed_finding_id") != payload["finding_id"] or adjudication_review.get("finding_revision") != expected_prior_revision or sha256_file(engagement / review_entry["path"]) != manifest["adjudication_review_digest"] or included & omitted or included | omitted != claim_ids or not included:
+                raise RecordError("report_manifest_binding_mismatch", event["event_id"])
+        if event["event_type"] == "operator.review_recorded":
+            report = state["reports"].get(payload["report_ref"]); review_entry = _index_entry(index, payload["review_ref"], "review", engagement_id)
+            review = load_json(engagement / review_entry["path"]) if review_entry else {}
+            if event["actor"]["id"] != active_scope_operator or report is None or state["findings"].get(report.get("finding_id"), {}).get("revision") != report.get("finding_revision") or report["status"] != "draft" or review_entry is None or payload["review_ref"] not in committed_entity_ids or review.get("review_type") != "operator" or review.get("verdict") != "accepted" or review.get("entity_ref") != payload["report_ref"] or review.get("independence", {}).get("reviewer_id") != active_scope_operator or payload["review_ref"] not in event["review_refs"]:
+                raise RecordError("operator_report_review_invalid", event["event_id"])
+        if event["event_type"] == "submission.recorded":
+            report = state["reports"].get(payload["report_ref"]); submission_path = (engagement / payload["submission_path"]).resolve(); submission_root = (engagement / "submissions").resolve()
+            if event["actor"]["id"] != active_scope_operator or report is None or state["findings"].get(report.get("finding_id"), {}).get("revision") != report.get("finding_revision") or report["status"] != "accepted" or not submission_path.is_relative_to(submission_root) or not submission_path.is_file() or submission_path.is_symlink() or sha256_file(submission_path) != payload["submission_digest"] or active_scope_operator not in payload["authorship_note"]:
+                raise RecordError("submission_authority_invalid", event["event_id"])
         if event["event_type"] in {"review.regrade_completed", "review.pocinator_completed"}:
             review_ref = payload["review_ref"]
             review_entry = _index_entry(index, review_ref, "review", engagement_id)
@@ -1052,8 +1092,12 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             state["outstanding_reviews"] = [item for item in state["outstanding_reviews"] if item["review_ref"] not in resolved]
         elif event_type == "report.generated":
             state["report_refs"].append(payload["report_ref"])
+            state["reports"][payload["report_ref"]] = {"finding_id": payload["finding_id"], "finding_revision": payload["finding_revision"], "status": "draft", "manifest_digest": payload["report_manifest_digest"], "historical_reason": None}
+        elif event_type == "operator.review_recorded":
+            state["reports"][payload["report_ref"]]["status"] = "accepted"
         elif event_type == "submission.recorded":
             state["submission_refs"].append(payload["submission_ref"])
+            state["reports"][payload["report_ref"]]["status"] = "submitted"
         elif event_type == "memory.disposition_recorded":
             state["memory_disposition"] = payload["memory_disposition"]
         elif event_type == "engagement.blocked":
@@ -1073,6 +1117,11 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             raise RecordError("scope_drift", "scope.md bytes changed; append a fresh scope.attested event before writes")
         if latest_scope_event["actor"] != {"role": "operator", "id": signed_operator_id} or latest_scope_event["payload"].get("operator_id") != signed_operator_id or latest_scope_event["payload"].get("signed_date") != metadata["date"]:
             raise RecordError("active_scope_attestation_mismatch", "latest scope event does not match the current signed scope operator/date")
+    for report in state["reports"].values():
+        current_revision = state["findings"].get(report["finding_id"], {}).get("revision")
+        if current_revision is not None and current_revision != report["finding_revision"]:
+            report["status"] = "historical"
+            report["historical_reason"] = f"superseded by finding revision {current_revision}"
     state["event_count"] = len(events)
     state["attempt_count"] = len(attempts)
     state["artifact_count"] = len(artifacts)
@@ -1101,10 +1150,10 @@ def assert_resume_current(engagement: Path) -> dict[str, Any]:
     return expected
 
 
-def append_event(engagement: Path, proposal: dict[str, Any]) -> dict[str, Any]:
+def append_event(engagement: Path, proposal: dict[str, Any], *, lock_held: bool = False) -> dict[str, Any]:
     # The append, reduction, snapshot, and views share one lock so concurrent writers cannot publish
     # a projection older than the authoritative ledger tail.
-    with engagement_lock(engagement):
+    with (nullcontext() if lock_held else engagement_lock(engagement)):
         current_events = read_ledger(engagement, "event")
         if not current_events:
             raise RecordError("scope_attestation_missing", "initialize engagement first")

@@ -50,6 +50,7 @@ from engagement_state import (
 )
 from engagement_views import assert_views_current, render_views, write_views
 from finding_review import claim_tuple_hash, render_claim_proof
+from reporting import accept_report, generate_report, record_submission
 
 
 def emit(value: object) -> None:
@@ -134,6 +135,55 @@ def command_render(args: argparse.Namespace) -> int:
         snapshot = reduce_engagement(engagement)
         write_views(engagement, snapshot)
     emit({"ok": True, "views": sorted(render_views(snapshot))})
+    return 0
+
+
+def command_migrate(args: argparse.Namespace) -> int:
+    command = [sys.executable, str(Path(__file__).with_name("migrate-decision5.py")), "--root", str(args.root)]
+    if args.output: command += ["--output", str(args.output)]
+    if args.propose_engagement:
+        if not args.operator_id or not args.output: raise RecordError("migration_proposal_args_missing", "proposal requires --operator-id and --output")
+        command += ["--propose-engagement", args.propose_engagement, "--operator-id", args.operator_id]
+    if args.apply_proposal:
+        if not args.operator_id or not args.recorded_at or not args.destination: raise RecordError("migration_apply_args_missing", "apply requires --destination, --operator-id and --recorded-at")
+        command += ["--apply-proposal", str(args.apply_proposal), "--destination", str(args.destination), "--operator-id", args.operator_id, "--recorded-at", args.recorded_at]
+    result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    if result.returncode:
+        raise RecordError("migration_command_failed", result.stderr or result.stdout)
+    if result.stdout: print(result.stdout, end="")
+    else: emit({"valid": True, "output": str(args.output)})
+    return 0
+
+
+def command_accept_report(args: argparse.Namespace) -> int:
+    try:
+        review = accept_report(args.engagement, args.report_id, args.operator_id, args.reason, args.recorded_at)
+    except ValueError as exc:
+        raise RecordError("report_acceptance_invalid", str(exc)) from exc
+    emit({"valid": True, "review_id": review["review_id"], "report_id": args.report_id})
+    return 0
+
+
+def command_record_submission(args: argparse.Namespace) -> int:
+    try:
+        submission_id = record_submission(args.engagement, args.report_id, args.file, args.program, args.operator_id, args.recorded_at)
+    except ValueError as exc:
+        raise RecordError("submission_invalid", str(exc)) from exc
+    emit({"valid": True, "submission_id": submission_id, "report_id": args.report_id})
+    return 0
+
+
+def command_generate_report(args: argparse.Namespace) -> int:
+    omitted = []
+    for value in args.omit_claim:
+        if "=" not in value:
+            raise RecordError("invalid_omitted_claim", "use --omit-claim claim-id=rationale")
+        claim_id, rationale = value.split("=", 1); omitted.append({"claim_id": claim_id, "rationale": rationale})
+    try:
+        manifest = generate_report(args.engagement, args.finding_id, args.revision, args.include_claim, omitted, args.operator_id, args.recorded_at)
+    except ValueError as exc:
+        raise RecordError("report_generation_invalid", str(exc)) from exc
+    emit({"valid": True, "report_id": manifest["report_id"], "report_digest": manifest["report_digest"]})
     return 0
 
 
@@ -427,6 +477,8 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         typed_state = reduce_engagement(engagement); proof_review = typed_state["proof_reviews"]["F-selftest:r2"]
         checks.append(("claim_mismatch routes correction without refuting finding", mismatch_state is not None and mismatch_state["findings"]["F-selftest"]["status"] == "confirmed" and mismatch_state["proof_reviews"]["F-selftest:r2"]["terminal_status"] == "route_back", str(mismatch_state)))
         checks.append(("definite high-value reward_hacked requires two independent reviewers", proof_review["terminal_status"] == "second_review_confirmed" and len(proof_review["reviewer_ids"]) == 2 and typed_state["findings"]["F-selftest"]["status"] == "confirmed", str(proof_review)))
+        report_manifest = generate_report(engagement, "F-selftest", 2, ["claim-mechanism", "claim-reach", "claim-impact"], [], "operator-selftest", "2026-07-10T00:15:50.500000Z")
+        report_state = reduce_engagement(engagement); checks.append(("report generation binds exact finding revision, review, claims, proof matrix, and bytes", report_state["reports"][report_manifest["report_id"]]["status"] == "draft" and (engagement / report_manifest["report_path"]).is_file(), str(report_manifest)))
 
         correction = {"schema_version": 1, "review_id": "review-regrade-correction", "engagement_id": engagement.name, "review_type": "regrade", "proposed_finding_id": "F-selftest", "recorded_at": "2026-07-10T00:15:51Z", "entity_ref": "F-selftest", "finding_revision": 2, "input_refs": ["F-selftest", "attempt-negative", "attempt-replay"], "input_hash": "sha256:" + "0" * 64, "evidence_refs": ["attempt-negative", "attempt-replay"], "rationale": "Finding remains real but residual uncertainty must be narrowed.", "conflicting_evidence": [], "verdict": "confirmed_with_correction", "corrections": ["Narrow the residual uncertainty to future versions only."], "required_next_actions": ["file contiguous corrected revision"], "independence": {"reviewer_id": "correction-reviewer", "reviewer_run_id": "run-regrade-correction", "reviewer_model": "independent-regrader", "fresh_context": True, "prior_verdict_visible": False, "disconfirming_objective": "Find unsupported breadth in the claim.", "originating_run_id": "event-finding-revision-2"}, "control_applicability": [{"attempt_ref": "attempt-negative", "applicable": True, "rationale": "Matched negative bounds breadth."}], "claim_tuple_hash": tuple_hash, "replay_freshness": [{"attempt_ref": "attempt-replay", "fresh": True, "rationale": "Fresh replay remains valid."}], "prior_review_run_ids": ["run-regrade-selftest"], "escalation_claims": [], "blocked_reason": None}
         correction["input_hash"] = compute_review_input_hash(engagement, correction, build_reference_index(engagement)); correction_path = reviews_dir / "regrade-correction.json"; correction_path.write_bytes(canonical_json_bytes(correction))
@@ -447,11 +499,17 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         filing3 = base_event(event_id="event-finding-revision-3", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:58Z", actor_role="operator", actor_id="operator-selftest", event_type="finding.revised", rationale="Operator files correction-bound contiguous revision.", payload={"finding_id": "F-selftest", "finding_revision": 3, "status": "confirmed", "finding_digest": sha256_file(finding3_path), "adjudication_review_ref": "review-claim-3", "adjudication_review_digest": sha256_file(review3_path), "adjudication_event_ref": "event-claim-correction-confirmed", "supersedes_revision": 2, "change_reason": "Resolve regrade correction and evidence-routed escalation.", "resolves_review_refs": ["event-regrade-escalation", "event-regrade-correction"]}, entity_refs=["F-selftest", "event-claim-correction-confirmed"], finding_refs=["F-selftest"], review_refs=["review-claim-3"]); append_event(engagement, filing3)
         corrected_state = reduce_engagement(engagement)
         checks.append(("correction review closes only through a contiguous adjudicated revision", corrected_state["findings"]["F-selftest"]["revision"] == 3 and not any(item["review_ref"] in {"event-regrade-escalation", "event-regrade-correction"} for item in corrected_state["outstanding_reviews"]), str(corrected_state["outstanding_reviews"])))
+        checks.append(("finding revision makes prior report visibly historical", corrected_state["reports"][report_manifest["report_id"]]["status"] == "historical" and "revision 3" in corrected_state["reports"][report_manifest["report_id"]]["historical_reason"], str(corrected_state["reports"])))
 
         tuple_hash3 = claim_tuple_hash(finding3); blocked_review = json.loads(json.dumps(correction)); blocked_review.update({"review_id": "review-regrade-blocked", "recorded_at": "2026-07-10T00:15:59Z", "finding_revision": 3, "verdict": "blocked", "rationale": "Pinned proof environment is unavailable; truth remains unchanged.", "corrections": [], "required_next_actions": ["restore pinned environment"], "claim_tuple_hash": tuple_hash3, "prior_review_run_ids": ["run-review-claim-3"], "escalation_claims": [], "blocked_reason": "Pinned proof environment unavailable."}); blocked_review["independence"].update({"reviewer_id": "blocked-reviewer", "reviewer_run_id": "run-regrade-blocked", "originating_run_id": "event-finding-revision-3"}); blocked_review["input_hash"] = compute_review_input_hash(engagement, blocked_review, build_reference_index(engagement)); blocked_path = reviews_dir / "regrade-blocked.json"; blocked_path.write_bytes(canonical_json_bytes(blocked_review))
         blocked_commit = base_event(event_id="event-regrade-blocked-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:59.200000Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit blocked regrade.", payload={"record_path": "reviews/regrade-blocked.json", "record_digest": sha256_file(blocked_path), "record_type": "review", "record_id": "review-regrade-blocked", "record_revision": None}); append_event(engagement, blocked_commit)
         blocked_event = base_event(event_id="event-regrade-blocked", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:59.500000Z", actor_role="reviewer", actor_id="blocked-reviewer", event_type="review.regrade_completed", rationale="Blocked review records no truth change.", payload={"review_ref": "review-regrade-blocked", "finding_id": "F-selftest", "finding_revision": 3, "verdict": "blocked", "claim_tuple_hash": tuple_hash3}, review_refs=["review-regrade-blocked"], finding_refs=["F-selftest"]); append_event(engagement, blocked_event)
         blocked_state = reduce_engagement(engagement); checks.append(("typed blocked regrade preserves finding truth and names blocker", blocked_state["findings"]["F-selftest"]["status"] == "confirmed" and any(item["status"] == "blocked" for item in blocked_state["outstanding_reviews"]), str(blocked_state["outstanding_reviews"])))
+        current_report = generate_report(engagement, "F-selftest", 3, ["claim-mechanism", "claim-reach", "claim-impact"], [], "operator-selftest", "2026-07-10T00:15:59.600000Z")
+        accept_report(engagement, current_report["report_id"], "operator-selftest", "Claims and proof links match revision three.", "2026-07-10T00:15:59.700000Z")
+        submission_path = engagement / "submissions" / "F-selftest.txt"; submission_path.write_text("Operator-authored external submission for F-selftest revision 3.\n", encoding="utf-8")
+        submission_id = record_submission(engagement, current_report["report_id"], submission_path, "selftest-program", "operator-selftest", "2026-07-10T00:15:59.800000Z")
+        submitted_state = reduce_engagement(engagement); checks.append(("external submission remains separate, operator-authored, and reduced from events", submitted_state["reports"][current_report["report_id"]]["status"] == "submitted" and submission_id in submitted_state["submission_refs"] and submission_path.read_bytes() != (engagement / current_report["report_path"]).read_bytes(), str(submitted_state["reports"])))
 
         rendered = render_claim_proof(finding2)
         checks.append(("claim-to-proof rendering binds every atomic claim and preserves inferred impact labels", tuple_hash in rendered and all(claim_id in rendered for claim_id in ("claim-mechanism", "claim-reach", "claim-impact")) and "demonstrated" in rendered, rendered))
@@ -474,6 +532,13 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         except RecordError as exc:
             committed_tamper_caught = exc.code == "committed_file_digest_mismatch"
         checks.append(("modified committed record fails reduction", committed_tamper_caught, "modified committed record accepted"))
+        report_tampered = root / "report-tampered"; shutil.copytree(engagement, report_tampered); (report_tampered / "reports" / "F-selftest-r3.md").write_text("tampered report\n", encoding="utf-8")
+        report_tamper_blocked = False
+        try:
+            reduce_engagement(report_tampered)
+        except RecordError as exc:
+            report_tamper_blocked = exc.code == "report_manifest_binding_mismatch"
+        checks.append(("report byte replacement fails revision-bound reduction", report_tamper_blocked, "tampered report reduced"))
         record_orphan = root / "record-orphan"; shutil.copytree(engagement, record_orphan); (record_orphan / "reports" / "orphan.manifest.json").write_text("{}\n")
         record_orphan_caught = False
         try:
@@ -481,6 +546,13 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         except RecordError as exc:
             record_orphan_caught = exc.code == "orphan_immutable_record"
         checks.append(("orphan immutable record fails reduction", record_orphan_caught, "orphan record accepted"))
+        report_orphan = root / "report-orphan"; shutil.copytree(engagement, report_orphan); (report_orphan / "reports" / "rogue.md").write_text("# unbound advisory\n", encoding="utf-8")
+        report_orphan_blocked = False
+        try:
+            reduce_engagement(report_orphan)
+        except RecordError as exc:
+            report_orphan_blocked = exc.code == "orphan_report_file"
+        checks.append(("unbound advisory Markdown fails reduction", report_orphan_blocked, "unbound advisory accepted"))
 
         current = reduce_engagement(engagement)
         tampered = root / "tampered"; shutil.copytree(engagement, tampered)
@@ -750,6 +822,14 @@ def parser() -> argparse.ArgumentParser:
     repair.add_argument("--operator-id", required=True)
     repair.add_argument("--reason", required=True)
     repair.add_argument("--recorded-at")
+    migrate = subcommands.add_parser("migrate", help="read-only legacy inventory or signed-operator migration proposal")
+    migrate.add_argument("--root", type=Path, default=Path(".")); migrate.add_argument("--output", type=Path); migrate.add_argument("--propose-engagement"); migrate.add_argument("--apply-proposal", type=Path); migrate.add_argument("--destination", type=Path); migrate.add_argument("--operator-id"); migrate.add_argument("--recorded-at")
+    accept = subcommands.add_parser("accept-report", help="operator review and acceptance of a current revision-bound report")
+    accept.add_argument("--engagement", type=Path, required=True); accept.add_argument("--report-id", required=True); accept.add_argument("--operator-id", required=True); accept.add_argument("--reason", required=True); accept.add_argument("--recorded-at", required=True)
+    submission = subcommands.add_parser("record-submission", help="record separate operator-authored external submission text")
+    submission.add_argument("--engagement", type=Path, required=True); submission.add_argument("--report-id", required=True); submission.add_argument("--file", type=Path, required=True); submission.add_argument("--program", required=True); submission.add_argument("--operator-id", required=True); submission.add_argument("--recorded-at", required=True)
+    report = subcommands.add_parser("generate-report", help="operator-only generation of a revision-bound internal report")
+    report.add_argument("--engagement", type=Path, required=True); report.add_argument("--finding-id", required=True); report.add_argument("--revision", type=int, required=True); report.add_argument("--include-claim", action="append", default=[]); report.add_argument("--omit-claim", action="append", default=[]); report.add_argument("--operator-id", required=True); report.add_argument("--recorded-at", required=True)
     proof = subcommands.add_parser("render-proof", help="render the exact structured claim-to-proof matrix for a committed finding revision")
     proof.add_argument("--engagement", type=Path, required=True)
     proof.add_argument("--finding-id", required=True)
@@ -774,6 +854,10 @@ def main() -> int:
             "repair-ledger-tail": command_repair_tail,
             "reduce": command_reduce,
             "render": command_render,
+            "migrate": command_migrate,
+            "accept-report": command_accept_report,
+            "record-submission": command_record_submission,
+            "generate-report": command_generate_report,
             "render-proof": command_render_proof,
             "check-resume": command_check_resume,
         }
