@@ -2102,6 +2102,7 @@
         "memory_disposition": null,
         "operator_priors": [],
         "outstanding_reviews": [],
+        "proof_reviews": {},
         "report_refs": [],
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -2222,6 +2223,7 @@
         "memory_disposition": null,
         "operator_priors": [],
         "outstanding_reviews": [],
+        "proof_reviews": {},
         "report_refs": [],
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -2260,6 +2262,7 @@
         "memory_disposition": null,
         "operator_priors": [],
         "outstanding_reviews": [],
+        "proof_reviews": {},
         "report_refs": [],
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -2609,6 +2612,288 @@
       },
       "schema": "migration-manifest",
       "valid": false
+    },
+    {
+      "id": "review-regrade-escalation-valid",
+      "record": {
+        "blocked_reason": null,
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "control_applicability": [
+          {
+            "applicable": true,
+            "attempt_ref": "attempt-2",
+            "rationale": "Matched negative."
+          }
+        ],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "escalation_claims": [
+          "Adjacent composition may increase reach."
+        ],
+        "evidence_refs": [
+          "attempt-1"
+        ],
+        "finding_revision": 2,
+        "independence": {
+          "disconfirming_objective": "Refute reachability.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-2",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-regrade-2"
+        },
+        "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_refs": [
+          "finding-1"
+        ],
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proposed_finding_id": "F-1",
+        "rationale": "Fresh regrade found a distinct escalation requiring evidence.",
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "replay_freshness": [
+          {
+            "attempt_ref": "attempt-3",
+            "fresh": true,
+            "rationale": "Fresh checkout."
+          }
+        ],
+        "required_next_actions": [
+          "collect escalation evidence"
+        ],
+        "review_id": "review-regrade-fixture",
+        "review_type": "regrade",
+        "schema_version": 1,
+        "verdict": "escalation_found"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-poc-claim-mismatch-valid",
+      "record": {
+        "blocked_reason": null,
+        "claim_mismatches": [
+          "Impact differs from finding."
+        ],
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "corrections": [
+          "correct report claim"
+        ],
+        "end_to_end_composition_reviewed": false,
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": 2,
+        "high_value": true,
+        "independence": {
+          "disconfirming_objective": "Break end-to-end composition.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-3",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-poc-1"
+        },
+        "input_hash": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "input_refs": [
+          "finding-1"
+        ],
+        "module_level_only": true,
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proof_profile_ref": "artifact-1",
+        "proposed_finding_id": "F-1",
+        "rationale": "Proof demonstrates a different claim tuple.",
+        "recorded_at": "2026-07-10T13:01:00Z",
+        "required_next_actions": [
+          "rerender report"
+        ],
+        "review_id": "review-poc-fixture",
+        "review_type": "pocinator",
+        "reward_hack_indicators": [],
+        "schema_version": 1,
+        "verdict": "claim_mismatch"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-poc-module-only-verified-invalid",
+      "record": {
+        "blocked_reason": null,
+        "claim_mismatches": [],
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "corrections": [
+          "correct report claim"
+        ],
+        "end_to_end_composition_reviewed": false,
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": 2,
+        "high_value": true,
+        "independence": {
+          "disconfirming_objective": "Break end-to-end composition.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-3",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-poc-1"
+        },
+        "input_hash": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "input_refs": [
+          "finding-1"
+        ],
+        "module_level_only": true,
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proof_profile_ref": "artifact-1",
+        "proposed_finding_id": "F-1",
+        "rationale": "Proof demonstrates a different claim tuple.",
+        "recorded_at": "2026-07-10T13:01:00Z",
+        "required_next_actions": [
+          "rerender report"
+        ],
+        "review_id": "review-poc-invalid-verified",
+        "review_type": "pocinator",
+        "reward_hack_indicators": [],
+        "schema_version": 1,
+        "verdict": "verified"
+      },
+      "schema": "review",
+      "valid": false
+    },
+    {
+      "id": "review-regrade-correction-valid",
+      "record": {
+        "blocked_reason": null,
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "control_applicability": [
+          {
+            "applicable": true,
+            "attempt_ref": "attempt-2",
+            "rationale": "Matched negative."
+          }
+        ],
+        "corrections": [
+          "Narrow deployment prevalence."
+        ],
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "escalation_claims": [],
+        "evidence_refs": [
+          "attempt-1"
+        ],
+        "finding_revision": 2,
+        "independence": {
+          "disconfirming_objective": "Refute reachability.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-2",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-regrade-2"
+        },
+        "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_refs": [
+          "finding-1"
+        ],
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proposed_finding_id": "F-1",
+        "rationale": "Mechanism holds with narrower deployment claim.",
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "replay_freshness": [
+          {
+            "attempt_ref": "attempt-3",
+            "fresh": true,
+            "rationale": "Fresh checkout."
+          }
+        ],
+        "required_next_actions": [
+          "file contiguous corrected revision"
+        ],
+        "review_id": "review-regrade-correction",
+        "review_type": "regrade",
+        "schema_version": 1,
+        "verdict": "confirmed_with_correction"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-regrade-blocked-valid",
+      "record": {
+        "blocked_reason": "Pinned build unavailable.",
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "control_applicability": [
+          {
+            "applicable": true,
+            "attempt_ref": "attempt-2",
+            "rationale": "Matched negative."
+          }
+        ],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "escalation_claims": [],
+        "evidence_refs": [
+          "attempt-1"
+        ],
+        "finding_revision": 2,
+        "independence": {
+          "disconfirming_objective": "Refute reachability.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-2",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-regrade-2"
+        },
+        "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_refs": [
+          "finding-1"
+        ],
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proposed_finding_id": "F-1",
+        "rationale": "Environment unavailable; no truth verdict.",
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "replay_freshness": [
+          {
+            "attempt_ref": "attempt-3",
+            "fresh": true,
+            "rationale": "Fresh checkout."
+          }
+        ],
+        "required_next_actions": [
+          "restore pinned build"
+        ],
+        "review_id": "review-regrade-blocked",
+        "review_type": "regrade",
+        "schema_version": 1,
+        "verdict": "blocked"
+      },
+      "schema": "review",
+      "valid": true
     }
   ],
   "schema_version": 1

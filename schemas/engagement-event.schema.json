@@ -586,6 +586,15 @@
         },
         "reopen_hypothesis_id": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "claim_tuple_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "high_value": {
+          "type": "boolean"
+        },
+        "resolves_review_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
         }
       }
     },
@@ -1158,6 +1167,57 @@
             "required": [
               "review_type",
               "verdict"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "review.regrade_completed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "review_ref",
+              "finding_id",
+              "finding_revision",
+              "verdict",
+              "claim_tuple_hash"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "review.pocinator_completed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "review_ref",
+              "finding_id",
+              "finding_revision",
+              "verdict",
+              "claim_tuple_hash",
+              "high_value"
             ]
           }
         }

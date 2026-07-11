@@ -21,6 +21,7 @@
     "hypotheses",
     "findings",
     "outstanding_reviews",
+    "proof_reviews",
     "coverage",
     "report_refs",
     "submission_refs",
@@ -390,7 +391,11 @@
         "required": [
           "review_type",
           "entity_ref",
-          "reason"
+          "review_ref",
+          "reason",
+          "status",
+          "hypothesis_ref",
+          "opened_at"
         ],
         "properties": {
           "review_type": {
@@ -399,7 +404,28 @@
           "entity_ref": {
             "type": "string"
           },
+          "review_ref": {
+            "type": "string"
+          },
           "reason": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "routed",
+              "evidence_collected",
+              "correction_required",
+              "blocked"
+            ]
+          },
+          "hypothesis_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "opened_at": {
             "type": "string"
           }
         }
@@ -519,6 +545,54 @@
           },
           "rationale": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "proof_reviews": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_revision",
+          "claim_tuple_hash",
+          "verdict",
+          "review_refs",
+          "reviewer_ids",
+          "terminal_status"
+        ],
+        "properties": {
+          "finding_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "claim_tuple_hash": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "review_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "terminal_status": {
+            "enum": [
+              "verified",
+              "route_back",
+              "pending_second_review",
+              "second_review_confirmed",
+              "blocked"
+            ]
+          },
+          "reviewer_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

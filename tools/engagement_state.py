@@ -25,6 +25,7 @@ from engagement_records import (
     validate_record,
     validate_record_references,
 )
+from finding_review import claim_tuple_hash
 
 LEDGERS = {
     "event": ("events.jsonl", "engagement-event", "event_id"),
@@ -51,6 +52,8 @@ EVENT_STATE_RULES = {
     "hypothesis.status_changed": ({"search"}, {"search"}),
     "claim.adjudicated": ({"claim"}, {"claim"}),
     "finding.revised": (set(), set()),
+    "review.regrade_completed": (set(), set()),
+    "review.pocinator_completed": (set(), set()),
     "coverage.status_changed": ({"coverage"}, {"coverage"}),
     "report.generated": ({"report"}, {"report"}),
     "submission.recorded": ({"report"}, {"report"}),
@@ -487,6 +490,8 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
     engagement_id = event.get("engagement_id")
     if event.get("provenance", {}).get("actor") != event.get("actor"):
         raise RecordError("event_actor_provenance_mismatch", event.get("event_id", "unknown"))
+    if event_type in {"review.regrade_completed", "review.pocinator_completed"} and event.get("actor", {}).get("role") != "reviewer":
+        raise RecordError("typed_review_actor_invalid", event.get("event_id", "unknown"))
     if event_type == "claim.adjudicated" and event.get("actor", {}).get("role") != "reviewer":
         raise RecordError("claim_adjudicator_role_invalid", event.get("event_id", "unknown"))
     if event_type == "finding.revised" and event.get("actor", {}).get("role") != "operator":
@@ -586,7 +591,7 @@ def validate_transition(states: dict[str, dict[str, str]], change: dict[str, Any
     target = change["current"]
     if target not in STATE_VALUES[dimension]:
         raise RecordError("unknown_transition_state", f"{dimension}:{target}")
-    if target not in TRANSITIONS[dimension].get(current, set()):
+    if target not in TRANSITIONS[dimension].get(current, set()) and not (dimension == "claim" and target == current):
         raise RecordError("invalid_state_transition", f"{dimension}:{current!r}->{target!r}")
     states[dimension][entity_id] = target
 
@@ -723,8 +728,14 @@ def validate_committed_record_precedence(engagement: Path, event: dict[str, Any]
     reference_errors = validate_record_references(record, schema_name, index)
     if reference_errors:
         raise RecordError("committed_record_reference_invalid", payload["record_id"], reference_errors)
-    if schema_name == "review" and record["input_hash"] != compute_review_input_hash(engagement, record, index):
-        raise RecordError("review_input_hash_mismatch", payload["record_id"])
+    if schema_name == "review":
+        if record["input_hash"] != compute_review_input_hash(engagement, record, index):
+            raise RecordError("review_input_hash_mismatch", payload["record_id"])
+        required_inputs = {item["attempt_ref"] for item in record.get("control_applicability", [])} | {item["attempt_ref"] for item in record.get("replay_freshness", [])}
+        if record.get("proof_profile_ref"):
+            required_inputs.add(record["proof_profile_ref"])
+        if not required_inputs.issubset(set(record["input_refs"])):
+            raise RecordError("review_material_not_in_input_set", payload["record_id"])
     event_time = datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00"))
     record_time_text = record.get("recorded_at") or record.get("generated_at") or record.get("created_at")
     record_time = datetime.fromisoformat(record_time_text.replace("Z", "+00:00")) if record_time_text else event_time
@@ -752,7 +763,7 @@ def _initial_snapshot(engagement_id: str, scope_hash: str) -> dict[str, Any]:
         "active_environment_ref": None, "last_event_id": None, "event_count": 0,
         "ledger_hash": "sha256:" + "0" * 64, "attempt_count": 0, "artifact_count": 0,
         "active_blockers": [], "candidates": {}, "control_candidates": [], "operator_priors": [], "hypotheses": {}, "findings": {},
-        "outstanding_reviews": [], "coverage": "active", "report_refs": [], "submission_refs": [],
+        "outstanding_reviews": [], "proof_reviews": {}, "coverage": "active", "report_refs": [], "submission_refs": [],
         "cleanup": {"open_count": 0, "obligations": []}, "memory_disposition": None, "source_hashes": {}, "integrity_errors": [],
     }
 
@@ -785,6 +796,8 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
     committed_entity_ids: set[str] = set()
     committed_records: dict[str, dict[str, Any]] = {}
     reviewer_run_ids: set[str] = set()
+    review_run_subjects: dict[str, tuple[str | None, int | None, str, str]] = {}
+    latest_regrades: dict[tuple[str, int], dict[str, Any]] = {}
     active_scope_operator: str | None = None
     for event in events:
         if event["engagement_id"] != state["engagement_id"]:
@@ -803,9 +816,16 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                 run_id = review["independence"]["reviewer_run_id"]
                 origin_id = review["independence"]["originating_run_id"]
                 origin_entries = [entry for entry in index.get(origin_id, []) if entry.get("engagement_id") == engagement_id and entry["type"] in {"event", "attempt"}]
-                if run_id in reviewer_run_ids or not origin_entries or review["independence"].get("prior_verdict_visible") is not False:
+                prior_run_ids = set(review.get("prior_review_run_ids", []))
+                relevant_revisions = {review.get("finding_revision")}
+                if isinstance(review.get("finding_revision"), int) and review["finding_revision"] > 1:
+                    relevant_revisions.add(review["finding_revision"] - 1)
+                permitted_prior_types = {"claim_adjudication", "regrade"} if review["review_type"] == "regrade" else ({"regrade", "pocinator"} if review["review_type"] == "pocinator" else set())
+                prior_subjects_match = all(review_run_subjects.get(prior, (None, None, "", ""))[0] == review.get("proposed_finding_id") and review_run_subjects.get(prior, (None, None, "", ""))[1] in relevant_revisions and review_run_subjects.get(prior, (None, None, "", ""))[2] in permitted_prior_types and review_run_subjects.get(prior, (None, None, "", ""))[3] == review.get("entity_ref") for prior in prior_run_ids) if prior_run_ids else True
+                if run_id in reviewer_run_ids or run_id in prior_run_ids or not prior_run_ids.issubset(reviewer_run_ids) or not prior_subjects_match or (review["review_type"] in {"regrade", "pocinator"} and not prior_run_ids) or not origin_entries or review["independence"].get("prior_verdict_visible") is not False:
                     raise RecordError("review_freshness_not_bound", review["review_id"])
                 reviewer_run_ids.add(run_id)
+                review_run_subjects[run_id] = (review.get("proposed_finding_id"), review.get("finding_revision"), review["review_type"], review["entity_ref"])
         if event["event_type"] == "operator_prior.recorded" and event["actor"]["id"] != active_scope_operator:
             raise RecordError("operator_prior_not_scope_authorized", event["event_id"])
         if event["event_type"] == "environment.preflight_recorded":
@@ -818,6 +838,28 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                 raise RecordError("environment_preflight_not_usable", event["event_id"])
         if event["event_type"] == "candidate.proposed" and (states["coverage"].get(engagement_id) == "coverage_dry" or states["engagement"].get(engagement_id) == "closed"):
             raise RecordError("candidate_after_closed_search", event["event_id"])
+        if event["event_type"] in {"review.regrade_completed", "review.pocinator_completed"}:
+            review_ref = payload["review_ref"]
+            review_entry = _index_entry(index, review_ref, "review", engagement_id)
+            current_finding = state["findings"].get(payload["finding_id"])
+            finding_commitment = committed_records.get(payload["finding_id"])
+            if review_ref not in committed_entity_ids or review_entry is None or review_ref not in event["review_refs"] or current_finding is None or current_finding["revision"] != payload["finding_revision"] or finding_commitment is None:
+                raise RecordError("typed_review_subject_not_current", event["event_id"])
+            review = load_json(engagement / review_entry["path"]); finding = load_json(engagement / finding_commitment["record_path"])
+            expected_type = "regrade" if event["event_type"] == "review.regrade_completed" else "pocinator"
+            if review.get("review_type") != expected_type or review.get("entity_ref") != payload["finding_id"] or review.get("finding_revision") != payload["finding_revision"] or review.get("verdict") != payload["verdict"] or review.get("independence", {}).get("reviewer_id") != event["actor"]["id"] or review.get("claim_tuple_hash") != payload["claim_tuple_hash"] or payload["claim_tuple_hash"] != claim_tuple_hash(finding):
+                raise RecordError("typed_review_binding_mismatch", event["event_id"])
+            if expected_type == "regrade":
+                latest_regrades[(payload["finding_id"], payload["finding_revision"])] = {"event_id": event["event_id"], "verdict": payload["verdict"]}
+            if expected_type == "pocinator":
+                prior_regrade = latest_regrades.get((payload["finding_id"], payload["finding_revision"]))
+                escalation_ready = prior_regrade and prior_regrade["verdict"] == "escalation_found" and any(item["review_ref"] == prior_regrade["event_id"] and item["status"] == "evidence_collected" for item in state["outstanding_reviews"])
+                if prior_regrade is None or (prior_regrade["verdict"] not in {"confirmed", "confirmed_with_correction"} and not escalation_ready):
+                    raise RecordError("pocinator_without_acceptable_regrade", event["event_id"])
+                if review.get("high_value") != payload["high_value"]:
+                    raise RecordError("pocinator_value_mismatch", event["event_id"])
+                if review["verdict"] == "verified" and (review["module_level_only"] or not review["end_to_end_composition_reviewed"]):
+                    raise RecordError("module_proof_not_end_to_end", event["event_id"])
         if event["event_type"] == "claim.adjudicated":
             review_ref = payload["review_ref"]
             review_entry = _index_entry(index, review_ref, "review", engagement_id)
@@ -837,6 +879,12 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             expected_supersedes = None if prior is None else prior["revision"]
             if event["actor"]["id"] != active_scope_operator:
                 raise RecordError("finding_filing_not_scope_operator", event["event_id"])
+            regrade_obligations = [item for item in state["outstanding_reviews"] if item["review_type"] in {"regrade_escalation", "regrade"} and item["entity_ref"] == finding_id and item["status"] in {"pending", "routed", "evidence_collected", "correction_required"}]
+            resolutions = set(payload.get("resolves_review_refs", []))
+            if any(item["review_type"] == "regrade_escalation" and item["status"] != "evidence_collected" for item in regrade_obligations):
+                raise RecordError("escalation_evidence_not_collected", event["event_id"])
+            if any(item["review_ref"] not in resolutions for item in regrade_obligations):
+                raise RecordError("regrade_correction_not_resolved", event["event_id"])
             if revision != expected_revision or payload["supersedes_revision"] != expected_supersedes:
                 raise RecordError("finding_revision_not_contiguous", event["event_id"])
             if commitment is None or finding_entry is None or commitment["record_revision"] != revision or commitment["record_digest"] != payload["finding_digest"]:
@@ -899,7 +947,7 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                 if origin_ref not in seen_events or seen_events[origin_ref]["event_type"] != "operator_prior.recorded":
                     raise RecordError("hypothesis_origin_not_prior_operator_event", event["event_id"])
             elif origin_type == "reviewer_challenge":
-                if not ((origin_ref in seen_events and seen_events[origin_ref]["event_type"] == "review.challenge_recorded") or _index_entry(index, origin_ref, "review", engagement_id)):
+                if not ((origin_ref in seen_events and seen_events[origin_ref]["event_type"] in {"review.challenge_recorded", "review.regrade_completed"}) or _index_entry(index, origin_ref, "review", engagement_id)):
                     raise RecordError("hypothesis_origin_not_prior_challenge", event["event_id"])
             elif origin_type == "confirmed_primitive":
                 origin_event = seen_events.get(origin_ref)
@@ -964,11 +1012,44 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                 hypothesis["rationale"] = payload["reopening_condition"]
         elif event_type == "hypothesis.created":
             state["hypotheses"][payload["hypothesis_id"]] = {"status": payload["status"], "rationale": event["rationale"], "origin_type": payload["origin_type"], "origin_ref": payload["origin_ref"], "statement": payload["hypothesis_statement"], "suspected_invariant": payload["suspected_invariant"], "trust_boundary": payload["trust_boundary"], "attacker_path": payload["attacker_path"], "impact_ceiling": payload["impact_ceiling"], "bounded_space": payload["bounded_space"], "lens_ids": payload["lens_ids"], "card_ids": payload["card_ids"], "expected_confirming_evidence": payload["expected_confirming_evidence"], "decisive_falsifiers": payload["decisive_falsifiers"], "cost_estimate": payload["cost_estimate"], "constraints": payload["constraints"], "next_experiment": payload["next_experiment"], "completion_criteria": payload["completion_criteria"], "experiment_refs": [], "control_refs": [], "supporting_evidence_refs": [], "conflicting_evidence_refs": [], "unresolved_questions": [], "next_route": None}
+            if payload["origin_type"] == "reviewer_challenge":
+                for item in state["outstanding_reviews"]:
+                    if item["review_ref"] == payload["origin_ref"] and item["status"] == "pending":
+                        item["status"] = "routed"; item["hypothesis_ref"] = payload["hypothesis_id"]
         elif event_type == "hypothesis.status_changed":
             hypothesis = state["hypotheses"].setdefault(payload["hypothesis_id"], {})
             hypothesis.update({"status": payload["status"], "rationale": payload["disposition_rationale"], "experiment_refs": payload["experiment_refs"], "control_refs": payload["control_refs"], "supporting_evidence_refs": payload["supporting_evidence_refs"], "conflicting_evidence_refs": payload["conflicting_evidence_refs"], "unresolved_questions": payload["unresolved_questions"], "next_route": payload["next_route"]})
+            if payload["supporting_evidence_refs"]:
+                for item in state["outstanding_reviews"]:
+                    if item["hypothesis_ref"] == payload["hypothesis_id"] and item["status"] == "routed":
+                        opened_at = datetime.fromisoformat(item["opened_at"].replace("Z", "+00:00"))
+                        evidence_is_new = all(any(entry.get("recorded_at") and datetime.fromisoformat(entry["recorded_at"].replace("Z", "+00:00")) > opened_at for entry in index.get(reference, []) if entry.get("engagement_id") == engagement_id) for reference in payload["supporting_evidence_refs"])
+                        if evidence_is_new:
+                            item["status"] = "evidence_collected"
+        elif event_type == "review.regrade_completed":
+            if payload["verdict"] == "escalation_found":
+                state["outstanding_reviews"].append({"review_type": "regrade_escalation", "entity_ref": payload["finding_id"], "review_ref": event["event_id"], "reason": event["rationale"], "status": "pending", "hypothesis_ref": None, "opened_at": event["recorded_at"]})
+            elif payload["verdict"] in {"confirmed_with_correction", "needs_more_evidence", "blocked"}:
+                status = "correction_required" if payload["verdict"] == "confirmed_with_correction" else ("blocked" if payload["verdict"] == "blocked" else "pending")
+                state["outstanding_reviews"].append({"review_type": "regrade", "entity_ref": payload["finding_id"], "review_ref": event["event_id"], "reason": event["rationale"], "status": status, "hypothesis_ref": None, "opened_at": event["recorded_at"]})
+        elif event_type == "review.pocinator_completed":
+            key = f"{payload['finding_id']}:r{payload['finding_revision']}"
+            prior_proof = state["proof_reviews"].get(key)
+            accumulate = prior_proof is not None and prior_proof["verdict"] == payload["verdict"] == "reward_hacked"
+            refs = ([*prior_proof["review_refs"], payload["review_ref"]] if accumulate and payload["review_ref"] not in prior_proof["review_refs"] else ([payload["review_ref"]] if not accumulate else prior_proof["review_refs"]))
+            reviewer_id = review["independence"]["reviewer_id"]
+            reviewer_ids = ([*prior_proof["reviewer_ids"], reviewer_id] if accumulate and reviewer_id not in prior_proof["reviewer_ids"] else ([reviewer_id] if not accumulate else prior_proof["reviewer_ids"]))
+            if payload["verdict"] == "verified": terminal = "verified"
+            elif payload["verdict"] == "blocked": terminal = "blocked"
+            elif payload["verdict"] == "reward_hacked" and payload["high_value"]: terminal = "second_review_confirmed" if len(refs) >= 2 and len(reviewer_ids) >= 2 else "pending_second_review"
+            else: terminal = "route_back"
+            state["proof_reviews"][key] = {"finding_revision": payload["finding_revision"], "claim_tuple_hash": payload["claim_tuple_hash"], "verdict": payload["verdict"], "review_refs": refs, "reviewer_ids": reviewer_ids, "terminal_status": terminal}
+            if terminal in {"route_back", "pending_second_review", "blocked"}:
+                state["outstanding_reviews"].append({"review_type": "pocinator", "entity_ref": payload["finding_id"], "review_ref": event["event_id"], "reason": event["rationale"], "status": "blocked" if terminal == "blocked" else "correction_required", "hypothesis_ref": None, "opened_at": event["recorded_at"]})
         elif event_type == "finding.revised":
             state["findings"][payload["finding_id"]] = {"revision": payload["finding_revision"], "status": payload["status"], "digest": payload["finding_digest"], "adjudication_review_ref": payload["adjudication_review_ref"], "change_reason": payload["change_reason"]}
+            resolved = set(payload.get("resolves_review_refs", []))
+            state["outstanding_reviews"] = [item for item in state["outstanding_reviews"] if item["review_ref"] not in resolved]
         elif event_type == "report.generated":
             state["report_refs"].append(payload["report_ref"])
         elif event_type == "submission.recorded":

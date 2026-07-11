@@ -187,7 +187,18 @@ Required by default for:
 Skippable only with an explicit, short operator note recorded in the finding (e.g. "source-only
 issue, no executable PoC, mechanism unambiguous from code alone") — never a silent skip.
 
-## 8. Model tier — judgment stays high-tier, legwork doesn't have to
+## 8. Decision-0005 record output
+
+Pocinator emits a committed `review` record (`review_type: pocinator`) and a
+`review.pocinator_completed` event bound to the exact finding revision, structured claim-tuple hash,
+proof-profile artifact, immutable input-set hash, prior reviewer runs, and end-to-end composition
+status. The event changes proof-review routing only—never finding truth. `claim_mismatch` routes claim
+and report correction; it does not refute a real mechanism. `verified` cannot be emitted from a
+module-only proof in place of end-to-end composition. A definite high-value `reward_hacked` remains
+`pending_second_review` until a second distinct fresh reviewer agrees. Non-verified outcomes route
+back with named actions.
+
+## 9. Model tier — judgment stays high-tier, legwork doesn't have to
 
 The actual verdict call (lens interrogation, deciding whether a mock dodges the real gate, assigning
 the final verdict) is a judgment task catching subtle self-deception, and belongs on the
@@ -200,7 +211,7 @@ contact, no judgment required) that can feed the planning-tier verdict rather th
 the expensive model itself. This session's own real pocinator passes already worked this way
 informally; naming the split explicitly here just makes it repeatable.
 
-## 9. What pocinator does not decide
+## 10. What pocinator does not decide
 
 A casebook lesson (`case-2026-07-oss-supply-chain-tooling`) already documents this concretely:
 passing pocinator does not guarantee a report won't come back as a HackerOne duplicate. Pocinator

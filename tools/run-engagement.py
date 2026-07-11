@@ -49,6 +49,7 @@ from engagement_state import (
     write_snapshot,
 )
 from engagement_views import assert_views_current, render_views, write_views
+from finding_review import claim_tuple_hash, render_claim_proof
 
 
 def emit(value: object) -> None:
@@ -133,6 +134,17 @@ def command_render(args: argparse.Namespace) -> int:
         snapshot = reduce_engagement(engagement)
         write_views(engagement, snapshot)
     emit({"ok": True, "views": sorted(render_views(snapshot))})
+    return 0
+
+
+def command_render_proof(args: argparse.Namespace) -> int:
+    engagement = args.engagement.resolve()
+    reduce_engagement(engagement)
+    entry = next((item for item in build_reference_index(engagement).get(args.finding_id, []) if item["type"] == "finding" and item.get("revision") == args.revision), None)
+    if entry is None:
+        raise RecordError("finding_revision_not_found", f"{args.finding_id}:{args.revision}")
+    finding = load_json(engagement / entry["path"])
+    emit({"valid": True, "finding_id": args.finding_id, "revision": args.revision, "claim_tuple_hash": claim_tuple_hash(finding), "markdown": render_claim_proof(finding)})
     return 0
 
 
@@ -378,6 +390,72 @@ def state_self_test() -> list[tuple[str, bool, str]]:
             skip_blocked = exc.code == "finding_revision_not_contiguous"
         checks.append(("finding revision cannot skip history", skip_blocked and (engagement / "events.jsonl").read_bytes() == before_skip, "skipped revision appended"))
 
+        tuple_hash = claim_tuple_hash(finding2)
+        regrade = {"schema_version": 1, "review_id": "review-regrade-selftest", "engagement_id": engagement.name, "review_type": "regrade", "proposed_finding_id": "F-selftest", "recorded_at": "2026-07-10T00:15:34Z", "entity_ref": "F-selftest", "finding_revision": 2, "input_refs": ["F-selftest", "attempt-primary", "attempt-negative", "attempt-replay"], "input_hash": "sha256:" + "0" * 64, "evidence_refs": ["attempt-primary", "attempt-negative", "attempt-replay", "artifact-selftest"], "rationale": "Fresh regrade identifies a distinct adjacent composition that still needs evidence.", "conflicting_evidence": [], "verdict": "escalation_found", "corrections": [], "required_next_actions": ["collect evidence before revising impact"], "independence": {"reviewer_id": "regrade-reviewer", "reviewer_run_id": "run-regrade-selftest", "reviewer_model": "independent-regrader", "fresh_context": True, "prior_verdict_visible": False, "disconfirming_objective": "Refute the adjacent composition.", "originating_run_id": "event-finding-revision-2"}, "control_applicability": [{"attempt_ref": "attempt-negative", "applicable": True, "rationale": "Matched negative remains applicable."}], "claim_tuple_hash": tuple_hash, "replay_freshness": [{"attempt_ref": "attempt-replay", "fresh": True, "rationale": "Fresh-state replay."}], "prior_review_run_ids": ["run-review-claim-2"], "escalation_claims": ["Adjacent owned transition may compose with the confirmed primitive."], "blocked_reason": None}
+        regrade["input_hash"] = compute_review_input_hash(engagement, regrade, build_reference_index(engagement)); regrade_path = reviews_dir / "regrade-selftest.json"; regrade_path.write_bytes(canonical_json_bytes(regrade))
+        regrade_commit = base_event(event_id="event-regrade-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:35Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit fresh regrade review.", payload={"record_path": "reviews/regrade-selftest.json", "record_digest": sha256_file(regrade_path), "record_type": "review", "record_id": "review-regrade-selftest", "record_revision": None}); append_event(engagement, regrade_commit)
+        regrade_event = base_event(event_id="event-regrade-escalation", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:36Z", actor_role="reviewer", actor_id="regrade-reviewer", event_type="review.regrade_completed", rationale="Escalation is a search obligation, not a finding claim.", payload={"review_ref": "review-regrade-selftest", "finding_id": "F-selftest", "finding_revision": 2, "verdict": "escalation_found", "claim_tuple_hash": tuple_hash}, review_refs=["review-regrade-selftest"], finding_refs=["F-selftest"]); append_event(engagement, regrade_event)
+        premature_revision = json.loads(json.dumps(filing2)); premature_revision["event_id"] = "event-premature-escalation-revision"; premature_revision["recorded_at"] = "2026-07-10T00:15:37Z"; premature_revision["payload"]["finding_revision"] = 3; premature_revision["payload"]["supersedes_revision"] = 2
+        premature_blocked = False
+        try:
+            append_event(engagement, premature_revision)
+        except RecordError as exc:
+            premature_blocked = exc.code == "escalation_evidence_not_collected"
+        checks.append(("regrade escalation routes to evidence collection before finding revision", premature_blocked, "escalation directly revised finding"))
+        escalation_hypothesis = base_event(event_id="event-hypothesis-escalation", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:38Z", actor_role="orchestrator", actor_id="orchestrator-selftest", event_type="hypothesis.created", rationale="Route reviewer escalation into bounded evidence collection.", payload={"hypothesis_id": "hypothesis-escalation", "origin_type": "reviewer_challenge", "origin_ref": "event-regrade-escalation", "hypothesis_statement": "The adjacent owned transition composes with the confirmed primitive.", "suspected_invariant": "Primitive output must not cross the adjacent boundary.", "trust_boundary": "primitive to adjacent owned transition", "attacker_path": ["primitive", "adjacent transition"], "impact_ceiling": "owned fixture only", "bounded_space": "One adjacent transition.", "lens_ids": ["composition"], "card_ids": ["card-selftest"], "expected_confirming_evidence": [{"evidence_type": "trace", "description": "end-to-end composition trace", "required": True}], "decisive_falsifiers": ["adjacent transition rejects primitive output"], "cost_estimate": zero_cost, "constraints": ["offline fixture"], "next_experiment": "trace composition", "completion_criteria": ["trace or decisive rejection"], "status": "queued"}, entity_refs=["event-regrade-escalation"], finding_refs=["F-selftest"], state_changes=[{"dimension": "search", "entity_id": "hypothesis-escalation", "previous": None, "current": "queued"}]); append_event(engagement, escalation_hypothesis)
+        escalation_evidence_path = engagement / "evidence" / "escalation.txt"; escalation_evidence_path.write_text("new bounded escalation trace\n", encoding="utf-8")
+        escalation_artifact = json.loads(json.dumps(artifact_metadata)); escalation_artifact.update({"artifact_id": "artifact-escalation", "created_at": "2026-07-10T00:15:40.500000Z", "acquisition_method": "source_inspection"}); register_artifact(engagement, escalation_evidence_path, escalation_artifact)
+        for status, previous, timestamp in (("selected", "queued", "2026-07-10T00:15:39Z"), ("running", "selected", "2026-07-10T00:15:40Z"), ("held", "running", "2026-07-10T00:15:41Z")):
+            support = ["artifact-escalation"] if status == "held" else []
+            transition = base_event(event_id=f"event-escalation-{status}", engagement_id=engagement.name, recorded_at=timestamp, actor_role="orchestrator", actor_id="orchestrator-selftest", event_type="hypothesis.status_changed", rationale=f"Escalation hypothesis {status}.", payload={"hypothesis_id": "hypothesis-escalation", "status": status, "reason": "bounded escalation evidence route", "experiment_refs": ["attempt-primary"] if status == "held" else [], "control_refs": ["attempt-negative"] if status == "held" else [], "supporting_evidence_refs": support, "conflicting_evidence_refs": [], "disposition_rationale": "Bounded evidence route recorded without changing finding truth.", "unresolved_questions": ["composition impact remains unproven"] if status == "held" else [], "next_route": "independent composition trace"}, evidence_refs=support, state_changes=[{"dimension": "search", "entity_id": "hypothesis-escalation", "previous": previous, "current": status}]); append_event(engagement, transition)
+
+        def poc_review(review_id: str, recorded_at: str, reviewer_id: str, run_id: str, verdict: str, prior_runs: list[str], mismatches: list[str], reward_indicators: list[str]) -> dict:
+            value = {"schema_version": 1, "review_id": review_id, "engagement_id": engagement.name, "review_type": "pocinator", "proposed_finding_id": "F-selftest", "recorded_at": recorded_at, "entity_ref": "F-selftest", "finding_revision": 2, "input_refs": ["F-selftest", "artifact-selftest"], "input_hash": "sha256:" + "0" * 64, "evidence_refs": ["artifact-selftest"], "rationale": f"Pocinator outcome: {verdict}.", "conflicting_evidence": [], "verdict": verdict, "corrections": mismatches, "required_next_actions": ["route back without changing finding truth"] if verdict != "verified" else [], "independence": {"reviewer_id": reviewer_id, "reviewer_run_id": run_id, "reviewer_model": "pocinator-reviewer", "fresh_context": True, "prior_verdict_visible": False, "disconfirming_objective": "Break the exact claim tuple and composition.", "originating_run_id": "event-finding-revision-2"}, "claim_tuple_hash": tuple_hash, "high_value": True, "proof_profile_ref": "artifact-selftest", "claim_mismatches": mismatches, "reward_hack_indicators": reward_indicators, "module_level_only": True, "end_to_end_composition_reviewed": False, "blocked_reason": None, "prior_review_run_ids": prior_runs}
+            value["input_hash"] = compute_review_input_hash(engagement, value, build_reference_index(engagement)); return value
+        poc_specs = [
+            ("review-poc-mismatch", "2026-07-10T00:15:42Z", "poc-reviewer", "run-poc-mismatch", "claim_mismatch", ["run-regrade-selftest"], ["Proof demonstrates only the module-level mechanism."], []),
+            ("review-poc-reward-1", "2026-07-10T00:15:45Z", "poc-reward-reviewer-1", "run-poc-reward-1", "reward_hacked", ["run-poc-mismatch"], [], ["Evaluator marker without end-to-end proof."]),
+            ("review-poc-reward-2", "2026-07-10T00:15:48Z", "poc-reward-reviewer-2", "run-poc-reward-2", "reward_hacked", ["run-poc-reward-1"], [], ["Independent reviewer confirms reward-only optimization."]),
+        ]
+        mismatch_state = None
+        for offset, spec in enumerate(poc_specs):
+            review_value = poc_review(*spec); review_path = reviews_dir / f"{spec[0]}.json"; review_path.write_bytes(canonical_json_bytes(review_value))
+            commit_time = ["2026-07-10T00:15:43Z", "2026-07-10T00:15:46Z", "2026-07-10T00:15:49Z"][offset]; event_time = ["2026-07-10T00:15:44Z", "2026-07-10T00:15:47Z", "2026-07-10T00:15:50Z"][offset]
+            commit = base_event(event_id=f"event-{spec[0]}-commit", engagement_id=engagement.name, recorded_at=commit_time, actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit typed Pocinator review.", payload={"record_path": f"reviews/{spec[0]}.json", "record_digest": sha256_file(review_path), "record_type": "review", "record_id": spec[0], "record_revision": None}); append_event(engagement, commit)
+            reviewed = base_event(event_id=f"event-{spec[0]}", engagement_id=engagement.name, recorded_at=event_time, actor_role="reviewer", actor_id=spec[2], event_type="review.pocinator_completed", rationale="Pocinator result routes proof state only.", payload={"review_ref": spec[0], "finding_id": "F-selftest", "finding_revision": 2, "verdict": spec[4], "claim_tuple_hash": tuple_hash, "high_value": True}, review_refs=[spec[0]], finding_refs=["F-selftest"]); append_event(engagement, reviewed)
+            if offset == 0: mismatch_state = reduce_engagement(engagement)
+        typed_state = reduce_engagement(engagement); proof_review = typed_state["proof_reviews"]["F-selftest:r2"]
+        checks.append(("claim_mismatch routes correction without refuting finding", mismatch_state is not None and mismatch_state["findings"]["F-selftest"]["status"] == "confirmed" and mismatch_state["proof_reviews"]["F-selftest:r2"]["terminal_status"] == "route_back", str(mismatch_state)))
+        checks.append(("definite high-value reward_hacked requires two independent reviewers", proof_review["terminal_status"] == "second_review_confirmed" and len(proof_review["reviewer_ids"]) == 2 and typed_state["findings"]["F-selftest"]["status"] == "confirmed", str(proof_review)))
+
+        correction = {"schema_version": 1, "review_id": "review-regrade-correction", "engagement_id": engagement.name, "review_type": "regrade", "proposed_finding_id": "F-selftest", "recorded_at": "2026-07-10T00:15:51Z", "entity_ref": "F-selftest", "finding_revision": 2, "input_refs": ["F-selftest", "attempt-negative", "attempt-replay"], "input_hash": "sha256:" + "0" * 64, "evidence_refs": ["attempt-negative", "attempt-replay"], "rationale": "Finding remains real but residual uncertainty must be narrowed.", "conflicting_evidence": [], "verdict": "confirmed_with_correction", "corrections": ["Narrow the residual uncertainty to future versions only."], "required_next_actions": ["file contiguous corrected revision"], "independence": {"reviewer_id": "correction-reviewer", "reviewer_run_id": "run-regrade-correction", "reviewer_model": "independent-regrader", "fresh_context": True, "prior_verdict_visible": False, "disconfirming_objective": "Find unsupported breadth in the claim.", "originating_run_id": "event-finding-revision-2"}, "control_applicability": [{"attempt_ref": "attempt-negative", "applicable": True, "rationale": "Matched negative bounds breadth."}], "claim_tuple_hash": tuple_hash, "replay_freshness": [{"attempt_ref": "attempt-replay", "fresh": True, "rationale": "Fresh replay remains valid."}], "prior_review_run_ids": ["run-regrade-selftest"], "escalation_claims": [], "blocked_reason": None}
+        correction["input_hash"] = compute_review_input_hash(engagement, correction, build_reference_index(engagement)); correction_path = reviews_dir / "regrade-correction.json"; correction_path.write_bytes(canonical_json_bytes(correction))
+        correction_commit = base_event(event_id="event-regrade-correction-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:52Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit correction regrade.", payload={"record_path": "reviews/regrade-correction.json", "record_digest": sha256_file(correction_path), "record_type": "review", "record_id": "review-regrade-correction", "record_revision": None}); append_event(engagement, correction_commit)
+        correction_event = base_event(event_id="event-regrade-correction", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:53Z", actor_role="reviewer", actor_id="correction-reviewer", event_type="review.regrade_completed", rationale="Correction must become a contiguous revision before closure.", payload={"review_ref": "review-regrade-correction", "finding_id": "F-selftest", "finding_revision": 2, "verdict": "confirmed_with_correction", "claim_tuple_hash": tuple_hash}, review_refs=["review-regrade-correction"], finding_refs=["F-selftest"]); append_event(engagement, correction_event)
+        unresolved_correction = json.loads(json.dumps(filing2)); unresolved_correction["event_id"] = "event-unresolved-correction"; unresolved_correction["recorded_at"] = "2026-07-10T00:15:53.500000Z"; unresolved_correction["payload"]["finding_revision"] = 3; unresolved_correction["payload"]["supersedes_revision"] = 2
+        correction_blocked = False
+        try:
+            append_event(engagement, unresolved_correction)
+        except RecordError as exc:
+            correction_blocked = exc.code == "regrade_correction_not_resolved"
+        checks.append(("confirmed_with_correction blocks filing until explicitly revision-bound", correction_blocked, "unresolved correction allowed finding revision"))
+        review3_path = reviews_dir / "review-claim-3.json"; review3 = claim_review("review-claim-3", "2026-07-10T00:15:54Z", "confirmed", "F-selftest", 2, "event-regrade-correction"); review3["input_hash"] = compute_review_input_hash(engagement, review3, build_reference_index(engagement)); review3_path.write_bytes(canonical_json_bytes(review3))
+        review3_commit = base_event(event_id="event-review-claim-3-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:55Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit correction adjudication.", payload={"record_path": "reviews/review-claim-3.json", "record_digest": sha256_file(review3_path), "record_type": "review", "record_id": "review-claim-3", "record_revision": None}); append_event(engagement, review3_commit)
+        adjudication3 = base_event(event_id="event-claim-correction-confirmed", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:56Z", actor_role="reviewer", actor_id="reviewer-selftest", event_type="claim.adjudicated", rationale="Independent review confirms corrected bounded claim.", payload={"entity_id": "F-selftest", "status": "confirmed", "review_ref": "review-claim-3", "review_digest": sha256_file(review3_path)}, review_refs=["review-claim-3"], state_changes=[{"dimension": "claim", "entity_id": "F-selftest", "previous": "confirmed", "current": "confirmed"}]); append_event(engagement, adjudication3)
+        finding3 = json.loads(json.dumps(finding2)); finding3.update({"revision": 3, "supersedes_revision": 2, "recorded_at": "2026-07-10T00:15:57Z", "change_reason": "Resolve regrade correction and evidence-routed escalation.", "claim_state": "confirmed"}); finding3["claims"]["uncertainty"] = ["future versions not assessed"]; finding3["adjudication"] = {"review_ref": "review-claim-3", "justification": "Fresh review confirms the corrected bounded tuple."}
+        finding3_path = finding_dir / "rev-3.json"; finding3_path.write_bytes(canonical_json_bytes(finding3)); finding3_commit = base_event(event_id="event-finding-3-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:57.500000Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit corrected finding revision three.", payload={"record_path": "findings/F-selftest/rev-3.json", "record_digest": sha256_file(finding3_path), "record_type": "finding-v3", "record_id": "F-selftest", "record_revision": 3}); append_event(engagement, finding3_commit)
+        filing3 = base_event(event_id="event-finding-revision-3", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:58Z", actor_role="operator", actor_id="operator-selftest", event_type="finding.revised", rationale="Operator files correction-bound contiguous revision.", payload={"finding_id": "F-selftest", "finding_revision": 3, "status": "confirmed", "finding_digest": sha256_file(finding3_path), "adjudication_review_ref": "review-claim-3", "adjudication_review_digest": sha256_file(review3_path), "adjudication_event_ref": "event-claim-correction-confirmed", "supersedes_revision": 2, "change_reason": "Resolve regrade correction and evidence-routed escalation.", "resolves_review_refs": ["event-regrade-escalation", "event-regrade-correction"]}, entity_refs=["F-selftest", "event-claim-correction-confirmed"], finding_refs=["F-selftest"], review_refs=["review-claim-3"]); append_event(engagement, filing3)
+        corrected_state = reduce_engagement(engagement)
+        checks.append(("correction review closes only through a contiguous adjudicated revision", corrected_state["findings"]["F-selftest"]["revision"] == 3 and not any(item["review_ref"] in {"event-regrade-escalation", "event-regrade-correction"} for item in corrected_state["outstanding_reviews"]), str(corrected_state["outstanding_reviews"])))
+
+        tuple_hash3 = claim_tuple_hash(finding3); blocked_review = json.loads(json.dumps(correction)); blocked_review.update({"review_id": "review-regrade-blocked", "recorded_at": "2026-07-10T00:15:59Z", "finding_revision": 3, "verdict": "blocked", "rationale": "Pinned proof environment is unavailable; truth remains unchanged.", "corrections": [], "required_next_actions": ["restore pinned environment"], "claim_tuple_hash": tuple_hash3, "prior_review_run_ids": ["run-review-claim-3"], "escalation_claims": [], "blocked_reason": "Pinned proof environment unavailable."}); blocked_review["independence"].update({"reviewer_id": "blocked-reviewer", "reviewer_run_id": "run-regrade-blocked", "originating_run_id": "event-finding-revision-3"}); blocked_review["input_hash"] = compute_review_input_hash(engagement, blocked_review, build_reference_index(engagement)); blocked_path = reviews_dir / "regrade-blocked.json"; blocked_path.write_bytes(canonical_json_bytes(blocked_review))
+        blocked_commit = base_event(event_id="event-regrade-blocked-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:59.200000Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit blocked regrade.", payload={"record_path": "reviews/regrade-blocked.json", "record_digest": sha256_file(blocked_path), "record_type": "review", "record_id": "review-regrade-blocked", "record_revision": None}); append_event(engagement, blocked_commit)
+        blocked_event = base_event(event_id="event-regrade-blocked", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:59.500000Z", actor_role="reviewer", actor_id="blocked-reviewer", event_type="review.regrade_completed", rationale="Blocked review records no truth change.", payload={"review_ref": "review-regrade-blocked", "finding_id": "F-selftest", "finding_revision": 3, "verdict": "blocked", "claim_tuple_hash": tuple_hash3}, review_refs=["review-regrade-blocked"], finding_refs=["F-selftest"]); append_event(engagement, blocked_event)
+        blocked_state = reduce_engagement(engagement); checks.append(("typed blocked regrade preserves finding truth and names blocker", blocked_state["findings"]["F-selftest"]["status"] == "confirmed" and any(item["status"] == "blocked" for item in blocked_state["outstanding_reviews"]), str(blocked_state["outstanding_reviews"])))
+
+        rendered = render_claim_proof(finding2)
+        checks.append(("claim-to-proof rendering binds every atomic claim and preserves inferred impact labels", tuple_hash in rendered and all(claim_id in rendered for claim_id in ("claim-mechanism", "claim-reach", "claim-impact")) and "demonstrated" in rendered, rendered))
+
         manifest_path = engagement / "legacy" / "migration-manifest.json"; manifest_path.parent.mkdir(exist_ok=True); manifest_path.write_bytes(canonical_json_bytes({"schema_version": 1, "migration_id": "migration-selftest", "engagement_id": engagement.name, "recorded_at": "2026-07-10T00:16:00Z", "source_inventory_hash": "sha256:" + "0" * 64, "operator": {"role": "operator", "id": "operator-selftest"}, "entries": [], "outcome_counts": {"imported": 0, "needs_review": 0, "skipped": 0, "errors": 0}}))
         commit_event = base_event(event_id="event-record-committed", engagement_id=engagement.name, recorded_at="2026-07-10T00:16:00Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit immutable self-test migration manifest.", payload={"record_path": "legacy/migration-manifest.json", "record_digest": sha256_file(manifest_path), "record_type": "migration-manifest", "record_id": "migration-selftest", "record_revision": None})
         append_event(engagement, commit_event)
@@ -431,7 +509,7 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         checks.append(("blank physical JSONL lines fail", blank_caught, "blank line accepted"))
 
         cross_ledger = root / "cross-ledger"; shutil.copytree(engagement, cross_ledger)
-        artifact_value = json.loads((cross_ledger / "artifacts.jsonl").read_text()); artifact_value["engagement_id"] = "eng-other"; artifact_value["record_hash"] = compute_record_hash(artifact_value); (cross_ledger / "artifacts.jsonl").write_bytes(canonical_json_bytes(artifact_value))
+        artifact_lines = [json.loads(line) for line in (cross_ledger / "artifacts.jsonl").read_text().splitlines()]; artifact_lines[-1]["engagement_id"] = "eng-other"; artifact_lines[-1]["record_hash"] = compute_record_hash(artifact_lines[-1]); (cross_ledger / "artifacts.jsonl").write_bytes(b"".join(canonical_json_bytes(item) for item in artifact_lines))
         cross_caught = False
         try:
             reduce_engagement(cross_ledger)
@@ -439,13 +517,21 @@ def state_self_test() -> list[tuple[str, bool, str]]:
             cross_caught = exc.code == "cross_engagement_ledger_record"
         checks.append(("direct-ledger cross-engagement records fail reduction", cross_caught, "cross-engagement artifact reduced"))
         dangling = root / "dangling-ref"; shutil.copytree(engagement, dangling)
-        artifact_value = json.loads((dangling / "artifacts.jsonl").read_text()); artifact_value["target_refs"] = ["target-missing"]; artifact_value["record_hash"] = compute_record_hash(artifact_value); (dangling / "artifacts.jsonl").write_bytes(canonical_json_bytes(artifact_value))
+        artifact_lines = [json.loads(line) for line in (dangling / "artifacts.jsonl").read_text().splitlines()]; artifact_lines[-1]["target_refs"] = ["target-missing"]; artifact_lines[-1]["record_hash"] = compute_record_hash(artifact_lines[-1]); (dangling / "artifacts.jsonl").write_bytes(b"".join(canonical_json_bytes(item) for item in artifact_lines))
         dangling_caught = False
         try:
             reduce_engagement(dangling)
         except RecordError as exc:
             dangling_caught = exc.code == "record_reference_invalid"
         checks.append(("direct-ledger dangling references fail reduction", dangling_caught, "dangling artifact reference reduced"))
+        collision = root / "cross-type-id-collision"; shutil.copytree(engagement, collision)
+        collision_event = base_event(event_id="artifact-selftest", engagement_id=engagement.name, recorded_at="2026-07-10T00:17:00Z", actor_role="operator", actor_id="operator-selftest", event_type="observation.recorded", rationale="Cross-type ID collision attack.", payload={"entity_id": "collision-observation", "entity_type": "observation", "status": "recorded"}); append_ledger_record(collision, "event", collision_event)
+        collision_blocked = False
+        try:
+            reduce_engagement(collision)
+        except RecordError as exc:
+            collision_blocked = exc.code == "cross_type_record_id_collision"
+        checks.append(("record IDs cannot collide across event/attempt/artifact/review types", collision_blocked, "cross-type collision reduced"))
 
         interrupted = root / "interrupted"; shutil.copytree(engagement, interrupted)
         with open(interrupted / "events.jsonl", "ab") as handle: handle.write(b'{\"partial\"')
@@ -664,6 +750,10 @@ def parser() -> argparse.ArgumentParser:
     repair.add_argument("--operator-id", required=True)
     repair.add_argument("--reason", required=True)
     repair.add_argument("--recorded-at")
+    proof = subcommands.add_parser("render-proof", help="render the exact structured claim-to-proof matrix for a committed finding revision")
+    proof.add_argument("--engagement", type=Path, required=True)
+    proof.add_argument("--finding-id", required=True)
+    proof.add_argument("--revision", type=int, required=True)
     for name in ("reduce", "render", "check-resume"):
         command = subcommands.add_parser(name, help=f"{name} deterministic engagement state")
         command.add_argument("--engagement", type=Path, required=True)
@@ -684,6 +774,7 @@ def main() -> int:
             "repair-ledger-tail": command_repair_tail,
             "reduce": command_reduce,
             "render": command_render,
+            "render-proof": command_render_proof,
             "check-resume": command_check_resume,
         }
         if args.command in commands:

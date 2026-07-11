@@ -368,6 +368,9 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
                     kind = "candidate" if record["event_type"] == "candidate.proposed" else "hypothesis"
                     index.setdefault(entity_id, []).append({"type": kind, "engagement_id": record.get("engagement_id"), "revision": None, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at")})
     for entity_id, entries in index.items():
+        types = {entry["type"] for entry in entries}
+        if len(types) > 1:
+            raise RecordError("cross_type_record_id_collision", f"ID reused across record types: {entity_id}:{sorted(types)}")
         seen: set[tuple[str, int | None]] = set()
         for entry in entries:
             key = (entry["type"], entry["revision"])
@@ -438,8 +441,11 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
     elif schema_name == "review":
         if not (record.get("review_type") == "claim_adjudication" and record.get("entity_ref") == record.get("proposed_finding_id")):
             dynamic_specs.append((("entity_ref",), record.get("entity_ref"), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement"}))
+        dynamic_specs.append((("proof_profile_ref",), record.get("proof_profile_ref"), {"artifact"}))
         for index_number, control in enumerate(record.get("control_applicability", [])):
             dynamic_specs.append((("control_applicability", str(index_number), "attempt_ref"), control.get("attempt_ref"), {"attempt"}))
+        for index_number, replay in enumerate(record.get("replay_freshness", [])):
+            dynamic_specs.append((("replay_freshness", str(index_number), "attempt_ref"), replay.get("attempt_ref"), {"attempt"}))
         for index_number, disposition in enumerate(record.get("hypothesis_dispositions", [])):
             dynamic_specs.append((("hypothesis_dispositions", str(index_number), "hypothesis_ref"), disposition.get("hypothesis_ref"), {"hypothesis"}))
     elif schema_name == "migration-manifest":
@@ -464,6 +470,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("payload", "control_refs"), payload.get("control_refs", []), {"attempt"}),
             (("payload", "supporting_evidence_refs"), payload.get("supporting_evidence_refs", []), {"attempt", "artifact"}),
             (("payload", "conflicting_evidence_refs"), payload.get("conflicting_evidence_refs", []), {"attempt", "artifact"}),
+            (("payload", "resolves_review_refs"), payload.get("resolves_review_refs", []), {"event"}),
         ])
 
     errors: list[dict[str, Any]] = []

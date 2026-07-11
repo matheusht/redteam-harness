@@ -48,8 +48,17 @@ so in the finding.
 > Bias the system toward `contaminated` / `needs_review` / `duplicate` unless the evidence is
 > unusually clean. Rigor is the product.
 
+## Decision-0005 record output
+
+The oracle produces an independent committed `claim_adjudication` review with the immutable input-set
+hash, exact proposed finding ID/prior revision, control applicability, evidence refs, and fresh reviewer
+run. A reviewer-authored `claim.adjudicated` event may change claim state only when it matches that
+record. It cannot file the finding: contiguous revision bytes are committed separately and only the
+active signed-scope operator may append `finding.revised`. Scanner, helper, and external-model output
+remain observations, never oracle truth.
+
 ## A negative is conditional, not final
 A `rejected` ("guard holds") verdict is scoped to **the exact conditions tested** — base model,
-account, method competence. Record the **base model** on every finding; re-test negatives on model
-swaps (a prompt-level guard can hold on one model and leak verbatim on another). "Holds" means
+account, method competence. Record model/provider provenance on attempts and runtime identity in the
+pinned environment preflight; re-test negatives on model swaps (a prompt-level guard can hold on one model and leak verbatim on another). "Holds" means
 "holds under these conditions," never "is secure."
