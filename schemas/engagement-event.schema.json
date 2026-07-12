@@ -652,6 +652,21 @@
             "null"
           ],
           "minimum": 1
+        },
+        "identity_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "confirmation_scope": {
+          "const": "zone2_artifact_creation"
+        },
+        "expires_at": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+        },
+        "cleanup_obligation_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "cleanup_obligation_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
         }
       }
     },
@@ -727,8 +742,18 @@
           "payload": {
             "required": [
               "environment_ref",
-              "status"
-            ]
+              "status",
+              "identity_hash"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "ready",
+                  "blocked",
+                  "needs_review"
+                ]
+              }
+            }
           }
         }
       }
@@ -1333,6 +1358,49 @@
               "imported_finding_id",
               "imported_revision"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "escalation.confirmed"
+          }
+        },
+        "required": [
+          "event_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "entity_id",
+              "status",
+              "confirmation_scope",
+              "environment_ref",
+              "expires_at",
+              "cleanup_obligation_ref",
+              "confirmation",
+              "cleanup_obligation_id"
+            ],
+            "properties": {
+              "status": {
+                "const": "confirmed"
+              },
+              "confirmation": {
+                "properties": {
+                  "category": {
+                    "const": "zone2_artifact_creation"
+                  },
+                  "expires_at": {
+                    "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+                  }
+                }
+              }
+            }
           }
         }
       }

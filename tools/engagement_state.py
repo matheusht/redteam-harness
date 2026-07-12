@@ -18,8 +18,10 @@ from engagement_records import (
     RecordError,
     build_reference_index,
     canonical_json_bytes,
+    detect_secret_classes,
     load_json,
     resolve_schema_name,
+    scan_file_secret_classes,
     sha256_bytes,
     sha256_file,
     validate_record,
@@ -569,6 +571,9 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
     elif event_type == "submission.recorded":
         binding = ("report", payload.get("report_ref"), "submitted")
     elif event_type == "cleanup.updated":
+        matching_obligations = [item for item in payload.get("cleanup_obligations", []) if item.get("obligation_id") == payload.get("entity_id")]
+        if len(matching_obligations) != 1 or matching_obligations[0].get("status") != payload.get("status"):
+            raise RecordError("cleanup_transition_obligation_mismatch", event["event_id"])
         binding = ("cleanup", payload.get("entity_id"), payload.get("status"))
     elif event_type == "memory.disposition_recorded":
         binding = ("memory", engagement_id, payload.get("memory_disposition"))
@@ -667,6 +672,34 @@ def validate_cross_ledger_causality(events: list[dict[str, Any]], attempts: list
     artifact_times = {artifact["artifact_id"]: datetime.fromisoformat(artifact["created_at"].replace("Z", "+00:00")) for artifact in artifacts}
     environment_commit_times = {event["payload"]["record_id"]: event_times[event["event_id"]] for event in events if event["event_type"] == "record.committed" and event["payload"]["record_type"] == "environment-preflight"}
     scope_timeline = [(event_times[event["event_id"]], event["payload"]["scope_hash"]) for event in events if event["event_type"] == "scope.attested"]
+    environment_timeline: list[tuple[datetime, str | None]] = []
+    for event in events:
+        if event["event_type"] == "scope.attested":
+            environment_timeline.append((event_times[event["event_id"]], None))
+        elif event["event_type"] == "environment.preflight_recorded":
+            environment_timeline.append((event_times[event["event_id"]], event["payload"]["environment_ref"] if event["payload"].get("status") == "ready" else None))
+    event_by_id = {event["event_id"]: event for event in events}
+    for artifact in artifacts:
+        artifact_time = datetime.fromisoformat(artifact["created_at"].replace("Z", "+00:00"))
+        active_environment = next((environment_ref for timestamp, environment_ref in reversed(environment_timeline) if timestamp <= artifact_time), None)
+        if artifact["environment_ref"] != active_environment:
+            raise RecordError("artifact_environment_not_active", artifact["artifact_id"])
+        if artifact["advisory_zone"] == "unknown":
+            raise RecordError("artifact_zone_unknown", artifact["artifact_id"])
+        if artifact["advisory_zone"] == "review_required":
+            confirmation = event_by_id.get(artifact.get("escalation_confirmation_event_ref")); cleanup_event = event_by_id.get(artifact.get("cleanup_obligation_ref"))
+            if confirmation is None or confirmation["event_type"] != "escalation.confirmed" or cleanup_event is None or cleanup_event["event_type"] != "cleanup.updated":
+                raise RecordError("zone2_confirmation_invalid", artifact["artifact_id"])
+            expires_at = datetime.fromisoformat(confirmation["payload"]["expires_at"].replace("Z", "+00:00")); confirmation_time = event_times[confirmation["event_id"]]
+            confirmation_payload = confirmation["payload"]; obligation_id = confirmation_payload.get("cleanup_obligation_id")
+            cleanup_status = None
+            for candidate in events:
+                if event_times[candidate["event_id"]] > artifact_time or candidate["event_type"] != "cleanup.updated": continue
+                for item in candidate["payload"]["cleanup_obligations"]:
+                    if item["obligation_id"] == obligation_id: cleanup_status = item["status"]
+            bounded = confirmation_payload.get("confirmation", {})
+            if confirmation_payload.get("confirmation_scope") != "zone2_artifact_creation" or confirmation_payload.get("entity_id") != artifact["artifact_id"] or bounded.get("bounded_action") != artifact["artifact_id"] or confirmation_payload.get("environment_ref") != artifact["environment_ref"] or confirmation_payload.get("cleanup_obligation_ref") != cleanup_event["event_id"] or cleanup_status != "open" or not (confirmation_time <= artifact_time <= expires_at):
+                raise RecordError("zone2_confirmation_invalid", artifact["artifact_id"])
     seen_attempts: set[str] = set()
     for attempt in attempts:
         attempt_time = datetime.fromisoformat(attempt["recorded_at"].replace("Z", "+00:00"))
@@ -685,6 +718,9 @@ def validate_cross_ledger_causality(events: list[dict[str, Any]], attempts: list
         environment_time = environment_commit_times.get(attempt["environment_ref"])
         if environment_time is None or environment_time > attempt_time:
             raise RecordError("attempt_precedes_environment_commit", attempt["attempt_id"])
+        active_environment = next((environment_ref for timestamp, environment_ref in reversed(environment_timeline) if timestamp <= attempt_time), None)
+        if attempt["environment_ref"] != active_environment:
+            raise RecordError("attempt_environment_not_active", attempt["attempt_id"])
         controls = set(attempt.get("control_of", []))
         if not controls.issubset(seen_attempts):
             raise RecordError("attempt_control_precedes_primary", attempt["attempt_id"])
@@ -778,7 +814,7 @@ def validate_committed_record_precedence(engagement: Path, event: dict[str, Any]
 def _initial_snapshot(engagement_id: str, scope_hash: str) -> dict[str, Any]:
     return {
         "schema_version": 1, "engagement_id": engagement_id, "scope_hash": scope_hash,
-        "active_environment_ref": None, "last_event_id": None, "event_count": 0,
+        "active_environment_ref": None, "environment_preflights": {}, "last_event_id": None, "event_count": 0,
         "ledger_hash": "sha256:" + "0" * 64, "attempt_count": 0, "artifact_count": 0,
         "active_blockers": [], "candidates": {}, "control_candidates": [], "operator_priors": [], "hypotheses": {}, "findings": {},
         "outstanding_reviews": [], "proof_reviews": {}, "coverage": "active", "reports": {}, "report_refs": [], "submission_refs": [],
@@ -844,6 +880,12 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                     raise RecordError("review_freshness_not_bound", review["review_id"])
                 reviewer_run_ids.add(run_id)
                 review_run_subjects[run_id] = (review.get("proposed_finding_id"), review.get("finding_revision"), review["review_type"], review["entity_ref"])
+        if event["event_type"] == "escalation.confirmed":
+            confirmation_time = datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")); expires_at = datetime.fromisoformat(payload["expires_at"].replace("Z", "+00:00")); cleanup_event = seen_events.get(payload["cleanup_obligation_ref"]); bounded = payload.get("confirmation", {})
+            cleanup_open = cleanup_event is not None and cleanup_event["event_type"] == "cleanup.updated" and any(item["obligation_id"] == payload.get("cleanup_obligation_id") and item["status"] == "open" for item in cleanup_event["payload"]["cleanup_obligations"]) and any(item["obligation_id"] == payload.get("cleanup_obligation_id") and item["status"] == "open" for item in state["cleanup"]["obligations"])
+            bounded_valid = bounded.get("category") == "zone2_artifact_creation" and bounded.get("bounded_action") == payload.get("entity_id") and bounded.get("scope_hash") == state["scope_hash"] and bounded.get("operator_id") == active_scope_operator and bounded.get("confirmed_at") == event["recorded_at"] and bounded.get("expires_at") == payload.get("expires_at")
+            if event["actor"] != {"role": "operator", "id": active_scope_operator} or payload.get("status") != "confirmed" or payload.get("confirmation_scope") != "zone2_artifact_creation" or payload.get("environment_ref") != state["active_environment_ref"] or not cleanup_open or not bounded_valid or expires_at <= confirmation_time or (expires_at - confirmation_time).total_seconds() > 1800:
+                raise RecordError("zone2_confirmation_invalid", event["event_id"])
         if event["event_type"] == "operator_prior.recorded" and event["actor"]["id"] != active_scope_operator:
             raise RecordError("operator_prior_not_scope_authorized", event["event_id"])
         if event["event_type"] == "environment.preflight_recorded":
@@ -852,7 +894,9 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             if environment_ref not in committed_entity_ids or environment_entry is None:
                 raise RecordError("environment_preflight_not_committed", event["event_id"])
             environment = load_json(engagement / environment_entry["path"])
-            if environment.get("scope_hash") != state["scope_hash"] or environment.get("fidelity_complete") is not True or event["actor"]["role"] != "operator":
+            if environment.get("scope_hash") != state["scope_hash"] or environment.get("status") != payload.get("status") or environment.get("identity_hash") != payload.get("identity_hash") or environment.get("identity_hash") != sha256_bytes(canonical_json_bytes(environment.get("identity"))) or event["actor"]["role"] != "operator" or event["actor"]["id"] != active_scope_operator:
+                raise RecordError("environment_preflight_not_usable", event["event_id"])
+            if payload["status"] == "ready" and (environment.get("fidelity_complete") is not True or environment.get("collector", {}).get("reproducible") is not True or environment.get("identity", {}).get("runtime_digest") is None or environment.get("safety", {}).get("advisory_zone") != "clear_local" or environment.get("safety", {}).get("zone2_authorization_granted") is not False or environment.get("safety", {}).get("secret_scan_status") != "clean" or environment.get("safety", {}).get("cleanup_open_count") != 0):
                 raise RecordError("environment_preflight_not_usable", event["event_id"])
         if event["event_type"] == "candidate.proposed" and (states["coverage"].get(engagement_id) == "coverage_dry" or states["engagement"].get(engagement_id) == "closed"):
             raise RecordError("candidate_after_closed_search", event["event_id"])
@@ -1032,8 +1076,19 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             if event["sequence"] > 1 and payload.get("supersedes_scope_hash") != prior:
                 raise RecordError("scope_reattestation_mismatch", event["event_id"])
             state["scope_hash"] = payload["scope_hash"]
+            if event["sequence"] > 1:
+                state["active_environment_ref"] = None
         elif event_type == "environment.preflight_recorded":
-            state["active_environment_ref"] = payload.get("record_id") or payload.get("environment_ref")
+            environment_entry = _index_entry(index, payload["environment_ref"], "environment", engagement_id)
+            environment = load_json(engagement / environment_entry["path"])
+            state["environment_preflights"][payload["environment_ref"]] = {"status": payload["status"], "identity_hash": payload["identity_hash"], "scope_hash": environment["scope_hash"]}
+            state["active_environment_ref"] = payload["environment_ref"] if payload["status"] == "ready" else None
+        elif event_type == "cleanup.updated":
+            obligations = {item["obligation_id"]: item for item in state["cleanup"]["obligations"]}
+            for item in payload["cleanup_obligations"]:
+                obligations[item["obligation_id"]] = {"obligation_id": item["obligation_id"], "status": item["status"]}
+            state["cleanup"]["obligations"] = [obligations[key] for key in sorted(obligations)]
+            state["cleanup"]["open_count"] = sum(item["status"] != "closed" for item in obligations.values())
         elif event_type == "routing.assessed" and payload["activation_strength"] == "negative":
             state["control_candidates"].append({"routing_event_id": event["event_id"], "source_observation_ref": payload["source_observation_ref"], "card_ids": payload["card_ids"], "status": "likely_held", "rationale": event["rationale"]})
         elif event_type == "candidate.proposed":
@@ -1214,6 +1269,12 @@ def register_artifact(engagement: Path, file_path: Path, metadata: dict[str, Any
     if not resolved_file.is_relative_to(evidence_root) or file_path.is_symlink() or not resolved_file.is_file():
         raise RecordError("artifact_path_not_contained", "artifact must be a regular non-symlink file under engagement/evidence")
     relative = resolved_file.relative_to(engagement).as_posix()
+    secret_classes = scan_file_secret_classes(resolved_file)
+    if secret_classes:
+        raise RecordError("secret_shaped_artifact_content", "artifact registration blocked by secret-pattern classes", [{"class": value} for value in secret_classes])
+    metadata_secret_classes = detect_secret_classes(canonical_json_bytes(metadata))
+    if metadata_secret_classes:
+        raise RecordError("secret_shaped_artifact_metadata", "artifact metadata blocked by secret-pattern classes", [{"class": value} for value in metadata_secret_classes])
     proposal = copy.deepcopy(metadata)
     for trusted in ("relative_path", "sha256", "size", "immutable", "sequence", "previous_hash", "record_hash"):
         if trusted in proposal:

@@ -11,6 +11,7 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -51,6 +52,29 @@ NEW_SCHEMA_FILES = (
     "memory-disposition.schema.json",
     "migration-manifest.schema.json",
 )
+SECRET_PATTERNS = {
+    "authorization_header": re.compile(rb"authorization\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE),
+    "jwt": re.compile(rb"eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}"),
+    "private_key": re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    "signed_url": re.compile(rb"[?&](?:x-amz-signature|signature|sig)=[A-Fa-f0-9%]{16,}", re.IGNORECASE),
+    "password_assignment": re.compile(rb"(?:password|passwd|pwd)[\"']?\s*[:=]\s*[\"']?[^\s,;\"']{8,}", re.IGNORECASE),
+    "provider_token": re.compile(rb"(?:gh[pousr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16}|sk-[A-Za-z0-9_-]{20,})"),
+}
+
+
+def detect_secret_classes(data: bytes) -> list[str]:
+    return sorted(name for name, pattern in SECRET_PATTERNS.items() if pattern.search(data))
+
+
+def scan_file_secret_classes(path: Path) -> list[str]:
+    found: set[str] = set(); overlap = b""
+    with open(path, "rb") as handle:
+        while chunk := handle.read(1024 * 1024):
+            sample = overlap + chunk
+            found.update(detect_secret_classes(sample)); overlap = sample[-4096:]
+    return sorted(found)
+
+
 RECORD_SCHEMA_FILES = {
     "finding-v3": "finding-v3.schema.json",
     "attempt-v2": "attempt-v2.schema.json",

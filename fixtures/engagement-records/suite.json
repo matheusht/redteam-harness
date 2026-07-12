@@ -2093,6 +2093,7 @@
         "control_candidates": [],
         "coverage": "active",
         "engagement_id": "eng-1",
+        "environment_preflights": {},
         "event_count": 1,
         "findings": {},
         "hypotheses": {},
@@ -2150,6 +2151,7 @@
         "control_candidates": [],
         "coverage": "blocked",
         "engagement_id": "eng-1",
+        "environment_preflights": {},
         "event_count": 5,
         "findings": {
           "F-1": {
@@ -2254,6 +2256,7 @@
         "control_candidates": [],
         "coverage": "active",
         "engagement_id": "eng-1",
+        "environment_preflights": {},
         "event_count": 1,
         "findings": {},
         "hypotheses": {},
@@ -2282,6 +2285,18 @@
     {
       "id": "environment-preflight-minimum",
       "record": {
+        "collector": {
+          "collector_version": "decision5-preflight-v1",
+          "exit_code": 1,
+          "operation": "package_identity",
+          "reproducible": true,
+          "reproduction_argv": [
+            "python3",
+            "test.py"
+          ],
+          "stderr_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "stdout_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
         "engagement_id": "eng-1",
         "fidelity_complete": false,
         "identity": {
@@ -2291,17 +2306,21 @@
           "dependency_lock_hash": null,
           "dirty_tree_hash": null,
           "endpoint_identity": null,
+          "expected_identity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
           "feature_flags": [],
           "git_commit": null,
+          "runtime_digest": null,
           "runtime_identity": null,
           "source_identity": null
         },
+        "identity_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "missing_fidelity": [
           {
             "field": "source_identity",
             "reason": "legacy fixture"
           }
         ],
+        "mode": "package",
         "preflight_id": "preflight-1",
         "provenance": {
           "actor": {
@@ -2315,8 +2334,20 @@
           "tool_versions": []
         },
         "recorded_at": "2026-07-10T12:00:00Z",
+        "safety": {
+          "account_labels": [],
+          "advisory_zone": "clear_local",
+          "cleanup_open_count": 0,
+          "credentials_present": false,
+          "scope_attested": true,
+          "secret_pattern_classes": [],
+          "secret_scan_status": "clean",
+          "zone2_authorization_granted": false,
+          "operator_redaction_attested": true
+        },
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "blocked",
         "target_refs": []
       },
       "schema": "environment-preflight",
@@ -2325,6 +2356,18 @@
     {
       "id": "environment-preflight-rich",
       "record": {
+        "collector": {
+          "collector_version": "decision5-preflight-v1",
+          "exit_code": 0,
+          "operation": "git_identity",
+          "reproducible": true,
+          "reproduction_argv": [
+            "python3",
+            "test.py"
+          ],
+          "stderr_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "stdout_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
         "engagement_id": "eng-1",
         "fidelity_complete": true,
         "identity": {
@@ -2334,14 +2377,18 @@
           "dependency_lock_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
           "dirty_tree_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
           "endpoint_identity": "local",
+          "expected_identity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "feature_flags": [
             "flag-a"
           ],
           "git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runtime_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
           "runtime_identity": "python",
           "source_identity": "repo"
         },
+        "identity_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "missing_fidelity": [],
+        "mode": "git",
         "preflight_id": "preflight-2",
         "provenance": {
           "actor": {
@@ -2355,8 +2402,20 @@
           "tool_versions": []
         },
         "recorded_at": "2026-07-10T12:00:00Z",
+        "safety": {
+          "account_labels": [],
+          "advisory_zone": "clear_local",
+          "cleanup_open_count": 0,
+          "credentials_present": false,
+          "scope_attested": true,
+          "secret_pattern_classes": [],
+          "secret_scan_status": "clean",
+          "zone2_authorization_granted": false,
+          "operator_redaction_attested": true
+        },
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "ready",
         "target_refs": []
       },
       "schema": "environment-preflight",
@@ -2365,6 +2424,18 @@
     {
       "id": "environment-preflight-unknown-property",
       "record": {
+        "collector": {
+          "collector_version": "decision5-preflight-v1",
+          "exit_code": 1,
+          "operation": "package_identity",
+          "reproducible": true,
+          "reproduction_argv": [
+            "python3",
+            "test.py"
+          ],
+          "stderr_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "stdout_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
         "engagement_id": "eng-1",
         "fidelity_complete": false,
         "identity": {
@@ -2374,17 +2445,21 @@
           "dependency_lock_hash": null,
           "dirty_tree_hash": null,
           "endpoint_identity": null,
+          "expected_identity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
           "feature_flags": [],
           "git_commit": null,
+          "runtime_digest": null,
           "runtime_identity": null,
           "source_identity": null
         },
+        "identity_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         "missing_fidelity": [
           {
             "field": "source_identity",
             "reason": "legacy fixture"
           }
         ],
+        "mode": "package",
         "preflight_id": "preflight-1",
         "provenance": {
           "actor": {
@@ -2398,8 +2473,20 @@
           "tool_versions": []
         },
         "recorded_at": "2026-07-10T12:00:00Z",
+        "safety": {
+          "account_labels": [],
+          "advisory_zone": "clear_local",
+          "cleanup_open_count": 0,
+          "credentials_present": false,
+          "scope_attested": true,
+          "secret_pattern_classes": [],
+          "secret_scan_status": "clean",
+          "zone2_authorization_granted": false,
+          "operator_redaction_attested": true
+        },
         "schema_version": 1,
         "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "blocked",
         "target_refs": [],
         "unknown": "forbidden"
       },

@@ -9,6 +9,7 @@
     "engagement_id",
     "scope_hash",
     "active_environment_ref",
+    "environment_preflights",
     "last_event_id",
     "event_count",
     "ledger_hash",
@@ -634,6 +635,33 @@
               "string",
               "null"
             ]
+          }
+        }
+      }
+    },
+    "environment_preflights": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "identity_hash",
+          "scope_hash"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ready",
+              "blocked",
+              "needs_review"
+            ]
+          },
+          "identity_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "scope_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
           }
         }
       }

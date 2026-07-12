@@ -49,6 +49,7 @@ from engagement_state import (
     write_snapshot,
 )
 from engagement_views import assert_views_current, render_views, write_views
+from environment_preflight import collect_preflight
 from finding_review import claim_tuple_hash, render_claim_proof
 from reporting import accept_report, generate_report, record_submission
 
@@ -135,6 +136,18 @@ def command_render(args: argparse.Namespace) -> int:
         snapshot = reduce_engagement(engagement)
         write_views(engagement, snapshot)
     emit({"ok": True, "views": sorted(render_views(snapshot))})
+    return 0
+
+
+def command_preflight(args: argparse.Namespace) -> int:
+    try:
+        reproduction = json.loads(args.reproduction_argv)
+        if not isinstance(reproduction, list) or any(not isinstance(item, str) or not item for item in reproduction):
+            raise ValueError("reproduction argv must be a JSON array of strings; an empty array records a blocked preflight")
+        record = collect_preflight(args.engagement, preflight_id=args.preflight_id, mode=args.mode, target=args.target, expected_identity=args.expected_identity, runtime=args.runtime, reproduction_argv=reproduction, operator_id=args.operator_id, recorded_at=args.recorded_at, operator_redaction_attested=args.operator_redaction_attested, advisory_zone=args.advisory_zone, credentials_present=args.credentials_present, account_labels=args.account_label, configuration_files=args.configuration_file, endpoint_identity=args.endpoint_identity, account_role=args.account_role, feature_flags=args.feature_flag)
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise RecordError("preflight_invalid", str(exc)) from exc
+    emit({"valid": True, "preflight_id": record["preflight_id"], "status": record["status"], "identity_hash": record["identity_hash"], "missing_fidelity": record["missing_fidelity"], "advisory_zone": record["safety"]["advisory_zone"], "zone2_authorization_granted": False})
     return 0
 
 
@@ -334,12 +347,35 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         (engagement / "state.snapshot.json").write_bytes(snapshot_bytes)
         checks.append(("check-resume rejects a stale snapshot", stale_resume_caught, "stale snapshot accepted"))
 
-        environment_path = engagement / "environment" / "preflight-selftest.json"; environment_path.parent.mkdir(exist_ok=True)
-        environment_record = {"schema_version": 1, "preflight_id": "preflight-selftest", "engagement_id": engagement.name, "recorded_at": "2026-07-10T00:13:00Z", "scope_hash": snapshot["scope_hash"], "target_refs": [], "identity": {"source_identity": "owned-fixture", "git_commit": "a" * 40, "dirty_tree_hash": "sha256:" + "0" * 64, "dependency_lock_hash": "sha256:" + "1" * 64, "build_identity": "selftest-build", "runtime_identity": "python-selftest", "configuration_hash": "sha256:" + "2" * 64, "feature_flags": [], "endpoint_identity": "local", "account_role": "owner"}, "fidelity_complete": True, "missing_fidelity": [], "provenance": {"actor": {"role": "operator", "id": "operator-selftest"}, "provider": None, "model": None, "prompt_version": None, "tool_versions": [], "card_versions": []}}
-        environment_path.write_bytes(canonical_json_bytes(environment_record))
-        environment_commit = base_event(event_id="event-environment-commit", engagement_id=engagement.name, recorded_at="2026-07-10T00:13:00Z", actor_role="operator", actor_id="operator-selftest", event_type="record.committed", rationale="Commit pinned local environment identity.", payload={"record_path": "environment/preflight-selftest.json", "record_digest": sha256_file(environment_path), "record_type": "environment-preflight", "record_id": "preflight-selftest", "record_revision": None}); append_event(engagement, environment_commit)
-        environment_event = base_event(event_id="event-environment-active", engagement_id=engagement.name, recorded_at="2026-07-10T00:13:01Z", actor_role="operator", actor_id="operator-selftest", event_type="environment.preflight_recorded", rationale="Activate complete pinned local environment.", payload={"environment_ref": "preflight-selftest", "status": "ready"}, entity_refs=["preflight-selftest"]); append_event(engagement, environment_event)
-        checks.append(("only a committed complete preflight becomes active", reduce_engagement(engagement)["active_environment_ref"] == "preflight-selftest", "environment activation failed"))
+        package_fixture = root / "package-fixture.bin"; package_fixture.write_bytes(b"pinned package fixture\n"); package_digest = sha256_file(package_fixture); runtime_fixture = Path(sys.executable).resolve()
+        blocked_environment = collect_preflight(engagement, preflight_id="preflight-wrong-identity", mode="package", target=package_fixture, expected_identity="sha256:" + "f" * 64, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:00Z", operator_redaction_attested=True)
+        review_environment = collect_preflight(engagement, preflight_id="preflight-zone-review", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:01Z", operator_redaction_attested=True, advisory_zone="unknown")
+        environment_record = collect_preflight(engagement, preflight_id="preflight-selftest", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:02Z", operator_redaction_attested=True, endpoint_identity="local", account_role="owner")
+        retry_event_count = reduce_engagement(engagement)["event_count"]; retried_environment = collect_preflight(engagement, preflight_id="preflight-selftest", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:02Z", operator_redaction_attested=True, endpoint_identity="local", account_role="owner")
+        environment_state = reduce_engagement(engagement)
+        checks.append(("preflight retry is byte-idempotent after record and event commit", retried_environment == environment_record and environment_state["event_count"] == retry_event_count, "preflight retry appended or changed immutable bytes"))
+        checks.append(("wrong identity blocks and advisory Zone never authorizes or replaces a ready preflight", environment_record["status"] == "ready" and blocked_environment["status"] == "blocked" and review_environment["status"] == "needs_review" and environment_state["active_environment_ref"] == "preflight-selftest" and not any(item["safety"]["zone2_authorization_granted"] for item in (environment_record, blocked_environment, review_environment)), str(environment_state["environment_preflights"])))
+        collector_engagement = root / "collector-modes"; collector_engagement.mkdir(); collector_engagement.joinpath("scope.md").write_text(scope.replace("self-test", "collector-modes"), encoding="utf-8"); initialize_engagement(collector_engagement, "2026-07-10T00:13:10Z")
+        git_fixture = root / "git-fixture"; git_fixture.mkdir(); subprocess.run(["git", "init", "-q", str(git_fixture)], check=True); subprocess.run(["git", "-C", str(git_fixture), "config", "user.email", "fixture@example.invalid"], check=True); subprocess.run(["git", "-C", str(git_fixture), "config", "user.name", "Fixture"], check=True); git_fixture.joinpath("fixture.txt").write_text("fixture\n"); subprocess.run(["git", "-C", str(git_fixture), "add", "fixture.txt"], check=True); subprocess.run(["git", "-C", str(git_fixture), "commit", "-qm", "fixture"], check=True); git_commit = subprocess.check_output(["git", "-C", str(git_fixture), "rev-parse", "HEAD"], text=True).strip()
+        git_preflight = collect_preflight(collector_engagement, preflight_id="preflight-git", mode="git", target=git_fixture, expected_identity=git_commit, runtime=runtime_fixture, reproduction_argv=[str(Path(sys.executable).resolve()), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:11Z", operator_redaction_attested=True)
+        local_preflight = collect_preflight(collector_engagement, preflight_id="preflight-local-runtime", mode="local_runtime", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(Path(sys.executable).resolve()), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:12Z", operator_redaction_attested=True)
+        checks.append(("demonstrated Git, package, and local-runtime collectors pin identity without executing reproduction argv", git_preflight["status"] == "ready" and local_preflight["status"] == "ready" and reduce_engagement(collector_engagement)["active_environment_ref"] == "preflight-local-runtime", str((git_preflight["status"], local_preflight["status"]))))
+        cleanup_event = base_event(event_id="event-cleanup-open", engagement_id=collector_engagement.name, recorded_at="2026-07-10T00:13:13Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="Track an unresolved local fixture cleanup obligation.", payload={"entity_id": "cleanup-selftest", "status": "open", "cleanup_obligations": [{"obligation_id": "cleanup-selftest", "kind": "local_fixture", "status": "open", "artifact_refs": [], "rationale": "Fixture cleanup remains open.", "closed_at": None}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-selftest", "previous": None, "current": "open"}]); append_event(collector_engagement, cleanup_event)
+        cleanup_blocked = collect_preflight(collector_engagement, preflight_id="preflight-cleanup-debt", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:14Z", operator_redaction_attested=True)
+        checks.append(("reduced cleanup debt blocks and invalidates environment activation", cleanup_blocked["status"] == "blocked" and cleanup_blocked["safety"]["cleanup_open_count"] == 1 and reduce_engagement(collector_engagement)["active_environment_ref"] is None, str(cleanup_blocked)))
+        second_cleanup = base_event(event_id="event-cleanup-second", engagement_id=collector_engagement.name, recorded_at="2026-07-10T00:13:15Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="A delta update must not erase an earlier open obligation.", payload={"entity_id": "cleanup-second", "status": "open", "cleanup_obligations": [{"obligation_id": "cleanup-second", "kind": "local_fixture", "status": "open", "artifact_refs": [], "rationale": "Second fixture cleanup remains open.", "closed_at": None}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-second", "previous": None, "current": "open"}]); append_event(collector_engagement, second_cleanup)
+        checks.append(("cleanup delta cannot silently drop an earlier open obligation", reduce_engagement(collector_engagement)["cleanup"]["open_count"] == 2, str(reduce_engagement(collector_engagement)["cleanup"])))
+        normalization_engagement = root / "operator-normalization"; normalization_engagement.mkdir(); normalization_engagement.joinpath("scope.md").write_text(scope.replace("self-test", "operator-normalization").replace("operator-selftest", "Operator Name!"), encoding="utf-8"); initialize_engagement(normalization_engagement, "2026-07-10T00:13:15Z")
+        empty_argv = collect_preflight(normalization_engagement, preflight_id="preflight-empty-argv", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[], operator_id="Operator Name!", recorded_at="2026-07-10T00:13:16Z", operator_redaction_attested=True)
+        unattested = collect_preflight(normalization_engagement, preflight_id="preflight-unattested", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="Operator Name!", recorded_at="2026-07-10T00:13:17Z")
+        checks.append(("empty argv records blocked, redaction requires attestation, and operator labels normalize once", empty_argv["status"] == "blocked" and empty_argv["collector"]["reproduction_argv"] == [] and unattested["status"] == "blocked" and empty_argv["provenance"]["actor"]["id"] == "Operator-Name", str((empty_argv, unattested))))
+        secret_engagement = root / "secret-artifact"; shutil.copytree(engagement, secret_engagement); secret_file = secret_engagement / "evidence" / "secret.txt"; secret_file.parent.mkdir(exist_ok=True); secret_file.write_text("Authorization: Bearer not-a-real-token-value-123456\n")
+        secret_blocked = False
+        try:
+            register_artifact(secret_engagement, secret_file, {"schema_version": 1, "artifact_id": "artifact-secret", "engagement_id": engagement.name, "created_at": "2026-07-10T00:13:13Z", "producer": {"role": "operator", "id": "operator-selftest"}, "acquisition_method": "operator", "target_refs": [], "environment_ref": "preflight-selftest", "sensitivity": "secret", "redaction_status": "pending", "contains_executable_capability": False, "advisory_zone": "unknown", "escalation_confirmation_event_ref": None, "cleanup_obligation_ref": None, "supersedes_artifact_id": None, "media_type": "text/plain"})
+        except RecordError as exc:
+            secret_blocked = exc.code == "secret_shaped_artifact_content" and all("not-a-real" not in str(item) for item in exc.details)
+        checks.append(("secret-shaped artifact content is rejected without echoing the value", secret_blocked, "secret-shaped artifact accepted or disclosed"))
 
         evidence_file = engagement / "evidence" / "artifact.txt"; evidence_file.write_text("benign evidence\n", encoding="utf-8")
         artifact_metadata = {"schema_version": 1, "artifact_id": "artifact-selftest", "engagement_id": engagement.name, "created_at": "2026-07-10T00:15:00Z", "producer": {"role": "operator", "id": "operator-selftest"}, "acquisition_method": "operator", "target_refs": [], "environment_ref": "preflight-selftest", "sensitivity": "internal", "redaction_status": "not_needed", "contains_executable_capability": False, "advisory_zone": "clear_local", "escalation_confirmation_event_ref": None, "cleanup_obligation_ref": None, "supersedes_artifact_id": None, "media_type": "text/plain"}
@@ -510,6 +546,13 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         submission_path = engagement / "submissions" / "F-selftest.txt"; submission_path.write_text("Operator-authored external submission for F-selftest revision 3.\n", encoding="utf-8")
         submission_id = record_submission(engagement, current_report["report_id"], submission_path, "selftest-program", "operator-selftest", "2026-07-10T00:15:59.800000Z")
         submitted_state = reduce_engagement(engagement); checks.append(("external submission remains separate, operator-authored, and reduced from events", submitted_state["reports"][current_report["report_id"]]["status"] == "submitted" and submission_id in submitted_state["submission_refs"] and submission_path.read_bytes() != (engagement / current_report["report_path"]).read_bytes(), str(submitted_state["reports"])))
+        package_fixture.write_bytes(b"changed pinned package fixture\n"); changed_digest = sha256_file(package_fixture); collect_preflight(engagement, preflight_id="preflight-changed-target", mode="package", target=package_fixture, expected_identity=changed_digest, runtime=runtime_fixture, reproduction_argv=[str(Path(sys.executable).resolve()), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:15:59.850000Z", operator_redaction_attested=True)
+        stale_attempt = attempt_proposal("attempt-stale-environment", "2026-07-10T00:15:59.900000Z", "environment_check", "no_signal", "Attempt incorrectly tries to reuse the superseded target identity.", []); stale_environment_blocked = False
+        try:
+            append_attempt(engagement, stale_attempt)
+        except RecordError as exc:
+            stale_environment_blocked = exc.code == "attempt_environment_not_active"
+        checks.append(("changing target identity prevents stale preflight reuse", stale_environment_blocked and reduce_engagement(engagement)["active_environment_ref"] == "preflight-changed-target" and all(item["attempt_id"] != "attempt-stale-environment" for item in read_ledger(engagement, "attempt")), "stale preflight was reused"))
 
         rendered = render_claim_proof(finding2)
         checks.append(("claim-to-proof rendering binds every atomic claim and preserves inferred impact labels", tuple_hash in rendered and all(claim_id in rendered for claim_id in ("claim-mechanism", "claim-reach", "claim-impact")) and "demonstrated" in rendered, rendered))
@@ -822,6 +865,8 @@ def parser() -> argparse.ArgumentParser:
     repair.add_argument("--operator-id", required=True)
     repair.add_argument("--reason", required=True)
     repair.add_argument("--recorded-at")
+    preflight = subcommands.add_parser("preflight", help="record offline Git/package/local-runtime identity and safety state")
+    preflight.add_argument("--engagement", type=Path, required=True); preflight.add_argument("--preflight-id", required=True); preflight.add_argument("--mode", choices=["git", "package", "local_runtime"], required=True); preflight.add_argument("--target", type=Path, required=True); preflight.add_argument("--expected-identity", required=True); preflight.add_argument("--runtime", type=Path, required=True); preflight.add_argument("--reproduction-argv", required=True, help="JSON array; recorded but never executed by preflight"); preflight.add_argument("--operator-id", required=True); preflight.add_argument("--recorded-at", required=True); preflight.add_argument("--operator-redaction-attested", action="store_true", help="operator attests all labels/argv were redacted and contain no credential values"); preflight.add_argument("--advisory-zone", choices=["clear_local", "review_required", "unknown"], default="clear_local"); preflight.add_argument("--credentials-present", action="store_true"); preflight.add_argument("--account-label", action="append", default=[]); preflight.add_argument("--configuration-file", type=Path, action="append", default=[]); preflight.add_argument("--endpoint-identity"); preflight.add_argument("--account-role"); preflight.add_argument("--feature-flag", action="append", default=[])
     migrate = subcommands.add_parser("migrate", help="read-only legacy inventory or signed-operator migration proposal")
     migrate.add_argument("--root", type=Path, default=Path(".")); migrate.add_argument("--output", type=Path); migrate.add_argument("--propose-engagement"); migrate.add_argument("--apply-proposal", type=Path); migrate.add_argument("--destination", type=Path); migrate.add_argument("--operator-id"); migrate.add_argument("--recorded-at")
     accept = subcommands.add_parser("accept-report", help="operator review and acceptance of a current revision-bound report")
@@ -854,6 +899,7 @@ def main() -> int:
             "repair-ledger-tail": command_repair_tail,
             "reduce": command_reduce,
             "render": command_render,
+            "preflight": command_preflight,
             "migrate": command_migrate,
             "accept-report": command_accept_report,
             "record-submission": command_record_submission,

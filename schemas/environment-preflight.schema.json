@@ -1,9 +1,385 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://llm-redteam-harness.local/schemas/environment-preflight.schema.json","title":"Decision 0005 environment preflight","type":"object","additionalProperties":false,
-  "required":["schema_version","preflight_id","engagement_id","recorded_at","scope_hash","target_refs","identity","fidelity_complete","missing_fidelity","provenance"],
-  "properties":{
-    "schema_version":{"const":1},"preflight_id":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},"engagement_id":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},"recorded_at":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},"scope_hash":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},"target_refs":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"},
-    "identity":{"type":"object","additionalProperties":false,"required":["source_identity","git_commit","dirty_tree_hash","build_identity","runtime_identity","dependency_lock_hash","configuration_hash","endpoint_identity","account_role","feature_flags"],"properties":{"source_identity":{"type":["string","null"]},"git_commit":{"type":["string","null"]},"dirty_tree_hash":{"oneOf":[{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},{"type":"null"}]},"build_identity":{"type":["string","null"]},"runtime_identity":{"type":["string","null"]},"dependency_lock_hash":{"oneOf":[{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},{"type":"null"}]},"configuration_hash":{"oneOf":[{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},{"type":"null"}]},"endpoint_identity":{"type":["string","null"]},"account_role":{"type":["string","null"]},"feature_flags":{"type":"array","items":{"type":"string"},"uniqueItems":true}}},
-    "fidelity_complete":{"type":"boolean"},"missing_fidelity":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["field","reason"],"properties":{"field":{"type":"string","minLength":1},"reason":{"type":"string","minLength":1}}}},"provenance":{"$ref":"https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"}
-  },"allOf":[{"if":{"properties":{"fidelity_complete":{"const":true}},"required":["fidelity_complete"]},"then":{"properties":{"missing_fidelity":{"maxItems":0}}},"else":{"properties":{"missing_fidelity":{"minItems":1}}}}]
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/environment-preflight.schema.json",
+  "title": "Decision 0005 environment fidelity and safety preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "preflight_id",
+    "engagement_id",
+    "recorded_at",
+    "scope_hash",
+    "target_refs",
+    "mode",
+    "status",
+    "identity",
+    "identity_hash",
+    "fidelity_complete",
+    "missing_fidelity",
+    "collector",
+    "safety",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "preflight_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "recorded_at": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+    },
+    "scope_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "target_refs": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+    },
+    "mode": {
+      "enum": [
+        "git",
+        "package",
+        "local_runtime"
+      ]
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "blocked",
+        "needs_review"
+      ]
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_identity",
+        "expected_identity",
+        "git_commit",
+        "dirty_tree_hash",
+        "build_identity",
+        "runtime_identity",
+        "runtime_digest",
+        "dependency_lock_hash",
+        "configuration_hash",
+        "endpoint_identity",
+        "account_role",
+        "feature_flags"
+      ],
+      "properties": {
+        "source_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expected_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "git_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dirty_tree_hash": {
+          "oneOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "build_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "runtime_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "runtime_digest": {
+          "oneOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dependency_lock_hash": {
+          "oneOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configuration_hash": {
+          "oneOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "endpoint_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "account_role": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "feature_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "identity_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "fidelity_complete": {
+      "type": "boolean"
+    },
+    "missing_fidelity": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "reason"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "collector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collector_version",
+        "operation",
+        "reproduction_argv",
+        "reproducible",
+        "exit_code",
+        "stdout_digest",
+        "stderr_digest"
+      ],
+      "properties": {
+        "collector_version": {
+          "const": "decision5-preflight-v1"
+        },
+        "operation": {
+          "enum": [
+            "git_identity",
+            "package_identity",
+            "local_runtime_identity"
+          ]
+        },
+        "reproduction_argv": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reproducible": {
+          "type": "boolean"
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "stdout_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "stderr_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_attested",
+        "credentials_present",
+        "account_labels",
+        "cleanup_open_count",
+        "advisory_zone",
+        "zone2_authorization_granted",
+        "secret_scan_status",
+        "secret_pattern_classes",
+        "operator_redaction_attested"
+      ],
+      "properties": {
+        "scope_attested": {
+          "const": true
+        },
+        "credentials_present": {
+          "type": "boolean"
+        },
+        "account_labels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "cleanup_open_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "advisory_zone": {
+          "enum": [
+            "clear_local",
+            "review_required",
+            "unknown"
+          ]
+        },
+        "zone2_authorization_granted": {
+          "const": false
+        },
+        "secret_scan_status": {
+          "enum": [
+            "clean",
+            "blocked",
+            "needs_review"
+          ]
+        },
+        "secret_pattern_classes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "authorization_header",
+              "jwt",
+              "private_key",
+              "signed_url",
+              "password_assignment",
+              "provider_token"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "operator_redaction_attested": {
+          "type": "boolean"
+        }
+      }
+    },
+    "provenance": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "fidelity_complete": {
+            "const": true
+          }
+        },
+        "required": [
+          "fidelity_complete"
+        ]
+      },
+      "then": {
+        "properties": {
+          "missing_fidelity": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "missing_fidelity": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ready"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "fidelity_complete": {
+            "const": true
+          },
+          "safety": {
+            "properties": {
+              "advisory_zone": {
+                "const": "clear_local"
+              },
+              "secret_scan_status": {
+                "const": "clean"
+              },
+              "cleanup_open_count": {
+                "const": 0
+              },
+              "operator_redaction_attested": {
+                "const": true
+              }
+            }
+          },
+          "collector": {
+            "properties": {
+              "reproducible": {
+                "const": true
+              }
+            }
+          },
+          "identity": {
+            "properties": {
+              "runtime_digest": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
