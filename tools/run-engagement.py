@@ -53,6 +53,7 @@ from environment_preflight import collect_preflight
 from finding_review import claim_tuple_hash, render_claim_proof
 from memory_disposition import _validate_promotable_abstraction, close_engagement, record_memory_disposition
 from reporting import accept_report, generate_report, record_submission
+from research_telemetry import export_telemetry, score_telemetry
 
 
 def emit(value: object) -> None:
@@ -137,6 +138,17 @@ def command_render(args: argparse.Namespace) -> int:
         snapshot = reduce_engagement(engagement)
         write_views(engagement, snapshot)
     emit({"ok": True, "views": sorted(render_views(snapshot))})
+    return 0
+
+
+def command_export_telemetry(args: argparse.Namespace) -> int:
+    export = export_telemetry(args.engagement, args.output)
+    emit(export if args.output is None else {"valid": True, "output": args.output.as_posix(), "classification": export["classification"], "candidate_count": len(export["candidates"])})
+    return 0
+
+
+def command_score_telemetry(args: argparse.Namespace) -> int:
+    emit(score_telemetry(load_json(args.file)))
     return 0
 
 
@@ -434,6 +446,10 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         reopen_prior = base_event(event_id="event-prior-reopens-negative", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:19Z", actor_role="operator", actor_id="operator-selftest", event_type="operator_prior.recorded", rationale="A strong operator prior reopens bounded search but supplies no claim evidence.", payload={"prior_id": "prior-reopen-negative", "prior_statement": "One materially distinct parser branch was not represented.", "strength": "strong", "reason": "operator target-model knowledge", "reopen_hypothesis_id": "hypothesis-h1", "reopening_condition": "Test the newly identified materially distinct parser branch."}, entity_refs=["hypothesis-h1"], state_changes=[{"dimension": "search", "entity_id": "hypothesis-h1", "previous": "exhausted", "current": "queued"}, {"dimension": "coverage", "entity_id": engagement.name, "previous": "coverage_dry", "current": "active"}]); append_event(supported_negative, reopen_prior)
         reopened_negative = reduce_engagement(supported_negative)
         checks.append(("strong operator prior reopens search and coverage without proving a claim", reopened_negative["coverage"] == "active" and reopened_negative["hypotheses"]["hypothesis-h1"]["status"] == "queued" and reopened_negative["findings"] == {}, str(reopened_negative)))
+        telemetry = export_telemetry(supported_negative); telemetry_score = score_telemetry(telemetry)
+        telemetry_states = telemetry["candidates"][0]["funnel_states"]
+        checks.append(("complete-funnel export retains eligible, selected, and reopened states", telemetry["denominator"] == {"eligible_count": 1, "exported_count": 1, "complete": True} and all(value in telemetry_states for value in ("eligible", "selected", "reopened")), str(telemetry)))
+        checks.append(("missing independent outcomes remains telemetry, never fake calibration", telemetry["classification"] == "telemetry" and "missing_independent_outcome" in telemetry["calibration_eligibility"]["reasons"] and telemetry_score["brier_score"] is None and telemetry_score["automatic_actions"] == [] and telemetry_score["bandit_enabled"] is False, str(telemetry_score)))
 
         artifact_tampered = root / "artifact-tampered"; shutil.copytree(engagement, artifact_tampered); (artifact_tampered / "evidence" / "artifact.txt").write_text("changed\n")
         artifact_tamper_caught = False
@@ -817,8 +833,16 @@ def self_test() -> int:
         mismatch_caught = exc.code == "schema_dispatch_mismatch"
     checks.append(("record identity/version dispatch is authoritative", dispatch_ok and mismatch_caught, "caller-selected schema overrode dispatch"))
     ids = {case["id"] for case in suite["results"] if case["passed"]}
-    for required in ("finding-v3-unknown-property", "finding-v3-duplicate-claim-id", "finding-v3-incomplete-claim-proof-map", "finding-v3-required-positive-control-missing", "finding-v3-empty-per-claim-proof", "finding-v3-positive-control-not-bound-per-claim", "attempt-v2-confirmed-outcome", "artifact-missing-conditional", "review-missing-conditional", "engagement-event-unknown-type", "state-snapshot-unknown-property", "environment-preflight-unknown-property", "report-manifest-unknown-property", "memory-disposition-unknown-property", "migration-manifest-unknown-property"):
+    for required in ("finding-v3-unknown-property", "finding-v3-duplicate-claim-id", "finding-v3-incomplete-claim-proof-map", "finding-v3-required-positive-control-missing", "finding-v3-empty-per-claim-proof", "finding-v3-positive-control-not-bound-per-claim", "attempt-v2-confirmed-outcome", "artifact-missing-conditional", "review-missing-conditional", "engagement-event-unknown-type", "state-snapshot-unknown-property", "environment-preflight-unknown-property", "report-manifest-unknown-property", "memory-disposition-unknown-property", "migration-manifest-unknown-property", "research-telemetry-unknown-property"):
         checks.append((f"negative fixture rejected: {required}", required in ids, "missing/failed fixture"))
+
+    telemetry_fixture = load_json(Path(__file__).resolve().parents[1] / "fixtures" / "engagement-records" / "suite.json")
+    calibration_record = json.loads(json.dumps(next(case["record"] for case in telemetry_fixture["cases"] if case["id"] == "research-telemetry-rich")))
+    template_row = calibration_record["candidates"][0]; calibration_record["candidates"] = []
+    for index_number in range(30):
+        row = json.loads(json.dumps(template_row)); row["candidate_id"] = f"candidate-{index_number:02d}"; row["funnel_history"][0]["source_ref"] = f"event-eligible-{index_number:02d}"; row["funnel_history"][1]["source_ref"] = f"event-selected-{index_number:02d}"; row["funnel_history"][2]["source_ref"] = f"review-outcome-{index_number:02d}"; row["outcome"]["review_ref"] = f"review-outcome-{index_number:02d}"; row["review_refs"] = [row["outcome"]["review_ref"]]; calibration_record["candidates"].append(row)
+    calibration_record["denominator"] = {"eligible_count": 30, "exported_count": 30, "complete": True}; calibration_record["classification"] = "calibration"; calibration_record["calibration_eligibility"] = {"eligible": True, "reasons": []}; calibration_score = score_telemetry(calibration_record)
+    checks.append(("eligible ex-ante probabilities produce offline Brier and reliability telemetry only", calibration_score["brier_score"] == 0.0625 and calibration_score["small_sample"] is False and calibration_score["automatic_actions"] == [] and calibration_score["bandit_enabled"] is False, str(calibration_score)))
 
     canonical = canonical_json_bytes({"b": 2, "a": 1})
     checks.append(("canonical JSON is sorted and newline terminated", canonical == b'{"a":1,"b":2}\n', repr(canonical)))
@@ -901,6 +925,10 @@ def parser() -> argparse.ArgumentParser:
     repair.add_argument("--operator-id", required=True)
     repair.add_argument("--reason", required=True)
     repair.add_argument("--recorded-at")
+    telemetry = subcommands.add_parser("export-telemetry", help="derive complete-funnel telemetry without changing routing")
+    telemetry.add_argument("--engagement", type=Path, required=True); telemetry.add_argument("--output", type=Path)
+    telemetry_score = subcommands.add_parser("score-telemetry", help="score telemetry or eligible calibration offline")
+    telemetry_score.add_argument("--file", type=Path, required=True)
     memory = subcommands.add_parser("record-memory", help="operator-review and commit one terminal memory disposition without modifying Plane-1")
     memory.add_argument("--engagement", type=Path, required=True); memory.add_argument("--file", type=Path, required=True); memory.add_argument("--operator-id", required=True)
     close = subcommands.add_parser("close", help="operator-only cleanup, coverage, report, and memory closure gate")
@@ -941,6 +969,8 @@ def main() -> int:
             "render": command_render,
             "preflight": command_preflight,
             "record-memory": command_record_memory,
+            "export-telemetry": command_export_telemetry,
+            "score-telemetry": command_score_telemetry,
             "close": command_close,
             "migrate": command_migrate,
             "accept-report": command_accept_report,

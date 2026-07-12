@@ -677,6 +677,16 @@
         },
         "updated_at": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+        },
+        "operator_override": {
+          "type": "boolean"
+        },
+        "override_reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
         }
       }
     },

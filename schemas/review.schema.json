@@ -40,7 +40,8 @@
         "coverage",
         "regrade",
         "pocinator",
-        "operator"
+        "operator",
+        "candidate_outcome"
       ]
     },
     "proposed_finding_id": {
@@ -288,6 +289,9 @@
         "string",
         "null"
       ]
+    },
+    "review_cost": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/cost"
     }
   },
   "allOf": [
@@ -579,6 +583,38 @@
             "const": true
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_type": {
+            "const": "candidate_outcome"
+          }
+        },
+        "required": [
+          "review_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "proposed_finding_id": {
+            "type": "null"
+          },
+          "finding_revision": {
+            "type": "null"
+          },
+          "verdict": {
+            "enum": [
+              "positive",
+              "negative",
+              "unresolved"
+            ]
+          }
+        },
+        "required": [
+          "review_cost"
+        ]
       }
     }
   ]

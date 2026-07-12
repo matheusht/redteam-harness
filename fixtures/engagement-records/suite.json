@@ -3458,6 +3458,390 @@
           }
         }
       }
+    },
+    {
+      "id": "research-telemetry-minimum",
+      "schema": "research-telemetry",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "export_id": "telemetry-eng-1",
+        "engagement_id": "eng-1",
+        "classification": "telemetry",
+        "source_hashes": {
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "denominator": {
+          "eligible_count": 0,
+          "exported_count": 0,
+          "complete": true
+        },
+        "candidates": [],
+        "cost_totals": {
+          "wall_seconds": null,
+          "model_seconds": null,
+          "tool_seconds": null,
+          "target_calls": null,
+          "model_calls": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": null
+        },
+        "calibration_eligibility": {
+          "eligible": false,
+          "reasons": [
+            "missing_denominator",
+            "small_sample"
+          ]
+        },
+        "policy": {
+          "automatic_card_deletion": false,
+          "automatic_prompt_change": false,
+          "bandit_enabled": false
+        },
+        "cost_coverage": {
+          "attempt_count": 0,
+          "attempts_with_cost": 0,
+          "review_count": 0,
+          "reviews_with_cost": 0
+        },
+        "cost_dimension_coverage": {
+          "wall_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "tool_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "target_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "input_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "output_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "cost_usd": {
+            "records": 0,
+            "measured": 0
+          },
+          "human_review_seconds": {
+            "records": 0,
+            "measured": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "research-telemetry-rich",
+      "schema": "research-telemetry",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "export_id": "telemetry-eng-1",
+        "engagement_id": "eng-1",
+        "classification": "telemetry",
+        "source_hashes": {
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "denominator": {
+          "eligible_count": 1,
+          "exported_count": 1,
+          "complete": true
+        },
+        "candidates": [
+          {
+            "candidate_id": "candidate-1",
+            "eligible_at": "2026-07-10T12:00:00Z",
+            "funnel_states": [
+              "eligible",
+              "selected",
+              "confirmed"
+            ],
+            "card_ids": [
+              "card-1"
+            ],
+            "ex_ante": {
+              "recorded_at": "2026-07-10T12:00:00Z",
+              "recorded_before_outcome": true,
+              "probability": 0.75,
+              "ordinal": "strong"
+            },
+            "outcome": {
+              "label": "positive",
+              "independent": true,
+              "recorded_at": "2026-07-10T13:00:00Z",
+              "review_ref": "review-outcome-1"
+            },
+            "attempt_refs": [
+              "attempt-1"
+            ],
+            "review_refs": [
+              "review-outcome-1"
+            ],
+            "finding_refs": [
+              "F-1"
+            ],
+            "cost": {
+              "wall_seconds": 0,
+              "model_seconds": 0,
+              "tool_seconds": 0,
+              "target_calls": 0,
+              "model_calls": 0,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": null,
+              "human_review_seconds": 0
+            },
+            "funnel_history": [
+              {
+                "state": "eligible",
+                "recorded_at": "2026-07-10T12:00:00Z",
+                "source_ref": "event-candidate-1",
+                "rationale": "Candidate entered the complete denominator.",
+                "source_kind": "event",
+                "source_sequence": 1,
+                "source_revision": null
+              },
+              {
+                "state": "selected",
+                "recorded_at": "2026-07-10T12:01:00Z",
+                "source_ref": "event-selected-1",
+                "rationale": "Candidate selected.",
+                "source_kind": "event",
+                "source_sequence": 2,
+                "source_revision": null
+              },
+              {
+                "state": "confirmed",
+                "recorded_at": "2026-07-10T13:00:00Z",
+                "source_ref": "review-outcome-1",
+                "rationale": "Independent positive outcome.",
+                "source_kind": "review",
+                "source_sequence": 0,
+                "source_revision": null
+              }
+            ]
+          }
+        ],
+        "cost_totals": {
+          "wall_seconds": 0,
+          "model_seconds": 0,
+          "tool_seconds": 0,
+          "target_calls": 0,
+          "model_calls": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": 0
+        },
+        "calibration_eligibility": {
+          "eligible": false,
+          "reasons": [
+            "small_sample"
+          ]
+        },
+        "policy": {
+          "automatic_card_deletion": false,
+          "automatic_prompt_change": false,
+          "bandit_enabled": false
+        },
+        "cost_coverage": {
+          "attempt_count": 1,
+          "attempts_with_cost": 1,
+          "review_count": 1,
+          "reviews_with_cost": 1
+        },
+        "cost_dimension_coverage": {
+          "wall_seconds": {
+            "records": 2,
+            "measured": 2
+          },
+          "model_seconds": {
+            "records": 2,
+            "measured": 2
+          },
+          "tool_seconds": {
+            "records": 2,
+            "measured": 2
+          },
+          "target_calls": {
+            "records": 2,
+            "measured": 2
+          },
+          "model_calls": {
+            "records": 2,
+            "measured": 2
+          },
+          "input_tokens": {
+            "records": 2,
+            "measured": 0
+          },
+          "output_tokens": {
+            "records": 2,
+            "measured": 0
+          },
+          "cost_usd": {
+            "records": 2,
+            "measured": 0
+          },
+          "human_review_seconds": {
+            "records": 2,
+            "measured": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "research-telemetry-unknown-property",
+      "schema": "research-telemetry",
+      "valid": false,
+      "record": {
+        "schema_version": 1,
+        "export_id": "telemetry-eng-1",
+        "engagement_id": "eng-1",
+        "classification": "telemetry",
+        "source_hashes": {
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "denominator": {
+          "eligible_count": 0,
+          "exported_count": 0,
+          "complete": true
+        },
+        "candidates": [],
+        "cost_totals": {
+          "wall_seconds": null,
+          "model_seconds": null,
+          "tool_seconds": null,
+          "target_calls": null,
+          "model_calls": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": null
+        },
+        "calibration_eligibility": {
+          "eligible": false,
+          "reasons": [
+            "missing_denominator",
+            "small_sample"
+          ]
+        },
+        "policy": {
+          "automatic_card_deletion": false,
+          "automatic_prompt_change": false,
+          "bandit_enabled": false
+        },
+        "unknown": "forbidden",
+        "cost_coverage": {
+          "attempt_count": 0,
+          "attempts_with_cost": 0,
+          "review_count": 0,
+          "reviews_with_cost": 0
+        },
+        "cost_dimension_coverage": {
+          "wall_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "tool_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "target_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "input_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "output_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "cost_usd": {
+            "records": 0,
+            "measured": 0
+          },
+          "human_review_seconds": {
+            "records": 0,
+            "measured": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "review-candidate-outcome",
+      "schema": "review",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "review_id": "review-candidate-outcome",
+        "engagement_id": "eng-1",
+        "review_type": "candidate_outcome",
+        "proposed_finding_id": null,
+        "entity_ref": "candidate-1",
+        "finding_revision": null,
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "input_refs": [],
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "evidence_refs": [],
+        "rationale": "Independent held-out outcome is positive.",
+        "conflicting_evidence": [],
+        "verdict": "positive",
+        "corrections": [],
+        "required_next_actions": [],
+        "independence": {
+          "reviewer_id": "reviewer-2",
+          "reviewer_run_id": "run-2",
+          "reviewer_model": null,
+          "fresh_context": true,
+          "prior_verdict_visible": false,
+          "disconfirming_objective": "Determine outcome without routing confidence.",
+          "originating_run_id": "run-1"
+        },
+        "review_cost": {
+          "wall_seconds": 1,
+          "model_seconds": 0,
+          "tool_seconds": 0,
+          "target_calls": 0,
+          "model_calls": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": 1
+        }
+      }
     }
   ],
   "schema_version": 1

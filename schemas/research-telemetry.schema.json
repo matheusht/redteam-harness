@@ -1,0 +1,611 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/research-telemetry.schema.json",
+  "title": "Decision 0005 complete-funnel research telemetry export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "export_id",
+    "engagement_id",
+    "classification",
+    "source_hashes",
+    "denominator",
+    "candidates",
+    "cost_totals",
+    "calibration_eligibility",
+    "policy",
+    "cost_coverage",
+    "cost_dimension_coverage"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "export_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "classification": {
+      "enum": [
+        "telemetry",
+        "calibration"
+      ]
+    },
+    "source_hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "events.jsonl",
+        "attempts.jsonl",
+        "artifacts.jsonl"
+      ],
+      "properties": {
+        "events.jsonl": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "attempts.jsonl": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "artifacts.jsonl": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "denominator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible_count",
+        "exported_count",
+        "complete"
+      ],
+      "properties": {
+        "eligible_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exported_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "complete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_id",
+          "eligible_at",
+          "funnel_states",
+          "card_ids",
+          "ex_ante",
+          "outcome",
+          "attempt_refs",
+          "review_refs",
+          "finding_refs",
+          "cost",
+          "funnel_history"
+        ],
+        "properties": {
+          "candidate_id": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "eligible_at": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+          },
+          "funnel_states": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "eligible",
+                "selected",
+                "skipped",
+                "overridden",
+                "held",
+                "deferred",
+                "contaminated",
+                "reopened",
+                "refuted",
+                "confirmed"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "card_ids": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+          },
+          "ex_ante": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recorded_at",
+              "recorded_before_outcome",
+              "probability",
+              "ordinal"
+            ],
+            "properties": {
+              "recorded_at": {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+              },
+              "recorded_before_outcome": {
+                "type": "boolean"
+              },
+              "probability": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "ordinal": {
+                "enum": [
+                  "negative",
+                  "weak",
+                  "strong",
+                  null
+                ]
+              }
+            }
+          },
+          "outcome": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "independent",
+              "recorded_at",
+              "review_ref"
+            ],
+            "properties": {
+              "label": {
+                "enum": [
+                  "positive",
+                  "negative",
+                  "unresolved"
+                ]
+              },
+              "independent": {
+                "type": "boolean"
+              },
+              "recorded_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "review_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "attempt_refs": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+          },
+          "review_refs": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+          },
+          "finding_refs": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+          },
+          "cost": {
+            "$ref": "#/$defs/measured_cost"
+          },
+          "funnel_history": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "state",
+                "recorded_at",
+                "source_ref",
+                "rationale",
+                "source_kind",
+                "source_sequence",
+                "source_revision"
+              ],
+              "properties": {
+                "state": {
+                  "enum": [
+                    "eligible",
+                    "selected",
+                    "skipped",
+                    "overridden",
+                    "held",
+                    "deferred",
+                    "contaminated",
+                    "reopened",
+                    "refuted",
+                    "confirmed"
+                  ]
+                },
+                "recorded_at": {
+                  "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+                },
+                "source_ref": {
+                  "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+                },
+                "rationale": {
+                  "type": "string"
+                },
+                "source_kind": {
+                  "enum": [
+                    "event",
+                    "attempt",
+                    "finding",
+                    "review"
+                  ]
+                },
+                "source_sequence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "source_revision": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "cost_totals": {
+      "$ref": "#/$defs/measured_cost"
+    },
+    "calibration_eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible",
+        "reasons"
+      ],
+      "properties": {
+        "eligible": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "missing_denominator",
+              "missing_ex_ante_probability",
+              "post_outcome_confidence",
+              "missing_independent_outcome",
+              "unresolved_outcome",
+              "small_sample"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automatic_card_deletion",
+        "automatic_prompt_change",
+        "bandit_enabled"
+      ],
+      "properties": {
+        "automatic_card_deletion": {
+          "const": false
+        },
+        "automatic_prompt_change": {
+          "const": false
+        },
+        "bandit_enabled": {
+          "const": false
+        }
+      }
+    },
+    "cost_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_count",
+        "attempts_with_cost",
+        "review_count",
+        "reviews_with_cost"
+      ],
+      "properties": {
+        "attempt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempts_with_cost": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "review_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reviews_with_cost": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "cost_dimension_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_seconds",
+        "model_seconds",
+        "tool_seconds",
+        "target_calls",
+        "model_calls",
+        "input_tokens",
+        "output_tokens",
+        "cost_usd",
+        "human_review_seconds"
+      ],
+      "properties": {
+        "wall_seconds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "model_seconds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "tool_seconds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "target_calls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "model_calls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "input_tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "output_tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "cost_usd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "human_review_seconds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "records",
+            "measured"
+          ],
+          "properties": {
+            "records": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "measured": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "measured_cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_seconds",
+        "model_seconds",
+        "tool_seconds",
+        "target_calls",
+        "model_calls",
+        "input_tokens",
+        "output_tokens",
+        "cost_usd",
+        "human_review_seconds"
+      ],
+      "properties": {
+        "wall_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "model_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "tool_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cost_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "human_review_seconds": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "target_calls": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "model_calls": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ import importlib.metadata
 import json
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -51,6 +52,7 @@ NEW_SCHEMA_FILES = (
     "report-manifest.schema.json",
     "memory-disposition.schema.json",
     "migration-manifest.schema.json",
+    "research-telemetry.schema.json",
 )
 SECRET_PATTERNS = {
     "authorization_header": re.compile(rb"authorization\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE),
@@ -86,6 +88,7 @@ RECORD_SCHEMA_FILES = {
     "report-manifest": "report-manifest.schema.json",
     "memory-disposition": "memory-disposition.schema.json",
     "migration-manifest": "migration-manifest.schema.json",
+    "research-telemetry": "research-telemetry.schema.json",
     "finding-v2-legacy": "finding.schema.json",
 }
 
@@ -245,8 +248,44 @@ def _semantic_record_errors(record: Any, schema_name: str) -> list[dict[str, Any
         errors: list[dict[str, Any]] = []
         if independence.get("reviewer_run_id") == independence.get("originating_run_id"):
             errors.append({"code": "review_not_independent", "instance_path": "/independence", "schema_path": "/semantic", "message": "reviewer and originating runs must differ"})
-        if record.get("review_type") in {"claim_adjudication", "coverage", "regrade", "pocinator"} and independence.get("fresh_context") is not True:
+        if record.get("review_type") in {"claim_adjudication", "coverage", "regrade", "pocinator", "candidate_outcome"} and independence.get("fresh_context") is not True:
             errors.append({"code": "fresh_review_required", "instance_path": "/independence/fresh_context", "schema_path": "/semantic", "message": "this review type requires fresh context"})
+        return errors
+    if schema_name == "research-telemetry":
+        rows = record.get("candidates", []); denominator = record.get("denominator", {}); eligibility = record.get("calibration_eligibility", {})
+        errors: list[dict[str, Any]] = []; candidate_ids = [row.get("candidate_id") for row in rows]
+        complete = denominator.get("eligible_count") == denominator.get("exported_count") == len(rows) == len(set(candidate_ids))
+        derived_reasons: set[str] = set()
+        if not rows or not complete: derived_reasons.add("missing_denominator")
+        if any(row.get("ex_ante", {}).get("probability") is None for row in rows): derived_reasons.add("missing_ex_ante_probability")
+        post_outcome = False
+        for row in rows:
+            ex_ante = row.get("ex_ante", {}); outcome = row.get("outcome", {})
+            if ex_ante.get("recorded_before_outcome") is not True: post_outcome = True
+            if outcome.get("recorded_at") and ex_ante.get("recorded_at"):
+                post_outcome = post_outcome or datetime.fromisoformat(ex_ante["recorded_at"].replace("Z", "+00:00")) >= datetime.fromisoformat(outcome["recorded_at"].replace("Z", "+00:00"))
+        if post_outcome: derived_reasons.add("post_outcome_confidence")
+        if any(row.get("outcome", {}).get("independent") is not True for row in rows): derived_reasons.add("missing_independent_outcome")
+        if any(row.get("outcome", {}).get("label") == "unresolved" for row in rows): derived_reasons.add("unresolved_outcome")
+        if len(rows) < 30: derived_reasons.add("small_sample")
+        core_eligible = not derived_reasons
+        if denominator.get("complete") != complete or set(eligibility.get("reasons", [])) != derived_reasons or eligibility.get("eligible") != core_eligible or record.get("classification") != ("calibration" if core_eligible else "telemetry"):
+            errors.append({"code": "telemetry_classification_mismatch", "instance_path": "/calibration_eligibility", "schema_path": "/semantic", "message": "classification, denominator, and derived calibration traps must agree"})
+        if len(candidate_ids) != len(set(candidate_ids)) or any("eligible" not in row.get("funnel_states", []) for row in rows):
+            errors.append({"code": "telemetry_denominator_invalid", "instance_path": "/candidates", "schema_path": "/semantic", "message": "each eligible candidate must appear exactly once"})
+        funnel_order = ("eligible", "selected", "skipped", "overridden", "held", "deferred", "contaminated", "reopened", "refuted", "confirmed")
+        for index_number, row in enumerate(rows):
+            history = row.get("funnel_history", []); history_states = {item.get("state") for item in history}; expected_states = [value for value in funnel_order if value in history_states]
+            kind_order = {"event": 0, "attempt": 1, "finding": 2, "review": 3}
+            history_keys = [(datetime.fromisoformat(item["recorded_at"].replace("Z", "+00:00")), kind_order.get(item.get("source_kind"), 99), item.get("source_sequence", -1), item.get("source_ref", ""), funnel_order.index(item["state"])) for item in history]
+            source_revision_valid = all((item.get("source_revision") is not None) == (item.get("source_kind") == "finding") for item in history)
+            outcome = row.get("outcome", {}); expected_terminal = "confirmed" if outcome.get("label") == "positive" else ("refuted" if outcome.get("label") == "negative" else None)
+            if row.get("funnel_states") != expected_states or not history or history[0].get("state") != "eligible" or history[0].get("recorded_at") != row.get("eligible_at") or history_keys != sorted(history_keys) or not source_revision_valid or (outcome.get("independent") is True and expected_terminal and expected_terminal not in history_states):
+                errors.append({"code": "telemetry_history_invalid", "instance_path": f"/candidates/{index_number}/funnel_history", "schema_path": "/semantic", "message": "ordered history must exactly support aggregate funnel states and independent outcome"})
+        dimension_coverage = record.get("cost_dimension_coverage", {}); totals = record.get("cost_totals", {})
+        invalid_cost = any((coverage.get("measured", 0) < coverage.get("records", 0) and totals.get(field) is not None) or (coverage.get("records", 0) > 0 and coverage.get("measured") == coverage.get("records") and totals.get(field) is None) or coverage.get("measured", 0) > coverage.get("records", 0) for field, coverage in dimension_coverage.items())
+        if invalid_cost:
+            errors.append({"code": "telemetry_missing_cost_imputed", "instance_path": "/cost_totals", "schema_path": "/semantic", "message": "each cost dimension must remain null unless measured for every contributing record"})
         return errors
     if schema_name != "finding-v3":
         return []
@@ -325,6 +364,8 @@ def infer_schema_name(record: Any) -> str | None:
         return "memory-disposition"
     if "migration_id" in record and version == 1:
         return "migration-manifest"
+    if "export_id" in record and version == 1:
+        return "research-telemetry"
     if "id" in record and version in (None, 2):
         return "finding-v2-legacy"
     return None

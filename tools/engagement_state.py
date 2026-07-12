@@ -518,6 +518,12 @@ def validate_event_semantics(event: dict[str, Any]) -> None:
         raise RecordError("file_commit_actor_unauthorized", event.get("event_id", "unknown"))
     if event_type in {"candidate.proposed", "candidate.selected", "candidate.skipped", "candidate.deferred"} and event.get("actor", {}).get("role") not in {"orchestrator", "operator"}:
         raise RecordError("candidate_actor_unauthorized", event.get("event_id", "unknown"))
+    if event_type in {"candidate.selected", "candidate.skipped", "candidate.deferred"}:
+        overridden = payload.get("operator_override", False)
+        if overridden and (event.get("actor", {}).get("role") != "operator" or not payload.get("override_reason")):
+            raise RecordError("candidate_override_authority_invalid", event.get("event_id", "unknown"))
+        if not overridden and payload.get("override_reason") is not None:
+            raise RecordError("candidate_override_reason_without_override", event.get("event_id", "unknown"))
     if event_type == "candidate.proposed":
         if payload.get("activation_strength") == "negative":
             raise RecordError("negative_signal_not_candidate", "negative routing signals are controls, not candidates")
