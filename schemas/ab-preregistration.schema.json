@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/ab-preregistration.schema.json",
+  "title": "Decision 0005 prospective A/B preregistration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "study_id",
+    "status",
+    "lane",
+    "exploratory",
+    "arms",
+    "common_safety_overlay",
+    "matching",
+    "inclusion_rules",
+    "exclusion_rules",
+    "contamination_rules",
+    "co_primary_endpoints",
+    "secondary_endpoints",
+    "blocked_run_treatment",
+    "minimum_practical_effect",
+    "sample_size",
+    "no_peeking",
+    "adjudication",
+    "safety",
+    "execution_authorized",
+    "target_strata",
+    "root_cause_deduplication",
+    "allowed_actions",
+    "safety_stops",
+    "power_basis",
+    "endpoint_definitions",
+    "analysis_plan",
+    "study_evidence_ref",
+    "case_isolation_plan_ref",
+    "withheld_material_manifest_ref"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "study_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "draft_not_authorized"
+    },
+    "lane": {
+      "enum": [
+        "sealed_known_truth",
+        "fresh_pinned_source",
+        "authorized_live_organic"
+      ]
+    },
+    "exploratory": {
+      "type": "boolean"
+    },
+    "arms": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/arm"
+      }
+    },
+    "common_safety_overlay": {
+      "$ref": "#/$defs/source_commitment"
+    },
+    "matching": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_provider_version",
+        "tools",
+        "target_copy",
+        "call_budget",
+        "time_budget",
+        "starting_information",
+        "filesystem_isolation",
+        "session_isolation",
+        "model_runtime_hash",
+        "tool_runtime_hash"
+      ],
+      "properties": {
+        "model_provider_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "target_copy": {
+          "const": "independent_per_arm"
+        },
+        "call_budget": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "time_budget": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "starting_information": {
+          "const": "identical_recon_only"
+        },
+        "filesystem_isolation": {
+          "const": true
+        },
+        "session_isolation": {
+          "const": true
+        },
+        "model_runtime_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "tool_runtime_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "inclusion_rules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "exclusion_rules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "contamination_rules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "co_primary_endpoints": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "rigor_non_inferiority",
+          "resolution_benefit"
+        ]
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true
+    },
+    "secondary_endpoints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "blocked_run_treatment": {
+      "const": "publish_and_exclude_from_effect_imputation"
+    },
+    "minimum_practical_effect": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "sample_size": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "no_peeking": {
+      "const": true
+    },
+    "adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blind_arm_labels",
+        "cold_primary_evidence",
+        "independent_panel_registered",
+        "tie_rule_registered",
+        "judge_packet_sealed",
+        "evidence_ref"
+      ],
+      "properties": {
+        "blind_arm_labels": {
+          "const": true
+        },
+        "cold_primary_evidence": {
+          "const": true
+        },
+        "independent_panel_registered": {
+          "type": "boolean"
+        },
+        "tie_rule_registered": {
+          "type": "boolean"
+        },
+        "judge_packet_sealed": {
+          "type": "boolean"
+        },
+        "evidence_ref": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/evidence_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identical_root_gates",
+        "zone2_fresh_confirmation",
+        "operator_only_filing",
+        "cleanup_required",
+        "shared_live_state_forbidden"
+      ],
+      "properties": {
+        "identical_root_gates": {
+          "const": true
+        },
+        "zone2_fresh_confirmation": {
+          "const": true
+        },
+        "operator_only_filing": {
+          "const": true
+        },
+        "cleanup_required": {
+          "const": true
+        },
+        "shared_live_state_forbidden": {
+          "const": true
+        }
+      }
+    },
+    "execution_authorized": {
+      "const": false
+    },
+    "target_strata": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "domain",
+          "size",
+          "mode",
+          "difficulty",
+          "truth_class"
+        ],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          },
+          "size": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "difficulty": {
+            "type": "string",
+            "minLength": 1
+          },
+          "truth_class": {
+            "enum": [
+              "known_vulnerable",
+              "known_clean",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "root_cause_deduplication": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "allowed_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "safety_stops": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "power_basis": {
+      "enum": [
+        "unavailable",
+        "pilot_bound"
+      ]
+    },
+    "endpoint_definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rigor_non_inferiority_margin",
+        "resolution_minimum_effect"
+      ],
+      "properties": {
+        "rigor_non_inferiority_margin": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "resolution_minimum_effect": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "analysis_plan": {
+      "const": "paired_case_deltas_exact_counts_publish_all_cases_no_unplanned_peeking"
+    },
+    "study_evidence_ref": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "case_isolation_plan_ref": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "withheld_material_manifest_ref": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "file_commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "sha256": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "source_commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "files",
+        "tree_hash",
+        "git_tree"
+      ],
+      "properties": {
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/file_commitment"
+          }
+        },
+        "tree_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "git_tree": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "arm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blind_label",
+        "treatment",
+        "source"
+      ],
+      "properties": {
+        "blind_label": {
+          "enum": [
+            "arm-x",
+            "arm-y"
+          ]
+        },
+        "treatment": {
+          "enum": [
+            "staged_baseline",
+            "decision_0005_kernel"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source_commitment"
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "sha256": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

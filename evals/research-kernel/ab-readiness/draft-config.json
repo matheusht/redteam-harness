@@ -1,0 +1,120 @@
+{
+  "study_id": "decision5-prospective-pilot-draft-v1",
+  "lane": "sealed_known_truth",
+  "exploratory": true,
+  "arms": [
+    {
+      "blind_label": "arm-x",
+      "treatment": "staged_baseline",
+      "commit": "34351f0",
+      "files": [
+        "engine/loop.md",
+        "engine/persistence.md",
+        "engine/routing.md",
+        "engine/regrade.md",
+        "engine/pocinator.md",
+        "schemas/attempt.schema.json",
+        "schemas/finding.schema.json"
+      ]
+    },
+    {
+      "blind_label": "arm-y",
+      "treatment": "decision_0005_kernel",
+      "commit": "ee8e265",
+      "files": [
+        "engine/loop.md",
+        "engine/persistence.md",
+        "engine/routing.md",
+        "engine/regrade.md",
+        "engine/pocinator.md",
+        "schemas/engagement-event.schema.json",
+        "schemas/attempt-v2.schema.json",
+        "schemas/artifact.schema.json",
+        "schemas/review.schema.json",
+        "schemas/finding-v3.schema.json",
+        "schemas/environment-preflight.schema.json",
+        "schemas/report-manifest.schema.json",
+        "schemas/memory-disposition.schema.json",
+        "schemas/research-telemetry.schema.json",
+        "tools/engagement_state.py",
+        "tools/run-engagement.py",
+        "tools/environment_preflight.py",
+        "tools/reporting.py",
+        "tools/memory_disposition.py",
+        "tools/research_telemetry.py"
+      ]
+    }
+  ],
+  "common_safety_overlay": {
+    "commit": "ee8e265",
+    "files": [
+      "AGENTS.md",
+      "engagements/_TEMPLATE/scope.md",
+      "skills/oracles/adjudication-oracle.md",
+      "engine/gates.md"
+    ]
+  },
+  "matching": {
+    "model_provider_version": null,
+    "tools": [],
+    "target_copy": "independent_per_arm",
+    "call_budget": null,
+    "time_budget": null,
+    "starting_information": "identical_recon_only",
+    "filesystem_isolation": true,
+    "session_isolation": true
+  },
+  "inclusion_rules": [
+    "Sealed local known-truth cases not used to design Decision 0005.",
+    "Pinned target identity and hermetic signed scope available before assignment."
+  ],
+  "exclusion_rules": [
+    "Any historical case or lesson that informed Decision 0005.",
+    "Any case requiring shared live state or contact with an old target."
+  ],
+  "contamination_rules": [
+    "Independent sessions, filesystems, target copies, and no shared notes.",
+    "Withhold findings, reports, PoCs, progress, case memory, and judge packets until outputs freeze."
+  ],
+  "secondary_endpoints": [
+    "persistence recovery",
+    "valid coverage closure",
+    "time and cost to resolution",
+    "human review burden",
+    "forced-resume correctness",
+    "report claim-to-proof completeness"
+  ],
+  "minimum_practical_effect": null,
+  "sample_size": null,
+  "adjudication": {
+    "blind_arm_labels": true,
+    "cold_primary_evidence": true,
+    "independent_panel_registered": false,
+    "tie_rule_registered": false,
+    "judge_packet_sealed": false
+  },
+  "pilot_variance_available": false,
+  "eligible_holdout_manifest": null,
+  "signed_scope_environment_ready": false,
+  "historical_cases_excluded_from_holdout": true,
+  "study_evidence_ref": null,
+  "target_strata": [
+    {
+      "domain": "to_be_registered",
+      "size": "to_be_registered",
+      "mode": "hermetic",
+      "difficulty": "to_be_registered",
+      "truth_class": "unknown"
+    }
+  ],
+  "root_cause_deduplication": [
+    "Deduplicate by mechanism, reachability boundary, and oracle-distinct root cause."
+  ],
+  "allowed_actions": [
+    "Only actions in the future signed hermetic case scope."
+  ],
+  "safety_stops": [
+    "Stop on scope drift, identity drift, cleanup debt, secret-shaped content, or any Zone-2 step without fresh confirmation."
+  ],
+  "rigor_non_inferiority_margin": 0.0
+}

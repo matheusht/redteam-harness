@@ -55,6 +55,9 @@ NEW_SCHEMA_FILES = (
     "research-telemetry.schema.json",
     "historical-case-manifest.schema.json",
     "retrospective-evaluation.schema.json",
+    "ab-preregistration.schema.json",
+    "ab-readiness-report.schema.json",
+    "ab-study-evidence.schema.json",
 )
 SECRET_PATTERNS = {
     "authorization_header": re.compile(rb"authorization\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE),
@@ -93,6 +96,9 @@ RECORD_SCHEMA_FILES = {
     "research-telemetry": "research-telemetry.schema.json",
     "historical-case-manifest": "historical-case-manifest.schema.json",
     "retrospective-evaluation": "retrospective-evaluation.schema.json",
+    "ab-preregistration": "ab-preregistration.schema.json",
+    "ab-readiness-report": "ab-readiness-report.schema.json",
+    "ab-study-evidence": "ab-study-evidence.schema.json",
     "finding-v2-legacy": "finding.schema.json",
 }
 
@@ -265,6 +271,26 @@ def _semantic_record_errors(record: Any, schema_name: str) -> list[dict[str, Any
         invalid=(reconstruction.get("representable",0)+reconstruction.get("needs_review",0)!=reconstruction.get("source_count",0) or artifact.get("eligible",0)+artifact.get("blocked",0)+artifact.get("not_applicable",0)!=artifact.get("case_count",0) or blinded.get("regression_only",0)+blinded.get("holdout_eligible",0)+blinded.get("blocked",0)!=blinded.get("case_count",0) or (blinded.get("paired_runs_executed",0)==0 and claims.get("regression_parity")!="not_demonstrated") or (claims.get("prospective_release")=="qualified" and (artifact.get("status")!="complete" or blinded.get("status")!="complete")))
         if invalid:errors.append({"code":"retrospective_denominator_or_claim_invalid","instance_path":"/","schema_path":"/semantic","message":"layer denominators and bounded claims must agree with executed work"})
         return errors
+    if schema_name == "ab-preregistration":
+        arms=record.get("arms",[]);labels=[item.get("blind_label") for item in arms];treatments=[item.get("treatment") for item in arms]
+        commitments=[item.get("source",{}) for item in arms]+[record.get("common_safety_overlay",{})]
+        hashes_valid=all(commitment.get("tree_hash")==sha256_bytes(canonical_json_bytes(commitment.get("files",[]))) for commitment in commitments)
+        evidence_refs=[record.get("study_evidence_ref"),record.get("case_isolation_plan_ref"),record.get("withheld_material_manifest_ref"),record.get("adjudication",{}).get("evidence_ref")];bound_refs=[item for item in evidence_refs if item is not None];refs_consistent=not bound_refs or (len(bound_refs)==4 and all(item==bound_refs[0] for item in bound_refs))
+        pilot_bound=record.get("power_basis")=="pilot_bound"
+        if len(set(labels))!=2 or len(set(treatments))!=2 or not hashes_valid or not refs_consistent or (pilot_bound and (record.get("minimum_practical_effect") is None or record.get("sample_size") is None or record.get("matching",{}).get("model_runtime_hash") is None or record.get("matching",{}).get("tool_runtime_hash") is None)) or (record.get("exploratory") is False and not pilot_bound):
+            errors.append({"code":"ab_preregistration_semantic_invalid","instance_path":"/","schema_path":"/semantic","message":"arms, frozen source hashes, and confirmatory design fields must be complete"})
+        return errors
+    if schema_name == "ab-study-evidence":
+        holdouts=record.get("holdouts",[]);isolation=record.get("isolation",[]);holdout_ids=[item.get("case_id") for item in holdouts];isolation_ids=[item.get("case_id") for item in isolation]
+        separated=all(item.get("arm_x_target_copy")!=item.get("arm_y_target_copy") and item.get("arm_x_filesystem")!=item.get("arm_y_filesystem") and item.get("arm_x_account_label")!=item.get("arm_y_account_label") for item in isolation)
+        if len(holdout_ids)!=len(set(holdout_ids)) or set(holdout_ids)!=set(isolation_ids) or len(isolation_ids)!=len(set(isolation_ids)) or not separated:
+            errors.append({"code":"ab_study_evidence_invalid","instance_path":"/isolation","schema_path":"/semantic","message":"every unique holdout needs distinct paired target, filesystem, and account isolation"})
+        return errors
+    if schema_name == "ab-readiness-report":
+        ready=record.get("status")=="ready_for_operator_authorization";checks=record.get("checks",{})
+        if ready!=(not record.get("blockers") and all(checks.values())) or (ready and record.get("claims",{}).get("ab_readiness")!="contract_ready"):
+            errors.append({"code":"ab_readiness_claim_invalid","instance_path":"/status","schema_path":"/semantic","message":"readiness status must exactly follow blockers and checks"})
+        return errors
     if schema_name == "research-telemetry":
         rows = record.get("candidates", []); denominator = record.get("denominator", {}); eligibility = record.get("calibration_eligibility", {})
         errors: list[dict[str, Any]] = []; candidate_ids = [row.get("candidate_id") for row in rows]
@@ -386,6 +412,12 @@ def infer_schema_name(record: Any) -> str | None:
         return "historical-case-manifest"
     if "evaluation_id" in record and version == 1:
         return "retrospective-evaluation"
+    if "study_id" in record and "arms" in record and version == 1:
+        return "ab-preregistration"
+    if "report_id" in record and "preregistration_hash" in record and version == 1:
+        return "ab-readiness-report"
+    if "evidence_id" in record and "holdouts" in record and version == 1:
+        return "ab-study-evidence"
     if "id" in record and version in (None, 2):
         return "finding-v2-legacy"
     return None

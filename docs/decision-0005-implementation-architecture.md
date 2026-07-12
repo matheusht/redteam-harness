@@ -1,7 +1,8 @@
 # Decision 0005 implementation architecture
 
-**Status:** implementation plan; no runtime capability in this document is implemented merely by this
-plan
+**Status:** Slices A–J implemented on `decision-0005/research-kernel`; see
+`docs/decision-0005-implementation-report.md`. Conformance is demonstrated, but retrospective parity,
+efficacy, artifact replay, and A/B execution are not.
 **Governing policy:**
 `docs/decisions/0005-reasoning-directed-evidence-constrained-research.md`
 **Also governed by:** `AGENTS.md`, Decisions 0001 and 0004, signed engagement scope, and the root
