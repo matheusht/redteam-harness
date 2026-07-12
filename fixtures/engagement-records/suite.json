@@ -2088,7 +2088,8 @@
         "candidates": {},
         "cleanup": {
           "obligations": [],
-          "open_count": 0
+          "open_count": 0,
+          "recorded": false
         },
         "control_candidates": [],
         "coverage": "active",
@@ -2146,7 +2147,8 @@
         },
         "cleanup": {
           "obligations": [],
-          "open_count": 0
+          "open_count": 0,
+          "recorded": false
         },
         "control_candidates": [],
         "coverage": "blocked",
@@ -2251,7 +2253,8 @@
         "candidates": {},
         "cleanup": {
           "obligations": [],
-          "open_count": 0
+          "open_count": 0,
+          "recorded": false
         },
         "control_candidates": [],
         "coverage": "active",
@@ -2617,20 +2620,54 @@
     {
       "id": "memory-disposition-minimum",
       "record": {
-        "disposition": "no_novel_lesson",
+        "schema_version": 1,
         "disposition_id": "memory-1",
         "engagement_id": "eng-1",
-        "finding_refs": [
-          "F-1"
-        ],
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "no_novel_lesson",
+        "lesson_kind": "none",
         "lesson_summary": null,
         "rationale": "No reusable lesson survived review.",
-        "recorded_at": "2026-07-10T12:00:00Z",
-        "reviewer": {
-          "id": "operator-1",
-          "role": "operator"
+        "candidate_refs": [],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
         },
-        "schema_version": 1
+        "sanitization": {
+          "status": "not_applicable",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": []
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "no_novel_lesson",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
       },
       "schema": "memory-disposition",
       "valid": true
@@ -2638,20 +2675,60 @@
     {
       "id": "memory-disposition-rich",
       "record": {
-        "disposition": "promote",
+        "schema_version": 1,
         "disposition_id": "memory-2",
         "engagement_id": "eng-1",
-        "finding_refs": [
-          "F-1"
-        ],
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "negative",
         "lesson_summary": "A scrubbed domain-neutral control pattern.",
         "rationale": "No reusable lesson survived review.",
-        "recorded_at": "2026-07-10T12:00:00Z",
-        "reviewer": {
-          "id": "operator-1",
-          "role": "operator"
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
         },
-        "schema_version": 1
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
       },
       "schema": "memory-disposition",
       "valid": true
@@ -2659,20 +2736,54 @@
     {
       "id": "memory-disposition-unknown-property",
       "record": {
-        "disposition": "no_novel_lesson",
+        "schema_version": 1,
         "disposition_id": "memory-1",
         "engagement_id": "eng-1",
-        "finding_refs": [
-          "F-1"
-        ],
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "no_novel_lesson",
+        "lesson_kind": "none",
         "lesson_summary": null,
         "rationale": "No reusable lesson survived review.",
-        "recorded_at": "2026-07-10T12:00:00Z",
-        "reviewer": {
-          "id": "operator-1",
-          "role": "operator"
+        "candidate_refs": [],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
         },
-        "schema_version": 1,
+        "sanitization": {
+          "status": "not_applicable",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": []
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "no_novel_lesson",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        },
         "unknown": "forbidden"
       },
       "schema": "memory-disposition",
@@ -3042,6 +3153,311 @@
       },
       "schema": "review",
       "valid": true
+    },
+    {
+      "id": "memory-disposition-refutation",
+      "schema": "memory-disposition",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-refutation",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "refutation",
+        "lesson_summary": "Sanitized refutation lesson.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-disposition-reward_hacked_proof",
+      "schema": "memory-disposition",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-reward-hacked-proof",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "reward_hacked_proof",
+        "lesson_summary": "Sanitized reward hacked proof lesson.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-disposition-environment_failure",
+      "schema": "memory-disposition",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-environment-failure",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "environment_failure",
+        "lesson_summary": "Sanitized environment failure lesson.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-promote-unsanitized",
+      "schema": "memory-disposition",
+      "valid": false,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-2",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "negative",
+        "lesson_summary": "A scrubbed domain-neutral control pattern.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "blocked",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-model-reviewer",
+      "schema": "memory-disposition",
+      "valid": false,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-2",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "negative",
+        "lesson_summary": "A scrubbed domain-neutral control pattern.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "model",
+            "id": "model-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
     }
   ],
   "schema_version": 1

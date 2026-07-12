@@ -308,7 +308,8 @@
               "status": {
                 "enum": [
                   "open",
-                  "closed",
+                  "completed",
+                  "not_applicable",
                   "blocked"
                 ]
               },
@@ -667,6 +668,15 @@
         },
         "cleanup_obligation_id": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "disposition_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "disposition_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "updated_at": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
         }
       }
     },
@@ -1048,7 +1058,9 @@
         "properties": {
           "payload": {
             "required": [
-              "memory_disposition"
+              "memory_disposition",
+              "disposition_ref",
+              "disposition_digest"
             ]
           }
         }
@@ -1118,7 +1130,10 @@
             "required": [
               "entity_id",
               "status",
-              "cleanup_obligations"
+              "cleanup_obligations",
+              "scope_hash",
+              "operator_id",
+              "updated_at"
             ]
           }
         }
@@ -1185,7 +1200,11 @@
           "payload": {
             "required": [
               "entity_id",
-              "status"
+              "status",
+              "disposition_ref",
+              "disposition_digest",
+              "scope_hash",
+              "operator_id"
             ]
           }
         }

@@ -39,7 +39,7 @@ STATE_VALUES = {
     "search": {"queued", "selected", "running", "held", "exhausted", "deferred", "blocked", "closed"},
     "coverage": {"active", "blocked", "coverage_dry"},
     "report": {"none", "draft", "accepted", "submitted"},
-    "cleanup": {"open", "closed"},
+    "cleanup": {"open", "completed", "not_applicable", "blocked"},
     "memory": {"pending", "promote", "defer", "no_novel_lesson"},
     "engagement": {"active", "blocked", "closed"},
 }
@@ -85,7 +85,7 @@ TRANSITIONS = {
     "search": {None: {"queued"}, "queued": {"selected", "deferred", "blocked", "closed"}, "selected": {"running", "deferred", "blocked"}, "running": {"queued", "held", "exhausted", "deferred", "blocked", "closed"}, "held": {"queued", "closed"}, "exhausted": {"queued", "closed"}, "deferred": {"queued", "closed"}, "blocked": {"queued", "deferred", "closed"}, "closed": {"queued"}},
     "coverage": {None: {"active"}, "active": {"blocked", "coverage_dry"}, "blocked": {"active", "coverage_dry"}, "coverage_dry": {"active"}},
     "report": {None: {"none", "draft"}, "none": {"draft"}, "draft": {"accepted", "none"}, "accepted": {"submitted", "draft"}, "submitted": {"draft"}},
-    "cleanup": {None: {"open", "closed"}, "open": {"closed"}, "closed": {"open"}},
+    "cleanup": {None: {"open", "completed", "not_applicable", "blocked"}, "open": {"completed", "not_applicable", "blocked"}, "blocked": {"completed", "not_applicable"}, "completed": set(), "not_applicable": set()},
     "memory": {None: {"pending", "promote", "defer", "no_novel_lesson"}, "pending": {"promote", "defer", "no_novel_lesson"}, "promote": {"defer"}, "defer": {"promote", "no_novel_lesson"}, "no_novel_lesson": {"defer", "promote"}},
     "engagement": {None: {"active"}, "active": {"blocked", "closed"}, "blocked": {"active", "closed"}, "closed": set()},
 }
@@ -651,7 +651,7 @@ def validate_temporal_search_reference(event: dict[str, Any], seen_events: dict[
 def validate_reference_precedence(event: dict[str, Any], index: dict[str, list[dict[str, Any]]], committed_entity_ids: set[str]) -> None:
     payload = event["payload"]
     refs = set(event.get("evidence_refs", [])) | set(event.get("review_refs", [])) | set(event.get("finding_refs", [])) | set(event.get("artifact_refs", []))
-    for key in ("environment_ref", "routing_review_ref", "origin_ref", "review_ref", "adjudication_review_ref"):
+    for key in ("environment_ref", "routing_review_ref", "origin_ref", "review_ref", "adjudication_review_ref", "disposition_ref"):
         if payload.get(key):
             refs.add(payload[key])
     for key in ("experiment_refs", "control_refs", "supporting_evidence_refs", "conflicting_evidence_refs"):
@@ -659,9 +659,9 @@ def validate_reference_precedence(event: dict[str, Any], index: dict[str, list[d
     event_time = datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00"))
     for reference in refs:
         entries = [entry for entry in index.get(reference, []) if entry.get("engagement_id") == event["engagement_id"]]
-        if any(entry["type"] in {"review", "finding", "environment"} for entry in entries) and reference not in committed_entity_ids:
+        if any(entry["type"] in {"review", "finding", "environment", "memory-disposition"} for entry in entries) and reference not in committed_entity_ids:
             raise RecordError("record_reference_precedes_commit", f"{event['event_id']}:{reference}")
-        temporal_entries = [entry for entry in entries if entry["type"] in {"attempt", "artifact", "review", "finding"} and entry.get("recorded_at")]
+        temporal_entries = [entry for entry in entries if entry["type"] in {"attempt", "artifact", "review", "finding", "memory-disposition"} and entry.get("recorded_at")]
         if temporal_entries and all(datetime.fromisoformat(entry["recorded_at"].replace("Z", "+00:00")) > event_time for entry in temporal_entries):
             raise RecordError("record_reference_from_future", f"{event['event_id']}:{reference}")
 
@@ -804,7 +804,7 @@ def validate_committed_record_precedence(engagement: Path, event: dict[str, Any]
         internal_refs.update(entry["imported_finding_id"] for entry in record["entries"])
     for reference in internal_refs:
         entries = [entry for entry in index.get(reference, []) if entry.get("engagement_id") == event["engagement_id"]]
-        if any(entry["type"] in {"review", "finding", "environment"} for entry in entries) and reference not in committed_entity_ids:
+        if any(entry["type"] in {"review", "finding", "environment", "memory-disposition"} for entry in entries) and reference not in committed_entity_ids:
             raise RecordError("committed_record_reference_precedes_commit", f"{payload['record_id']}:{reference}")
         temporal_entries = [entry for entry in entries if entry.get("recorded_at")]
         if temporal_entries and all(datetime.fromisoformat(entry["recorded_at"].replace("Z", "+00:00")) > record_time for entry in temporal_entries):
@@ -818,7 +818,7 @@ def _initial_snapshot(engagement_id: str, scope_hash: str) -> dict[str, Any]:
         "ledger_hash": "sha256:" + "0" * 64, "attempt_count": 0, "artifact_count": 0,
         "active_blockers": [], "candidates": {}, "control_candidates": [], "operator_priors": [], "hypotheses": {}, "findings": {},
         "outstanding_reviews": [], "proof_reviews": {}, "coverage": "active", "reports": {}, "report_refs": [], "submission_refs": [],
-        "cleanup": {"open_count": 0, "obligations": []}, "memory_disposition": None, "source_hashes": {}, "integrity_errors": [],
+        "cleanup": {"open_count": 0, "obligations": [], "recorded": False}, "memory_disposition": None, "source_hashes": {}, "integrity_errors": [],
     }
 
 
@@ -880,6 +880,23 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                     raise RecordError("review_freshness_not_bound", review["review_id"])
                 reviewer_run_ids.add(run_id)
                 review_run_subjects[run_id] = (review.get("proposed_finding_id"), review.get("finding_revision"), review["review_type"], review["entity_ref"])
+        if event["event_type"] == "cleanup.updated":
+            if event["actor"] != {"role": "operator", "id": active_scope_operator} or payload.get("operator_id") != active_scope_operator or payload.get("scope_hash") != state["scope_hash"] or payload.get("updated_at") != event["recorded_at"]:
+                raise RecordError("cleanup_authority_invalid", event["event_id"])
+        if event["event_type"] == "memory.disposition_recorded":
+            entry = _index_entry(index, payload.get("disposition_ref"), "memory-disposition", engagement_id)
+            if entry is None: raise RecordError("memory_disposition_record_missing", event["event_id"])
+            disposition = load_json(engagement / entry["path"])
+            if state["memory_disposition"] is not None or event["actor"] != {"role": "operator", "id": active_scope_operator} or disposition["disposition"] != payload.get("memory_disposition") or disposition["scope_hash"] != state["scope_hash"] or disposition["human_review"]["reviewer"] != event["actor"] or sha256_file(engagement / entry["path"]) != payload.get("disposition_digest"):
+                raise RecordError("memory_disposition_binding_invalid", event["event_id"])
+        if event["event_type"] == "engagement.closed":
+            memory = state["memory_disposition"]
+            reports_current = all(any(report["finding_id"] == finding_id and report["finding_revision"] == finding["revision"] and report["status"] in {"accepted", "submitted"} for report in state["reports"].values()) for finding_id, finding in state["findings"].items())
+            pending_reviews = bool(state["outstanding_reviews"])
+            cleanup_terminal = state["cleanup"]["recorded"] and all(item["status"] in {"completed", "not_applicable", "blocked"} for item in state["cleanup"]["obligations"])
+            memory_bound = memory is not None and payload.get("disposition_ref") == memory["disposition_ref"] and payload.get("disposition_digest") == memory["disposition_digest"]
+            if event["actor"] != {"role": "operator", "id": active_scope_operator} or payload.get("operator_id") != active_scope_operator or payload.get("scope_hash") != state["scope_hash"] or not memory_bound or not cleanup_terminal or states["coverage"].get(engagement_id, "active") not in {"coverage_dry", "blocked"} or pending_reviews or not reports_current:
+                raise RecordError("engagement_closure_gate_failed", event["event_id"])
         if event["event_type"] == "escalation.confirmed":
             confirmation_time = datetime.fromisoformat(event["recorded_at"].replace("Z", "+00:00")); expires_at = datetime.fromisoformat(payload["expires_at"].replace("Z", "+00:00")); cleanup_event = seen_events.get(payload["cleanup_obligation_ref"]); bounded = payload.get("confirmation", {})
             cleanup_open = cleanup_event is not None and cleanup_event["event_type"] == "cleanup.updated" and any(item["obligation_id"] == payload.get("cleanup_obligation_id") and item["status"] == "open" for item in cleanup_event["payload"]["cleanup_obligations"]) and any(item["obligation_id"] == payload.get("cleanup_obligation_id") and item["status"] == "open" for item in state["cleanup"]["obligations"])
@@ -898,8 +915,8 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
                 raise RecordError("environment_preflight_not_usable", event["event_id"])
             if payload["status"] == "ready" and (environment.get("fidelity_complete") is not True or environment.get("collector", {}).get("reproducible") is not True or environment.get("identity", {}).get("runtime_digest") is None or environment.get("safety", {}).get("advisory_zone") != "clear_local" or environment.get("safety", {}).get("zone2_authorization_granted") is not False or environment.get("safety", {}).get("secret_scan_status") != "clean" or environment.get("safety", {}).get("cleanup_open_count") != 0):
                 raise RecordError("environment_preflight_not_usable", event["event_id"])
-        if event["event_type"] == "candidate.proposed" and (states["coverage"].get(engagement_id) == "coverage_dry" or states["engagement"].get(engagement_id) == "closed"):
-            raise RecordError("candidate_after_closed_search", event["event_id"])
+        if event["event_type"] in {"candidate.proposed", "candidate.selected", "hypothesis.created"} and (states["coverage"].get(engagement_id) == "coverage_dry" or states["engagement"].get(engagement_id) == "closed"):
+            raise RecordError("search_material_after_closed_coverage", event["event_id"])
         if event["event_type"] == "report.generated":
             report_ref = payload["report_ref"]; commitment = committed_records.get(report_ref)
             finding_commitment = committed_records.get(payload["finding_id"]); current_finding = state["findings"].get(payload["finding_id"])
@@ -1088,7 +1105,8 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             for item in payload["cleanup_obligations"]:
                 obligations[item["obligation_id"]] = {"obligation_id": item["obligation_id"], "status": item["status"]}
             state["cleanup"]["obligations"] = [obligations[key] for key in sorted(obligations)]
-            state["cleanup"]["open_count"] = sum(item["status"] != "closed" for item in obligations.values())
+            state["cleanup"]["open_count"] = sum(item["status"] in {"open", "blocked"} for item in obligations.values())
+            state["cleanup"]["recorded"] = True
         elif event_type == "routing.assessed" and payload["activation_strength"] == "negative":
             state["control_candidates"].append({"routing_event_id": event["event_id"], "source_observation_ref": payload["source_observation_ref"], "card_ids": payload["card_ids"], "status": "likely_held", "rationale": event["rationale"]})
         elif event_type == "candidate.proposed":
@@ -1154,7 +1172,7 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             state["submission_refs"].append(payload["submission_ref"])
             state["reports"][payload["report_ref"]]["status"] = "submitted"
         elif event_type == "memory.disposition_recorded":
-            state["memory_disposition"] = payload["memory_disposition"]
+            state["memory_disposition"] = {"disposition": payload["memory_disposition"], "disposition_ref": payload["disposition_ref"], "disposition_digest": payload["disposition_digest"]}
         elif event_type == "engagement.blocked":
             state["active_blockers"].append(event["rationale"])
         elif event_type == "engagement.reopened":

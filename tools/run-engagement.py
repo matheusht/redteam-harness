@@ -51,6 +51,7 @@ from engagement_state import (
 from engagement_views import assert_views_current, render_views, write_views
 from environment_preflight import collect_preflight
 from finding_review import claim_tuple_hash, render_claim_proof
+from memory_disposition import _validate_promotable_abstraction, close_engagement, record_memory_disposition
 from reporting import accept_report, generate_report, record_submission
 
 
@@ -136,6 +137,18 @@ def command_render(args: argparse.Namespace) -> int:
         snapshot = reduce_engagement(engagement)
         write_views(engagement, snapshot)
     emit({"ok": True, "views": sorted(render_views(snapshot))})
+    return 0
+
+
+def command_record_memory(args: argparse.Namespace) -> int:
+    record = record_memory_disposition(args.engagement, args.file, args.operator_id)
+    emit({"valid": True, "disposition_id": record["disposition_id"], "disposition": record["disposition"], "plane1_modified": False})
+    return 0
+
+
+def command_close(args: argparse.Namespace) -> int:
+    snapshot = close_engagement(args.engagement, args.operator_id, args.reason, args.recorded_at)
+    emit({"valid": True, "engagement_id": snapshot["engagement_id"], "closed": True, "memory_disposition": snapshot["memory_disposition"]})
     return 0
 
 
@@ -360,10 +373,10 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         git_preflight = collect_preflight(collector_engagement, preflight_id="preflight-git", mode="git", target=git_fixture, expected_identity=git_commit, runtime=runtime_fixture, reproduction_argv=[str(Path(sys.executable).resolve()), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:11Z", operator_redaction_attested=True)
         local_preflight = collect_preflight(collector_engagement, preflight_id="preflight-local-runtime", mode="local_runtime", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(Path(sys.executable).resolve()), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:12Z", operator_redaction_attested=True)
         checks.append(("demonstrated Git, package, and local-runtime collectors pin identity without executing reproduction argv", git_preflight["status"] == "ready" and local_preflight["status"] == "ready" and reduce_engagement(collector_engagement)["active_environment_ref"] == "preflight-local-runtime", str((git_preflight["status"], local_preflight["status"]))))
-        cleanup_event = base_event(event_id="event-cleanup-open", engagement_id=collector_engagement.name, recorded_at="2026-07-10T00:13:13Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="Track an unresolved local fixture cleanup obligation.", payload={"entity_id": "cleanup-selftest", "status": "open", "cleanup_obligations": [{"obligation_id": "cleanup-selftest", "kind": "local_fixture", "status": "open", "artifact_refs": [], "rationale": "Fixture cleanup remains open.", "closed_at": None}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-selftest", "previous": None, "current": "open"}]); append_event(collector_engagement, cleanup_event)
+        cleanup_event = base_event(event_id="event-cleanup-open", engagement_id=collector_engagement.name, recorded_at="2026-07-10T00:13:13Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="Track an unresolved local fixture cleanup obligation.", payload={"entity_id": "cleanup-selftest", "status": "open", "scope_hash": reduce_engagement(collector_engagement)["scope_hash"], "operator_id": "operator-selftest", "updated_at": "2026-07-10T00:13:13Z", "cleanup_obligations": [{"obligation_id": "cleanup-selftest", "kind": "local_fixture", "status": "open", "artifact_refs": [], "rationale": "Fixture cleanup remains open.", "closed_at": None}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-selftest", "previous": None, "current": "open"}]); append_event(collector_engagement, cleanup_event)
         cleanup_blocked = collect_preflight(collector_engagement, preflight_id="preflight-cleanup-debt", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[str(runtime_fixture), "-c", "pass"], operator_id="operator-selftest", recorded_at="2026-07-10T00:13:14Z", operator_redaction_attested=True)
         checks.append(("reduced cleanup debt blocks and invalidates environment activation", cleanup_blocked["status"] == "blocked" and cleanup_blocked["safety"]["cleanup_open_count"] == 1 and reduce_engagement(collector_engagement)["active_environment_ref"] is None, str(cleanup_blocked)))
-        second_cleanup = base_event(event_id="event-cleanup-second", engagement_id=collector_engagement.name, recorded_at="2026-07-10T00:13:15Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="A delta update must not erase an earlier open obligation.", payload={"entity_id": "cleanup-second", "status": "open", "cleanup_obligations": [{"obligation_id": "cleanup-second", "kind": "local_fixture", "status": "open", "artifact_refs": [], "rationale": "Second fixture cleanup remains open.", "closed_at": None}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-second", "previous": None, "current": "open"}]); append_event(collector_engagement, second_cleanup)
+        second_cleanup = base_event(event_id="event-cleanup-second", engagement_id=collector_engagement.name, recorded_at="2026-07-10T00:13:15Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="A delta update must not erase an earlier open obligation.", payload={"entity_id": "cleanup-second", "status": "open", "scope_hash": reduce_engagement(collector_engagement)["scope_hash"], "operator_id": "operator-selftest", "updated_at": "2026-07-10T00:13:15Z", "cleanup_obligations": [{"obligation_id": "cleanup-second", "kind": "local_fixture", "status": "open", "artifact_refs": [], "rationale": "Second fixture cleanup remains open.", "closed_at": None}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-second", "previous": None, "current": "open"}]); append_event(collector_engagement, second_cleanup)
         checks.append(("cleanup delta cannot silently drop an earlier open obligation", reduce_engagement(collector_engagement)["cleanup"]["open_count"] == 2, str(reduce_engagement(collector_engagement)["cleanup"])))
         normalization_engagement = root / "operator-normalization"; normalization_engagement.mkdir(); normalization_engagement.joinpath("scope.md").write_text(scope.replace("self-test", "operator-normalization").replace("operator-selftest", "Operator Name!"), encoding="utf-8"); initialize_engagement(normalization_engagement, "2026-07-10T00:13:15Z")
         empty_argv = collect_preflight(normalization_engagement, preflight_id="preflight-empty-argv", mode="package", target=package_fixture, expected_identity=package_digest, runtime=runtime_fixture, reproduction_argv=[], operator_id="Operator Name!", recorded_at="2026-07-10T00:13:16Z", operator_redaction_attested=True)
@@ -412,6 +425,12 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         negative_dry = base_event(event_id="event-coverage-negative-dry", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:18Z", actor_role="operator", actor_id="operator-selftest", event_type="coverage.status_changed", rationale="Supported negative reaches coverage dry without a finding.", payload={"entity_id": engagement.name, "status": "coverage_dry", "coverage_review_ref": "event-coverage-negative-reviewed"}, entity_refs=["event-coverage-negative-reviewed"], state_changes=[{"dimension": "coverage", "entity_id": engagement.name, "previous": "blocked", "current": "coverage_dry"}]); append_event(supported_negative, negative_dry)
         negative_state = reduce_engagement(supported_negative)
         checks.append(("well-supported negative reaches cold-reviewed coverage_dry without a finding", negative_state["coverage"] == "coverage_dry" and negative_state["hypotheses"]["hypothesis-h1"]["status"] == "exhausted" and negative_state["findings"] == {}, str(negative_state)))
+        late_payload = json.loads(json.dumps(hypothesis["payload"])); late_payload["hypothesis_id"] = "hypothesis-after-dry"
+        late_hypothesis = base_event(event_id="event-hypothesis-after-dry", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:18.500000Z", actor_role="orchestrator", actor_id="orchestrator-selftest", event_type="hypothesis.created", rationale="Must explicitly reopen coverage before introducing new search material.", payload=late_payload, entity_refs=["candidate-c1"], state_changes=[{"dimension": "search", "entity_id": "hypothesis-after-dry", "previous": None, "current": "queued"}])
+        late_hypothesis_blocked = False
+        try: append_event(supported_negative, late_hypothesis)
+        except RecordError as exc: late_hypothesis_blocked = exc.code == "search_material_after_closed_coverage"
+        checks.append(("new hypotheses cannot preserve a false coverage_dry state", late_hypothesis_blocked, "hypothesis appended after dry coverage without reopening"))
         reopen_prior = base_event(event_id="event-prior-reopens-negative", engagement_id=engagement.name, recorded_at="2026-07-10T00:15:19Z", actor_role="operator", actor_id="operator-selftest", event_type="operator_prior.recorded", rationale="A strong operator prior reopens bounded search but supplies no claim evidence.", payload={"prior_id": "prior-reopen-negative", "prior_statement": "One materially distinct parser branch was not represented.", "strength": "strong", "reason": "operator target-model knowledge", "reopen_hypothesis_id": "hypothesis-h1", "reopening_condition": "Test the newly identified materially distinct parser branch."}, entity_refs=["hypothesis-h1"], state_changes=[{"dimension": "search", "entity_id": "hypothesis-h1", "previous": "exhausted", "current": "queued"}, {"dimension": "coverage", "entity_id": engagement.name, "previous": "coverage_dry", "current": "active"}]); append_event(supported_negative, reopen_prior)
         reopened_negative = reduce_engagement(supported_negative)
         checks.append(("strong operator prior reopens search and coverage without proving a claim", reopened_negative["coverage"] == "active" and reopened_negative["hypotheses"]["hypothesis-h1"]["status"] == "queued" and reopened_negative["findings"] == {}, str(reopened_negative)))
@@ -759,6 +778,23 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         reattestation = base_event(event_id="event-scope-reattested", engagement_id=engagement.name, recorded_at="2026-07-10T00:20:00Z", actor_role="operator", actor_id="operator-selftest", event_type="scope.attested", rationale="Operator re-attests changed scope bytes.", payload={"scope_hash": new_hash, "operator_id": "operator-selftest", "signed_date": "2026-07-10", "record_kernel": "decision-0005-v1", "supersedes_scope_hash": active_hash}, entity_refs=[engagement.name])
         append_event(drifted, reattestation)
         checks.append(("fresh operator scope re-attestation restores writes without mutating history", reduce_engagement(drifted)["scope_hash"] == new_hash and read_ledger(drifted, "event")[-2]["record_hash"] == current["ledger_hash"], "scope re-attestation failed or rewrote ledger"))
+
+        closure = root / "memory-closure"; closure.mkdir(); closure.joinpath("scope.md").write_text(scope.replace("self-test", "memory-closure"), encoding="utf-8"); initialize_engagement(closure, "2026-07-10T00:21:00Z"); closure_state = reduce_engagement(closure)
+        append_event(closure, base_event(event_id="event-closure-blocked", engagement_id=closure.name, recorded_at="2026-07-10T00:21:01Z", actor_role="operator", actor_id="operator-selftest", event_type="engagement.blocked", rationale="Exercise an evidence-preserving blocked closure.", payload={"entity_id": closure.name, "status": "blocked", "reason": "A bounded fixture blocker prevents coverage completion."}, state_changes=[{"dimension": "engagement", "entity_id": closure.name, "previous": "active", "current": "blocked"}, {"dimension": "coverage", "entity_id": closure.name, "previous": "active", "current": "blocked"}]))
+        append_event(closure, base_event(event_id="event-cleanup-na", engagement_id=closure.name, recorded_at="2026-07-10T00:21:02Z", actor_role="operator", actor_id="operator-selftest", event_type="cleanup.updated", rationale="No live artifact cleanup exists.", payload={"entity_id": "cleanup-none", "status": "not_applicable", "scope_hash": closure_state["scope_hash"], "operator_id": "operator-selftest", "updated_at": "2026-07-10T00:21:02Z", "cleanup_obligations": [{"obligation_id": "cleanup-none", "kind": "no_live_artifacts", "status": "not_applicable", "artifact_refs": [], "rationale": "The engagement created no live target artifacts.", "closed_at": "2026-07-10T00:21:02Z"}]}, state_changes=[{"dimension": "cleanup", "entity_id": "cleanup-none", "previous": None, "current": "not_applicable"}]))
+        missing_memory_blocked = False
+        try: close_engagement(closure, "operator-selftest", "Must not close without memory disposition.", "2026-07-10T00:21:03Z")
+        except RecordError as exc: missing_memory_blocked = exc.code == "engagement_closure_memory_missing"
+        memory_proposal = {"schema_version": 1, "disposition_id": "memory-closure-final", "engagement_id": closure.name, "recorded_at": "2026-07-10T00:21:04Z", "scope_hash": closure_state["scope_hash"], "disposition": "no_novel_lesson", "lesson_kind": "none", "lesson_summary": None, "rationale": "Independent operator review found no reusable lesson.", "candidate_refs": [], "source_refs": {key: [] for key in ("event_refs", "candidate_refs", "hypothesis_refs", "attempt_refs", "artifact_refs", "review_refs", "finding_refs", "environment_refs")}, "sanitization": {"status": "not_applicable", "secret_scan_status": "clean", "target_identifiers_removed": True, "credential_values_removed": True, "harmful_recipe_removed": True, "target_terms_checked": [], "notes": "No lesson body exists to promote."}, "human_review": {"reviewer": {"role": "operator", "id": "operator-selftest"}, "reviewed_at": "2026-07-10T00:21:04Z", "decision": "no_novel_lesson", "rationale": "No novel lesson survived review.", "source_material_compared": True, "abstraction_only": True, "plane1_pr_required": True}, "reopening_condition": None, "provenance": {"actor": {"role": "operator", "id": "operator-selftest"}}}
+        unsafe_promotion = json.loads(json.dumps(memory_proposal)); unsafe_promotion.update({"disposition": "promote", "lesson_kind": "negative", "lesson_summary": "A target-neutral defensive lesson.", "candidate_refs": ["candidate-c1"]}); unsafe_promotion["sanitization"].update({"status": "sanitized", "target_terms_checked": [closure.name]}); unsafe_promotion["human_review"]["decision"] = "promote"; unsafe_promotion["human_review"]["rationale"] = "Run curl against a retained endpoint."
+        unsafe_promotion_blocked = False
+        try: _validate_promotable_abstraction(unsafe_promotion)
+        except RecordError as exc: unsafe_promotion_blocked = exc.code == "memory_abstraction_not_sanitized"
+        checks.append(("promote scrubbing covers every retained human text field", unsafe_promotion_blocked, "unsafe review rationale passed promotion scrub"))
+        proposal_path = root / "memory-proposal.json"; write_canonical_json(proposal_path, memory_proposal); recorded_memory = record_memory_disposition(closure, proposal_path, "operator-selftest"); retry_count = reduce_engagement(closure)["event_count"]; record_memory_disposition(closure, proposal_path, "operator-selftest")
+        closed = close_engagement(closure, "operator-selftest", "Cleanup, blocked coverage, reports, and memory are terminal.", "2026-07-10T00:21:05Z")
+        checks.append(("closure requires one operator-reviewed memory disposition and accepts no_novel_lesson", missing_memory_blocked and recorded_memory["disposition"] == "no_novel_lesson" and retry_count + 1 == closed["event_count"] and closed["memory_disposition"]["disposition"] == "no_novel_lesson", str(closed)))
+        checks.append(("memory disposition never writes Plane-1", not (closure / "skills").exists() and not (closure / "casebooks").exists(), "record-memory created Plane-1 content"))
     return checks
 
 
@@ -865,6 +901,10 @@ def parser() -> argparse.ArgumentParser:
     repair.add_argument("--operator-id", required=True)
     repair.add_argument("--reason", required=True)
     repair.add_argument("--recorded-at")
+    memory = subcommands.add_parser("record-memory", help="operator-review and commit one terminal memory disposition without modifying Plane-1")
+    memory.add_argument("--engagement", type=Path, required=True); memory.add_argument("--file", type=Path, required=True); memory.add_argument("--operator-id", required=True)
+    close = subcommands.add_parser("close", help="operator-only cleanup, coverage, report, and memory closure gate")
+    close.add_argument("--engagement", type=Path, required=True); close.add_argument("--operator-id", required=True); close.add_argument("--reason", required=True); close.add_argument("--recorded-at", required=True)
     preflight = subcommands.add_parser("preflight", help="record offline Git/package/local-runtime identity and safety state")
     preflight.add_argument("--engagement", type=Path, required=True); preflight.add_argument("--preflight-id", required=True); preflight.add_argument("--mode", choices=["git", "package", "local_runtime"], required=True); preflight.add_argument("--target", type=Path, required=True); preflight.add_argument("--expected-identity", required=True); preflight.add_argument("--runtime", type=Path, required=True); preflight.add_argument("--reproduction-argv", required=True, help="JSON array; recorded but never executed by preflight"); preflight.add_argument("--operator-id", required=True); preflight.add_argument("--recorded-at", required=True); preflight.add_argument("--operator-redaction-attested", action="store_true", help="operator attests all labels/argv were redacted and contain no credential values"); preflight.add_argument("--advisory-zone", choices=["clear_local", "review_required", "unknown"], default="clear_local"); preflight.add_argument("--credentials-present", action="store_true"); preflight.add_argument("--account-label", action="append", default=[]); preflight.add_argument("--configuration-file", type=Path, action="append", default=[]); preflight.add_argument("--endpoint-identity"); preflight.add_argument("--account-role"); preflight.add_argument("--feature-flag", action="append", default=[])
     migrate = subcommands.add_parser("migrate", help="read-only legacy inventory or signed-operator migration proposal")
@@ -900,6 +940,8 @@ def main() -> int:
             "reduce": command_reduce,
             "render": command_render,
             "preflight": command_preflight,
+            "record-memory": command_record_memory,
+            "close": command_close,
             "migrate": command_migrate,
             "accept-report": command_accept_report,
             "record-submission": command_record_submission,

@@ -459,7 +459,8 @@
       "additionalProperties": false,
       "required": [
         "open_count",
-        "obligations"
+        "obligations",
+        "recorded"
       ],
       "properties": {
         "open_count": {
@@ -484,13 +485,41 @@
               }
             }
           }
+        },
+        "recorded": {
+          "type": "boolean"
         }
       }
     },
     "memory_disposition": {
-      "type": [
-        "string",
-        "null"
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "disposition",
+            "disposition_ref",
+            "disposition_digest"
+          ],
+          "properties": {
+            "disposition": {
+              "enum": [
+                "promote",
+                "defer",
+                "no_novel_lesson"
+              ]
+            },
+            "disposition_ref": {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+            },
+            "disposition_digest": {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+            }
+          }
+        }
       ]
     },
     "source_hashes": {

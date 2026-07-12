@@ -194,6 +194,13 @@ provenance, but correctness must not depend on a clean worktree or Git history b
 Concurrency remains one by default. If scope later permits multiple live workers, append operations
 must still serialize through this ledger; that requirement does not authorize parallel target work.
 
+The operator account, local OS, and engagement filesystem are the trusted computing base. Hash chains
+and committed-file digests detect mutation relative to an observed commitment; they are not digital
+signatures and cannot authenticate history against an attacker who can rewrite the scope, every
+ledger/file, and all comparison state. Such host compromise is outside this repository-local threat
+model and requires external signing/attestation infrastructure. Model output and direct model-role
+ledger events remain untrusted even inside that boundary.
+
 ### 4.2 Immutable file records and interruption recovery
 
 Environment preflights, finding revisions, reviews, report manifests, memory dispositions, and

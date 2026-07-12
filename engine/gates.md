@@ -42,3 +42,18 @@ no wasted runs, no unauthorized reach.
 Every artifact the harness created (test chat, shared object, uploaded fixture, planted canary) is
 recorded in `cleanup.md` with its revert action and status. Unresolved cleanup **blocks pattern
 promotion**. Redact secrets always.
+
+## 7. Memory disposition and closure gate
+Every completed or blocked engagement records exactly one operator-reviewed `promote`, `defer`, or
+`no_novel_lesson` disposition with typed provenance and sanitization metadata. Every retained text field in a
+`promote` proposal is checked against operator-enumerated target terms, referenced IDs, endpoints,
+commands, and recipe shapes; the operator also attests source comparison and abstraction review. Positive controls,
+refutations, reward-hacked proof shapes, and environment failures may be lessons; promotion is never
+forced. `record-memory` changes only engagement-local immutable records. Even `promote` cannot write
+`skills/`, casebooks, or other Plane-1 memory; that requires a later scrubbed human-reviewed PR.
+
+`close` is operator-only and requires terminal coverage, a structured cleanup disposition for every
+obligation, no pending review, accepted/submitted current-revision reports for filed findings, and
+the committed memory disposition. Narrative edits cannot satisfy these gates. Operator identity is anchored in the trusted local OS,
+signed scope, and engagement filesystem; repository hash chains are tamper-evident commitments, not
+cryptographic authentication against total host/filesystem compromise.

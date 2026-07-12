@@ -446,7 +446,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("finding_id",), {"finding"}), (("adjudication_review_ref",), {"review"}),
         ],
         "environment-preflight": [(("target_refs",), {"target"})],
-        "memory-disposition": [(("finding_refs",), {"finding"})],
+        "memory-disposition": [],
     }
     dynamic_specs: list[tuple[tuple[str, ...], Any, set[str]]] = []
     if schema_name == "finding-v3":
@@ -471,6 +471,11 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             dynamic_specs.append((("replay_freshness", str(index_number), "attempt_ref"), replay.get("attempt_ref"), {"attempt"}))
         for index_number, disposition in enumerate(record.get("hypothesis_dispositions", [])):
             dynamic_specs.append((("hypothesis_dispositions", str(index_number), "hypothesis_ref"), disposition.get("hypothesis_ref"), {"hypothesis"}))
+    elif schema_name == "memory-disposition":
+        source_types = {"event_refs": {"event"}, "candidate_refs": {"candidate"}, "hypothesis_refs": {"hypothesis"}, "attempt_refs": {"attempt"}, "artifact_refs": {"artifact"}, "review_refs": {"review"}, "finding_refs": {"finding"}, "environment_refs": {"environment"}}
+        for field, allowed in source_types.items():
+            dynamic_specs.append((("source_refs", field), record.get("source_refs", {}).get(field, []), allowed))
+        dynamic_specs.append((("candidate_refs",), record.get("candidate_refs", []), {"candidate", "hypothesis", "review"}))
     elif schema_name == "migration-manifest":
         for index_number, entry in enumerate(record.get("entries", [])):
             dynamic_specs.extend([

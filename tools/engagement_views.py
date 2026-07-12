@@ -69,16 +69,21 @@ Outstanding review obligations: {len(snapshot['outstanding_reviews'])}.
 
 {_bullets(snapshot['submission_refs'], 'No operator-owned submission records.')}
 """
+    memory_state = snapshot["memory_disposition"]
+    memory_status = memory_state["disposition"] if memory_state else "pending"
+    memory_ref = memory_state["disposition_ref"] if memory_state else "none"
     memory = f"""{SENTINEL}
 # Memory disposition — {engagement_id}
 
-Disposition: `{snapshot['memory_disposition'] or 'pending'}`.
+Disposition: `{memory_status}`. Record: `{memory_ref}`.
 
 This view does not promote Plane-1 memory. Promotion remains an operator-reviewed change.
 """
     cleanup_items = [f"{item['obligation_id']}: {item['status']}" for item in snapshot["cleanup"]["obligations"]]
     cleanup = f"""{SENTINEL}
 # Mechanical cleanup status — {engagement_id}
+
+Disposition recorded: `{str(snapshot['cleanup']['recorded']).lower()}`.
 
 {_bullets(cleanup_items, 'No structured cleanup obligations recorded.')}
 
