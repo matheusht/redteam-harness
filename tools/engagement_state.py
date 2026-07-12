@@ -976,6 +976,15 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             expected_prior_revision = state["findings"].get(payload["entity_id"], {}).get("revision")
             if sha256_file(engagement / review_entry["path"]) != payload["review_digest"] or review.get("review_type") != "claim_adjudication" or review.get("verdict") != payload["status"] or review.get("proposed_finding_id") != payload["entity_id"] or review.get("entity_ref") != payload["entity_id"] or review.get("finding_revision") != expected_prior_revision or review.get("independence", {}).get("reviewer_id") != event["actor"]["id"]:
                 raise RecordError("claim_adjudication_review_mismatch", event["event_id"])
+        if event["event_type"] == "legacy.record_imported" and payload.get("imported_finding_id") is not None:
+            finding_id, revision = payload["imported_finding_id"], payload["imported_revision"]
+            commitment=committed_records.get(finding_id);finding_entry=_index_entry(index,finding_id,"finding",engagement_id,revision)
+            if event["actor"]["role"]!="migration" or revision!=1 or finding_id in state["findings"] or commitment is None or finding_entry is None or commitment["record_revision"]!=revision:
+                raise RecordError("legacy_finding_import_invalid",event["event_id"])
+            finding=load_json(engagement/finding_entry["path"])
+            legacy=finding.get("legacy_import",{})
+            if finding.get("claim_state")!="needs_review" or finding.get("revision")!=1 or finding.get("engagement_id")!=engagement_id or legacy.get("source_artifact_ref")!=payload.get("source_artifact_ref") or legacy.get("source_hash")!=payload.get("source_hash") or sha256_file(engagement/finding_entry["path"])!=commitment["record_digest"]:
+                raise RecordError("legacy_finding_record_mismatch",event["event_id"])
         if event["event_type"] == "finding.revised":
             finding_id, revision = payload["finding_id"], payload["finding_revision"]
             commitment = committed_records.get(finding_id)
@@ -1165,6 +1174,10 @@ def reduce_engagement(engagement: Path, *, allowed_record_orphans: set[str] | No
             state["proof_reviews"][key] = {"finding_revision": payload["finding_revision"], "claim_tuple_hash": payload["claim_tuple_hash"], "verdict": payload["verdict"], "review_refs": refs, "reviewer_ids": reviewer_ids, "terminal_status": terminal}
             if terminal in {"route_back", "pending_second_review", "blocked"}:
                 state["outstanding_reviews"].append({"review_type": "pocinator", "entity_ref": payload["finding_id"], "review_ref": event["event_id"], "reason": event["rationale"], "status": "blocked" if terminal == "blocked" else "correction_required", "hypothesis_ref": None, "opened_at": event["recorded_at"]})
+        elif event_type == "legacy.record_imported" and payload.get("imported_finding_id") is not None:
+            commitment=committed_records[payload["imported_finding_id"]]
+            state["findings"][payload["imported_finding_id"]]={"revision":payload["imported_revision"],"status":"needs_review","digest":commitment["record_digest"],"adjudication_review_ref":None,"change_reason":"initial legacy reconstruction"}
+            state["outstanding_reviews"].append({"review_type":"legacy_adjudication","entity_ref":payload["imported_finding_id"],"review_ref":event["event_id"],"reason":"Legacy finding requires independent adjudication before any authority or report acceptance.","status":"pending","hypothesis_ref":None,"opened_at":event["recorded_at"]})
         elif event_type == "finding.revised":
             state["findings"][payload["finding_id"]] = {"revision": payload["finding_revision"], "status": payload["status"], "digest": payload["finding_digest"], "adjudication_review_ref": payload["adjudication_review_ref"], "change_reason": payload["change_reason"]}
             resolved = set(payload.get("resolves_review_refs", []))

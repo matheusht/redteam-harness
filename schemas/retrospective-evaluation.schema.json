@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/retrospective-evaluation.schema.json",
+  "title": "Decision 0005 bounded retrospective evaluation",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "evaluation_id", "inventory_hash", "case_matrix_hash", "record_reconstruction", "artifact_replay", "blinded_rerun", "hard_gates", "claims", "policy"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evaluation_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "inventory_hash": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
+    "case_matrix_hash": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
+    "record_reconstruction": {"type": "object", "additionalProperties": false, "required": ["source_count", "representable", "needs_review", "invented_attempts", "source_bytes_modified", "exact_resume"], "properties": {"source_count": {"type": "integer", "minimum": 0}, "representable": {"type": "integer", "minimum": 0}, "needs_review": {"type": "integer", "minimum": 0}, "invented_attempts": {"const": 0}, "source_bytes_modified": {"const": false}, "exact_resume": {"enum": ["demonstrated", "not_run", "blocked"]}}},
+    "artifact_replay": {"type": "object", "additionalProperties": false, "required": ["case_count", "eligible", "blocked", "not_applicable", "executed", "status"], "properties": {"case_count": {"type": "integer", "minimum": 0}, "eligible": {"type": "integer", "minimum": 0}, "blocked": {"type": "integer", "minimum": 0}, "not_applicable": {"type": "integer", "minimum": 0}, "executed": {"type": "integer", "minimum": 0}, "status": {"enum": ["not_run", "partial", "complete"]}}},
+    "blinded_rerun": {"type": "object", "additionalProperties": false, "required": ["case_count", "regression_only", "holdout_eligible", "blocked", "paired_runs_executed", "status"], "properties": {"case_count": {"type": "integer", "minimum": 0}, "regression_only": {"type": "integer", "minimum": 0}, "holdout_eligible": {"type": "integer", "minimum": 0}, "blocked": {"type": "integer", "minimum": 0}, "paired_runs_executed": {"type": "integer", "minimum": 0}, "status": {"enum": ["not_run", "partial", "complete"]}}},
+    "hard_gates": {"type": "object", "additionalProperties": false, "required": ["safety_violations", "secrets_stored", "known_clean_invalid_accepts", "report_link_violations", "artifact_integrity_violations", "unsupported_impact_regression"], "properties": {"safety_violations": {"const": 0}, "secrets_stored": {"const": 0}, "known_clean_invalid_accepts": {"type": ["integer", "null"], "minimum": 0}, "report_link_violations": {"type": ["integer", "null"], "minimum": 0}, "artifact_integrity_violations": {"type": ["integer", "null"], "minimum": 0}, "unsupported_impact_regression": {"enum": ["none_observed", "not_measured"]}}},
+    "claims": {"type": "object", "additionalProperties": false, "required": ["architecture_conformance", "historical_reconstruction", "regression_parity", "demonstrated_efficacy", "prospective_release"], "properties": {"architecture_conformance": {"enum": ["demonstrated", "not_demonstrated"]}, "historical_reconstruction": {"enum": ["complete", "partial", "not_demonstrated"]}, "regression_parity": {"enum": ["demonstrated", "not_demonstrated"]}, "demonstrated_efficacy": {"const": "not_demonstrated"}, "prospective_release": {"enum": ["qualified", "not_qualified"]}}},
+    "policy": {"type": "object", "additionalProperties": false, "required": ["target_contact", "artifact_execution", "zone2_creation", "invented_results"], "properties": {"target_contact": {"const": false}, "artifact_execution": {"const": false}, "zone2_creation": {"const": false}, "invented_results": {"const": false}}}
+  }
+}

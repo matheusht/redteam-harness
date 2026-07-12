@@ -376,7 +376,7 @@
             "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
           },
           "adjudication_review_ref": {
-            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+            "oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]
           },
           "change_reason": {
             "type": "string",

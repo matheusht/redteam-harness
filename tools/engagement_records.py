@@ -53,6 +53,8 @@ NEW_SCHEMA_FILES = (
     "memory-disposition.schema.json",
     "migration-manifest.schema.json",
     "research-telemetry.schema.json",
+    "historical-case-manifest.schema.json",
+    "retrospective-evaluation.schema.json",
 )
 SECRET_PATTERNS = {
     "authorization_header": re.compile(rb"authorization\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE),
@@ -89,6 +91,8 @@ RECORD_SCHEMA_FILES = {
     "memory-disposition": "memory-disposition.schema.json",
     "migration-manifest": "migration-manifest.schema.json",
     "research-telemetry": "research-telemetry.schema.json",
+    "historical-case-manifest": "historical-case-manifest.schema.json",
+    "retrospective-evaluation": "retrospective-evaluation.schema.json",
     "finding-v2-legacy": "finding.schema.json",
 }
 
@@ -243,13 +247,23 @@ def _error_detail(error: Any) -> dict[str, Any]:
 def _semantic_record_errors(record: Any, schema_name: str) -> list[dict[str, Any]]:
     if not isinstance(record, dict):
         return []
+    errors: list[dict[str, Any]] = []
     if schema_name == "review":
         independence = record.get("independence", {})
-        errors: list[dict[str, Any]] = []
         if independence.get("reviewer_run_id") == independence.get("originating_run_id"):
             errors.append({"code": "review_not_independent", "instance_path": "/independence", "schema_path": "/semantic", "message": "reviewer and originating runs must differ"})
         if record.get("review_type") in {"claim_adjudication", "coverage", "regrade", "pocinator", "candidate_outcome"} and independence.get("fresh_context") is not True:
             errors.append({"code": "fresh_review_required", "instance_path": "/independence/fresh_context", "schema_path": "/semantic", "message": "this review type requires fresh context"})
+        return errors
+    if schema_name == "historical-case-manifest":
+        cases=record.get("cases",[]);case_ids=[item.get("case_id") for item in cases]
+        if len(case_ids)!=len(set(case_ids)) or any(item.get("decision5_informed") and item.get("blinded_rerun")!="regression_only" for item in cases):
+            errors.append({"code":"historical_case_classification_invalid","instance_path":"/cases","schema_path":"/semantic","message":"case IDs must be unique and decision-informing cases are regression-only"})
+        return errors
+    if schema_name == "retrospective-evaluation":
+        reconstruction=record.get("record_reconstruction",{});artifact=record.get("artifact_replay",{});blinded=record.get("blinded_rerun",{});claims=record.get("claims",{})
+        invalid=(reconstruction.get("representable",0)+reconstruction.get("needs_review",0)!=reconstruction.get("source_count",0) or artifact.get("eligible",0)+artifact.get("blocked",0)+artifact.get("not_applicable",0)!=artifact.get("case_count",0) or blinded.get("regression_only",0)+blinded.get("holdout_eligible",0)+blinded.get("blocked",0)!=blinded.get("case_count",0) or (blinded.get("paired_runs_executed",0)==0 and claims.get("regression_parity")!="not_demonstrated") or (claims.get("prospective_release")=="qualified" and (artifact.get("status")!="complete" or blinded.get("status")!="complete")))
+        if invalid:errors.append({"code":"retrospective_denominator_or_claim_invalid","instance_path":"/","schema_path":"/semantic","message":"layer denominators and bounded claims must agree with executed work"})
         return errors
     if schema_name == "research-telemetry":
         rows = record.get("candidates", []); denominator = record.get("denominator", {}); eligibility = record.get("calibration_eligibility", {})
@@ -346,6 +360,8 @@ def infer_schema_name(record: Any) -> str | None:
     version = record.get("schema_version")
     if "finding_id" in record and version == 3:
         return "finding-v3"
+    if "id" in record and "engagement" in record and version in (None, 2):
+        return "finding-v2-legacy"
     if "attempt_id" in record and version == 2:
         return "attempt-v2"
     if "artifact_id" in record and version == 1:
@@ -366,6 +382,10 @@ def infer_schema_name(record: Any) -> str | None:
         return "migration-manifest"
     if "export_id" in record and version == 1:
         return "research-telemetry"
+    if "matrix_id" in record and version == 1:
+        return "historical-case-manifest"
+    if "evaluation_id" in record and version == 1:
+        return "retrospective-evaluation"
     if "id" in record and version in (None, 2):
         return "finding-v2-legacy"
     return None

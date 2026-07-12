@@ -3842,6 +3842,577 @@
           "human_review_seconds": 1
         }
       }
+    },
+    {
+      "id": "historical-case-manifest-minimum",
+      "record": {
+        "schema_version": 1,
+        "matrix_id": "matrix-min",
+        "cases": [
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-skills-symlink",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          }
+        ],
+        "policy": {
+          "artifact_execution": false,
+          "historical_answers_exposed_to_runner": false,
+          "target_contact": false,
+          "zone2_creation": false
+        }
+      },
+      "schema": "historical-case-manifest",
+      "valid": true
+    },
+    {
+      "id": "historical-case-manifest-rich",
+      "record": {
+        "cases": [
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-skills-symlink",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "netflix-zuul-stopfilterprocessing",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "api",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "cosmos-iavl-negative-version",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "distributed-systems",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "matomo-coreupdater",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "cosmos-cometbft-leads",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "distributed-systems",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-flags-prototype-pollution",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-workflow-token",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "not_applicable",
+            "blinded_rerun": "regression_only",
+            "case_id": "alsco-royal",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "not_applicable",
+            "blinded_rerun": "regression_only",
+            "case_id": "duplogreenengine-rpc-sweep",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "api",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "netflix-atlas-spectator-vercel-ms",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "source-review",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "cybench-xbow-subsets",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "benchmark",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "false-discovery-known-clean",
+            "contamination_class": "known_clean",
+            "decision5_informed": true,
+            "domain": "hermetic",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          }
+        ],
+        "matrix_id": "decision5-historical-regression-v1",
+        "policy": {
+          "artifact_execution": false,
+          "historical_answers_exposed_to_runner": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "schema_version": 1
+      },
+      "schema": "historical-case-manifest",
+      "valid": true
+    },
+    {
+      "id": "historical-case-manifest-unknown-property",
+      "record": {
+        "schema_version": 1,
+        "matrix_id": "matrix-min",
+        "cases": [
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-skills-symlink",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          }
+        ],
+        "policy": {
+          "artifact_execution": false,
+          "historical_answers_exposed_to_runner": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "unexpected": true
+      },
+      "schema": "historical-case-manifest",
+      "valid": false
+    },
+    {
+      "id": "retrospective-evaluation-minimum",
+      "record": {
+        "artifact_replay": {
+          "blocked": 10,
+          "case_count": 12,
+          "eligible": 0,
+          "executed": 0,
+          "not_applicable": 2,
+          "status": "not_run"
+        },
+        "blinded_rerun": {
+          "blocked": 0,
+          "case_count": 12,
+          "holdout_eligible": 0,
+          "paired_runs_executed": 0,
+          "regression_only": 12,
+          "status": "not_run"
+        },
+        "case_matrix_hash": "sha256:32715e1065aadae1c3b6638f10559c735cf920d0f9a9f6aa34b05bf14d96e24b",
+        "claims": {
+          "architecture_conformance": "demonstrated",
+          "demonstrated_efficacy": "not_demonstrated",
+          "historical_reconstruction": "not_demonstrated",
+          "prospective_release": "not_qualified",
+          "regression_parity": "not_demonstrated"
+        },
+        "evaluation_id": "decision5-retrospective-v1",
+        "hard_gates": {
+          "artifact_integrity_violations": null,
+          "known_clean_invalid_accepts": null,
+          "report_link_violations": null,
+          "safety_violations": 0,
+          "secrets_stored": 0,
+          "unsupported_impact_regression": "not_measured"
+        },
+        "inventory_hash": "sha256:09041202dad535776f7dbadaa17f4a789e1963358fd2acaca08e417561675077",
+        "policy": {
+          "artifact_execution": false,
+          "invented_results": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "record_reconstruction": {
+          "exact_resume": "not_run",
+          "invented_attempts": 0,
+          "needs_review": 136154,
+          "representable": 0,
+          "source_bytes_modified": false,
+          "source_count": 136154
+        },
+        "schema_version": 1
+      },
+      "schema": "retrospective-evaluation",
+      "valid": true
+    },
+    {
+      "id": "retrospective-evaluation-rich",
+      "record": {
+        "artifact_replay": {
+          "blocked": 10,
+          "case_count": 12,
+          "eligible": 0,
+          "executed": 0,
+          "not_applicable": 2,
+          "status": "not_run"
+        },
+        "blinded_rerun": {
+          "blocked": 0,
+          "case_count": 12,
+          "holdout_eligible": 0,
+          "paired_runs_executed": 0,
+          "regression_only": 12,
+          "status": "not_run"
+        },
+        "case_matrix_hash": "sha256:32715e1065aadae1c3b6638f10559c735cf920d0f9a9f6aa34b05bf14d96e24b",
+        "claims": {
+          "architecture_conformance": "demonstrated",
+          "demonstrated_efficacy": "not_demonstrated",
+          "historical_reconstruction": "not_demonstrated",
+          "prospective_release": "not_qualified",
+          "regression_parity": "not_demonstrated"
+        },
+        "evaluation_id": "decision5-retrospective-v1",
+        "hard_gates": {
+          "artifact_integrity_violations": null,
+          "known_clean_invalid_accepts": null,
+          "report_link_violations": null,
+          "safety_violations": 0,
+          "secrets_stored": 0,
+          "unsupported_impact_regression": "not_measured"
+        },
+        "inventory_hash": "sha256:09041202dad535776f7dbadaa17f4a789e1963358fd2acaca08e417561675077",
+        "policy": {
+          "artifact_execution": false,
+          "invented_results": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "record_reconstruction": {
+          "exact_resume": "not_run",
+          "invented_attempts": 0,
+          "needs_review": 136154,
+          "representable": 0,
+          "source_bytes_modified": false,
+          "source_count": 136154
+        },
+        "schema_version": 1
+      },
+      "schema": "retrospective-evaluation",
+      "valid": true
+    },
+    {
+      "id": "retrospective-evaluation-unknown-property",
+      "record": {
+        "artifact_replay": {
+          "blocked": 10,
+          "case_count": 12,
+          "eligible": 0,
+          "executed": 0,
+          "not_applicable": 2,
+          "status": "not_run"
+        },
+        "blinded_rerun": {
+          "blocked": 0,
+          "case_count": 12,
+          "holdout_eligible": 0,
+          "paired_runs_executed": 0,
+          "regression_only": 12,
+          "status": "not_run"
+        },
+        "case_matrix_hash": "sha256:32715e1065aadae1c3b6638f10559c735cf920d0f9a9f6aa34b05bf14d96e24b",
+        "claims": {
+          "architecture_conformance": "demonstrated",
+          "demonstrated_efficacy": "not_demonstrated",
+          "historical_reconstruction": "not_demonstrated",
+          "prospective_release": "not_qualified",
+          "regression_parity": "not_demonstrated"
+        },
+        "evaluation_id": "decision5-retrospective-v1",
+        "hard_gates": {
+          "artifact_integrity_violations": null,
+          "known_clean_invalid_accepts": null,
+          "report_link_violations": null,
+          "safety_violations": 0,
+          "secrets_stored": 0,
+          "unsupported_impact_regression": "not_measured"
+        },
+        "inventory_hash": "sha256:09041202dad535776f7dbadaa17f4a789e1963358fd2acaca08e417561675077",
+        "policy": {
+          "artifact_execution": false,
+          "invented_results": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "record_reconstruction": {
+          "exact_resume": "not_run",
+          "invented_attempts": 0,
+          "needs_review": 136154,
+          "representable": 0,
+          "source_bytes_modified": false,
+          "source_count": 136154
+        },
+        "schema_version": 1,
+        "unexpected": true
+      },
+      "schema": "retrospective-evaluation",
+      "valid": false
     }
   ],
   "schema_version": 1
