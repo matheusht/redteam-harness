@@ -58,6 +58,7 @@ NEW_SCHEMA_FILES = (
     "ab-preregistration.schema.json",
     "ab-readiness-report.schema.json",
     "ab-study-evidence.schema.json",
+    "migration-artifact-review.schema.json",
 )
 SECRET_PATTERNS = {
     "authorization_header": re.compile(rb"authorization\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE),
@@ -99,6 +100,7 @@ RECORD_SCHEMA_FILES = {
     "ab-preregistration": "ab-preregistration.schema.json",
     "ab-readiness-report": "ab-readiness-report.schema.json",
     "ab-study-evidence": "ab-study-evidence.schema.json",
+    "migration-artifact-review": "migration-artifact-review.schema.json",
     "finding-v2-legacy": "finding.schema.json",
 }
 
@@ -392,6 +394,8 @@ def infer_schema_name(record: Any) -> str | None:
         return "attempt-v2"
     if "artifact_id" in record and version == 1:
         return "artifact"
+    if "review_id" in record and "inventory_hash" in record and "redaction_attested" in record and version == 1:
+        return "migration-artifact-review"
     if "review_id" in record and version == 1:
         return "review"
     if "event_id" in record and version == 1:

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -47,6 +48,7 @@ from engagement_state import (
     register_artifact,
     repair_ledger_tail,
     write_snapshot,
+    _scope_metadata,
 )
 from engagement_views import assert_views_current, render_views, write_views
 from environment_preflight import collect_preflight
@@ -90,13 +92,24 @@ def command_validate(args: argparse.Namespace) -> int:
 
 
 def command_init(args: argparse.Namespace) -> int:
+    metadata=_scope_metadata(args.engagement.resolve()/"scope.md");operator_id=re.sub(r"[^A-Za-z0-9._:-]+","-",metadata["operator"]).strip("-") or "operator";_require_operator_console(args.engagement,operator_id,"initialize-engagement")
     snapshot = initialize_engagement(args.engagement, args.recorded_at)
     emit({"ok": True, "engagement_id": snapshot["engagement_id"], "scope_hash": snapshot["scope_hash"], "event_count": snapshot["event_count"]})
     return 0
 
 
+def _require_operator_console(engagement: Path, operator_id: str, operation: str) -> None:
+    metadata=_scope_metadata(engagement.resolve()/"scope.md");signed=re.sub(r"[^A-Za-z0-9._:-]+","-",metadata["operator"]).strip("-") or "operator"
+    if operator_id!=signed:raise RecordError("operator_authority_invalid","operator id does not match signed scope")
+    if not sys.stdin.isatty():raise RecordError("operator_console_required",f"{operation} requires a fresh interactive operator confirmation")
+    expected=f"{operation} {operator_id}"
+    if input(f"Type '{expected}' to continue: ").strip()!=expected:raise RecordError("operator_confirmation_failed",operation)
+
+
 def command_append_event(args: argparse.Namespace) -> int:
     proposal = load_json(args.file)
+    if proposal.get("actor",{}).get("role") in {"operator","migration"} or proposal.get("event_type") in {"scope.attested","operator_prior.recorded","claim.adjudicated","finding.revised","report.generated","operator.review_recorded","submission.recorded","cleanup.updated","memory.disposition_recorded","escalation.confirmed","legacy.record_imported","record.committed","engagement.reopened","engagement.closed"}:
+        _require_operator_console(args.engagement,proposal.get("actor",{}).get("id",""),f"append-{proposal.get('event_type','event')}")
     record = append_event(args.engagement.resolve(), proposal)
     emit({"ok": True, "event_id": record["event_id"], "sequence": record["sequence"], "record_hash": record["record_hash"]})
     return 0
@@ -104,6 +117,7 @@ def command_append_event(args: argparse.Namespace) -> int:
 
 def command_register_artifact(args: argparse.Namespace) -> int:
     metadata = load_json(args.metadata)
+    if metadata.get("producer",{}).get("role") in {"operator","migration"}:_require_operator_console(args.engagement,metadata.get("producer",{}).get("id",""),"register-artifact")
     record = register_artifact(args.engagement.resolve(), args.file, metadata)
     emit({"ok": True, "artifact_id": record["artifact_id"], "sequence": record["sequence"], "record_hash": record["record_hash"], "sha256": record["sha256"]})
     return 0
@@ -111,12 +125,14 @@ def command_register_artifact(args: argparse.Namespace) -> int:
 
 def command_append_attempt(args: argparse.Namespace) -> int:
     proposal = load_json(args.file)
+    if proposal.get("provenance",{}).get("actor",{}).get("role") in {"operator","migration"}:_require_operator_console(args.engagement,proposal.get("provenance",{}).get("actor",{}).get("id",""),"append-attempt")
     record = append_attempt(args.engagement.resolve(), proposal)
     emit({"ok": True, "attempt_id": record["attempt_id"], "sequence": record["sequence"], "record_hash": record["record_hash"]})
     return 0
 
 
 def command_repair_tail(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"repair-ledger-tail")
     result = repair_ledger_tail(args.engagement.resolve(), args.ledger, args.operator_id, args.reason, args.recorded_at)
     emit({"ok": True, **result})
     return 0
@@ -153,18 +169,21 @@ def command_score_telemetry(args: argparse.Namespace) -> int:
 
 
 def command_record_memory(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"record-memory")
     record = record_memory_disposition(args.engagement, args.file, args.operator_id)
     emit({"valid": True, "disposition_id": record["disposition_id"], "disposition": record["disposition"], "plane1_modified": False})
     return 0
 
 
 def command_close(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"close-engagement")
     snapshot = close_engagement(args.engagement, args.operator_id, args.reason, args.recorded_at)
     emit({"valid": True, "engagement_id": snapshot["engagement_id"], "closed": True, "memory_disposition": snapshot["memory_disposition"]})
     return 0
 
 
 def command_preflight(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"environment-preflight")
     try:
         reproduction = json.loads(args.reproduction_argv)
         if not isinstance(reproduction, list) or any(not isinstance(item, str) or not item for item in reproduction):
@@ -177,14 +196,19 @@ def command_preflight(args: argparse.Namespace) -> int:
 
 
 def command_migrate(args: argparse.Namespace) -> int:
+    if sum(value is not None for value in (args.propose_engagement,args.dry_run_engagement,args.apply_proposal))>1:raise RecordError("migration_mode_conflict","choose exactly one migration mode")
     command = [sys.executable, str(Path(__file__).with_name("migrate-decision5.py")), "--root", str(args.root)]
     if args.output: command += ["--output", str(args.output)]
     if args.propose_engagement:
-        if not args.operator_id or not args.output: raise RecordError("migration_proposal_args_missing", "proposal requires --operator-id and --output")
-        command += ["--propose-engagement", args.propose_engagement, "--operator-id", args.operator_id]
+        if not args.operator_id or not args.output or not args.recorded_at: raise RecordError("migration_proposal_args_missing", "proposal requires --operator-id and --output")
+        command += ["--propose-engagement", args.propose_engagement, "--operator-id", args.operator_id, "--recorded-at", args.recorded_at]
+    if args.dry_run_engagement:
+        if not args.operator_id or not args.recorded_at or not args.migration_dir:raise RecordError("migration_dry_run_args_missing","dry-run bundle requires --operator-id, --recorded-at and --migration-dir")
+        command += ["--dry-run-engagement",args.dry_run_engagement,"--migration-dir",str(args.migration_dir),"--operator-id",args.operator_id,"--recorded-at",args.recorded_at]
     if args.apply_proposal:
         if not args.operator_id or not args.recorded_at or not args.destination: raise RecordError("migration_apply_args_missing", "apply requires --destination, --operator-id and --recorded-at")
-        command += ["--apply-proposal", str(args.apply_proposal), "--destination", str(args.destination), "--operator-id", args.operator_id, "--recorded-at", args.recorded_at]
+        command += ["--apply-proposal", str(args.apply_proposal), "--destination", str(args.destination), "--operator-id", args.operator_id, "--recorded-at", args.recorded_at, "--operator-redaction-attested"]
+        if args.artifact_review:command += ["--artifact-review",str(args.artifact_review)]
     result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     if result.returncode:
         raise RecordError("migration_command_failed", result.stderr or result.stdout)
@@ -194,6 +218,7 @@ def command_migrate(args: argparse.Namespace) -> int:
 
 
 def command_accept_report(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"accept-report")
     try:
         review = accept_report(args.engagement, args.report_id, args.operator_id, args.reason, args.recorded_at)
     except ValueError as exc:
@@ -203,6 +228,7 @@ def command_accept_report(args: argparse.Namespace) -> int:
 
 
 def command_record_submission(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"record-submission")
     try:
         submission_id = record_submission(args.engagement, args.report_id, args.file, args.program, args.operator_id, args.recorded_at)
     except ValueError as exc:
@@ -212,6 +238,7 @@ def command_record_submission(args: argparse.Namespace) -> int:
 
 
 def command_generate_report(args: argparse.Namespace) -> int:
+    _require_operator_console(args.engagement,args.operator_id,"generate-report")
     omitted = []
     for value in args.omit_claim:
         if "=" not in value:
@@ -351,7 +378,7 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         before_concurrent_count = len(read_ledger(engagement, "event"))
         processes = []
         for number in range(4):
-            proposal = base_event(event_id=f"event-concurrent-{number}", engagement_id=engagement.name, recorded_at="2026-07-10T00:10:00Z", actor_role="operator", actor_id="operator-selftest", event_type="observation.recorded", rationale=f"Concurrent append {number}.", payload={"entity_id": f"observation-{number + 2}", "entity_type": "observation", "status": "recorded"})
+            proposal = base_event(event_id=f"event-concurrent-{number}", engagement_id=engagement.name, recorded_at="2026-07-10T00:10:00Z", actor_role="orchestrator", actor_id="orchestrator-selftest", event_type="observation.recorded", rationale=f"Concurrent append {number}.", payload={"entity_id": f"observation-{number + 2}", "entity_type": "observation", "status": "recorded"})
             proposal_path = root / f"proposal-{number}.json"
             proposal_path.write_bytes(canonical_json_bytes(proposal))
             processes.append(subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "append-event", "--engagement", str(engagement), "--file", str(proposal_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True))
@@ -361,6 +388,10 @@ def state_self_test() -> list[tuple[str, bool, str]]:
         concurrent_records = read_ledger(engagement, "event")
         current = reduce_engagement(engagement)
         checks.append(("concurrent writers serialize without loss or stale projections", all(result[2] == 0 for result in outcomes) and len(concurrent_records) == before_concurrent_count + 4 and (engagement / "state.snapshot.json").read_bytes() == canonical_json_bytes(current), str(outcomes)))
+        forged=base_event(event_id="event-forged-operator",engagement_id=engagement.name,recorded_at="2026-07-10T00:10:01Z",actor_role="operator",actor_id="operator-selftest",event_type="observation.recorded",rationale="Attempt noninteractive operator impersonation.",payload={"entity_id":"observation-forged","entity_type":"observation","status":"recorded"});forged_path=root/"forged-operator.json";forged_path.write_bytes(canonical_json_bytes(forged));forged_run=subprocess.run([sys.executable,str(Path(__file__).resolve()),"append-event","--engagement",str(engagement),"--file",str(forged_path)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,check=False)
+        try:forged_payload=json.loads(forged_run.stdout);forged_blocked=forged_run.returncode!=0 and forged_payload.get("error",{}).get("code")=="operator_console_required"
+        except json.JSONDecodeError:forged_blocked=False
+        checks.append(("noninteractive caller cannot impersonate signed operator through generic append",forged_blocked,forged_run.stdout+forged_run.stderr))
         snapshot_bytes = (engagement / "state.snapshot.json").read_bytes()
         stale_value = json.loads(snapshot_bytes); stale_value["event_count"] -= 1
         (engagement / "state.snapshot.json").write_bytes(canonical_json_bytes(stale_value))
@@ -899,7 +930,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--self-test", action="store_true", help="run hermetic schema/record tests")
     subcommands = result.add_subparsers(dest="command")
     validate = subcommands.add_parser("validate", help="validate schemas, records, fixtures, or a read-only legacy inventory")
-    validate.add_argument("--schema", choices=["finding-v3", "attempt-v2", "artifact", "review", "engagement-event", "state-snapshot", "environment-preflight", "report-manifest", "memory-disposition", "migration-manifest", "finding-v2-legacy"])
+    validate.add_argument("--schema", choices=["finding-v3", "attempt-v2", "artifact", "review", "engagement-event", "state-snapshot", "environment-preflight", "report-manifest", "memory-disposition", "migration-manifest", "migration-artifact-review", "research-telemetry", "historical-case-manifest", "retrospective-evaluation", "ab-preregistration", "ab-study-evidence", "ab-readiness-report", "finding-v2-legacy"])
     validate.add_argument("--file", type=Path)
     validate.add_argument("--engagement", type=Path, help="engagement root used to resolve record references")
     validate.add_argument("--schema-only", action="store_true", help="fixture/schema work only; skip engagement reference resolution")
@@ -936,7 +967,7 @@ def parser() -> argparse.ArgumentParser:
     preflight = subcommands.add_parser("preflight", help="record offline Git/package/local-runtime identity and safety state")
     preflight.add_argument("--engagement", type=Path, required=True); preflight.add_argument("--preflight-id", required=True); preflight.add_argument("--mode", choices=["git", "package", "local_runtime"], required=True); preflight.add_argument("--target", type=Path, required=True); preflight.add_argument("--expected-identity", required=True); preflight.add_argument("--runtime", type=Path, required=True); preflight.add_argument("--reproduction-argv", required=True, help="JSON array; recorded but never executed by preflight"); preflight.add_argument("--operator-id", required=True); preflight.add_argument("--recorded-at", required=True); preflight.add_argument("--operator-redaction-attested", action="store_true", help="operator attests all labels/argv were redacted and contain no credential values"); preflight.add_argument("--advisory-zone", choices=["clear_local", "review_required", "unknown"], default="clear_local"); preflight.add_argument("--credentials-present", action="store_true"); preflight.add_argument("--account-label", action="append", default=[]); preflight.add_argument("--configuration-file", type=Path, action="append", default=[]); preflight.add_argument("--endpoint-identity"); preflight.add_argument("--account-role"); preflight.add_argument("--feature-flag", action="append", default=[])
     migrate = subcommands.add_parser("migrate", help="read-only legacy inventory or signed-operator migration proposal")
-    migrate.add_argument("--root", type=Path, default=Path(".")); migrate.add_argument("--output", type=Path); migrate.add_argument("--propose-engagement"); migrate.add_argument("--apply-proposal", type=Path); migrate.add_argument("--destination", type=Path); migrate.add_argument("--operator-id"); migrate.add_argument("--recorded-at")
+    migrate.add_argument("--root", type=Path, default=Path(".")); migrate.add_argument("--output", type=Path); migrate.add_argument("--propose-engagement"); migrate.add_argument("--dry-run-engagement"); migrate.add_argument("--migration-dir",type=Path); migrate.add_argument("--apply-proposal", type=Path); migrate.add_argument("--destination", type=Path); migrate.add_argument("--artifact-review",type=Path); migrate.add_argument("--operator-id"); migrate.add_argument("--recorded-at")
     accept = subcommands.add_parser("accept-report", help="operator review and acceptance of a current revision-bound report")
     accept.add_argument("--engagement", type=Path, required=True); accept.add_argument("--report-id", required=True); accept.add_argument("--operator-id", required=True); accept.add_argument("--reason", required=True); accept.add_argument("--recorded-at", required=True)
     submission = subcommands.add_parser("record-submission", help="record separate operator-authored external submission text")

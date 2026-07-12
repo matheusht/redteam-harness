@@ -27,9 +27,32 @@ The architecture is now strong at authority separation, provenance, deterministi
 
 All new governed schemas are version 1 except attempt v2 and finding v3. Legacy `finding.schema.json` remains readable as `finding-v2-legacy`. Validation requires pinned `jsonschema==4.26.0` and fails closed when unavailable.
 
+## Sections 3–20 requirement matrix
+
+| Plan section | Implemented surface | Verification / rollback |
+| --- | --- | --- |
+| 3 Architectural boundaries | `engagement_records.py`, `engagement_state.py`, `run-engagement.py`; model semantics remain outside authority shell | state/self-tests; stop appends and preserve ledgers |
+| 4 Authority map | typed event actors, operator-only filing/report/submission/memory/closure, independent reviews | injected model/operator-authority negative tests |
+| 5 Record layout | canonical `events.jsonl`, `attempts.jsonl`, `artifacts.jsonl`; versioned records; derived snapshot/views | noncanonical/tail/tamper/orphan/rebuild tests |
+| 6 Core schemas | closed versioned schemas in `schemas/`, pinned full validator, semantic/ref checks | minimum/rich/reject fixture suite and schema-ID/ref checks |
+| 7 State/reducer | deterministic reduction, typed transitions, cross-ledger causal time, locks/recovery | resume, rollback, scope drift, collision, repair tests |
+| 8 Hypothesis/persistence | candidate/material-hypothesis lifecycle, prior provenance, held/exhausted/reopen, exact cold-reviewed dry closure | funnel and post-dry/reopen negative tests |
+| 9 Oracle/reviews | signal/adjudication/coverage/regrade/Pocinator/candidate-outcome roles remain distinct | independence, correction, escalation, reward-hack tests |
+| 10 Views/reporting | hash-bound generated views; deterministic claim/proof reports; revision history; operator acceptance/submission | stale/tampered/orphan/render/binding tests |
+| 11 Domain neutrality | free domain IDs, namespaced weakness identifiers, atomic mechanism/reachability/impact; no pack is an oracle | LLM and non-LLM finding fixtures; optional domain packs not required for core |
+| 12 Safety/operations | signed scope, safe signal, advisory Zone, fresh Zone-2 event/cleanup, secret scans, credential-label restriction | preflight/artifact/cleanup/scope adversarial tests |
+| 13 Slices A–J | phase commits, bounded Terra audit, full CI, push, Draft PR update per slice | commit/PR evidence below; rollback is additive stop/no rewrite |
+| 14 Migration | full-file dry inventory/bundles; separate reviewed apply; immutable legacy artifacts; needs-review v3 reconstruction; unresolved reports | source-before/after equality, no-invented-attempt, alias/stale/redaction tests |
+| 15 Test architecture | schema, semantic, lifecycle, crash/tamper, integration, frozen-campaign, historical and readiness fixtures | CI 31/31 plus I/J self-tests and 323/0 conformance |
+| 16 Retrospective | three layers represented separately; historical matrix and offline report; blocked/not-run never imputed | 136,154-file deterministic inventory; replay/rerun explicitly not run |
+| 17 Prospective A/B | full-tree arm freezes, common safety overlay, preregistration/study-evidence/readiness contracts | structurally `not_ready`; zero arm runs; no authorization transition |
+| 18 Compatibility/rollback | legacy v2 adapter plus v3 kernel flag; preserve partial history; fail closed on version/reducer bugs | legacy fixtures, migration manifest, append-only rollback tests |
+| 19 Required evidence | this report, per-slice commits/PR notes, known limitations, complexity/safety/claim accounting | Draft PR #21 and final audit |
+| 20 Explicit deferrals | no scheduler, auto-promotion, DB/service, extra concurrency, bandit/UCB, universal ontology, permanent model assignment, or sealed evaluator service | repository inventory and non-authoritative readiness schema |
+
 ## Authority and trust boundary
 
-- The signed-scope operator alone files finding revisions, accepts reports, records submissions, chooses memory disposition, closes engagements, and authors any Plane-1 promotion PR.
+- The signed-scope operator alone files finding revisions, accepts reports, records submissions, chooses memory disposition, closes engagements, and authors any Plane-1 promotion PR. Public CLI mutations carrying operator/migration authority require a fresh phrase on an interactive operator console; noninteractive model/tool calls fail with `operator_console_required`.
 - Models direct semantic research but cannot adjudicate their own claims or mutate trusted state.
 - Attempts and artifacts are immutable; findings are revisioned; events are append-only; views are derived.
 - Claim, search, coverage, proof-review, report, environment, memory, and submission state remain separate.
@@ -59,7 +82,7 @@ Each slice received bounded static adversarial review with `openai-codex/gpt-5.6
 
 ## Migration and retrospective result
 
-The deterministic operator-local inventory covered 136,154 files across complete historical engagement trees. Every file was classified and hashed; all remain `needs_review`; zero attempts or controls were invented; source bytes were unchanged. Recognized legacy finding records can be proposed as revision-1 v3 `needs_review` records bound only to their immutable source artifact, with scope, environment, attempts, controls, replay, and adjudication explicitly missing. Reports are preserved as artifacts and remain unresolved when destination authority is unavailable.
+The deterministic operator-local inventory covered 136,154 files across complete historical engagement trees. Every file was classified and hashed; all remain `needs_review`; zero attempts or controls were invented; source bytes were unchanged. Artifact/unknown files require a complete hash-bound `migration-artifact-review`; executable or `review_required` entries additionally require fresh escalation-confirmation and cleanup references enforced by artifact registration. Recognized legacy finding records can be proposed as revision-1 v3 `needs_review` records bound only to their immutable source artifact, with scope, environment, attempts, controls, replay, and adjudication explicitly missing. Reports are preserved as artifacts and remain unresolved when destination authority is unavailable.
 
 Artifact replay: `not_run`.  
 Blinded historical rerun: `not_run`.  

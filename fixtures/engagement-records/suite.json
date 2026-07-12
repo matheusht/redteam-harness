@@ -5517,6 +5517,90 @@
       },
       "schema": "ab-study-evidence",
       "valid": false
+    },
+    {
+      "id": "migration-artifact-review-minimum",
+      "record": {
+        "schema_version": 1,
+        "review_id": "migration-review-fixture",
+        "inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operator": {
+          "role": "operator",
+          "id": "operator-1"
+        },
+        "operator_reviewed": true,
+        "redaction_attested": true,
+        "entries": [
+          {
+            "source_path": "artifacts/inert.txt",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "classification": "artifact",
+            "classification_rationale": "Operator inspected inert text bytes.",
+            "advisory_zone": "clear_local",
+            "contains_executable_capability": false,
+            "escalation_confirmation_event_ref": null,
+            "cleanup_obligation_ref": null
+          }
+        ]
+      },
+      "schema": "migration-artifact-review",
+      "valid": true
+    },
+    {
+      "id": "migration-artifact-review-rich",
+      "record": {
+        "schema_version": 1,
+        "review_id": "migration-review-rich",
+        "inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operator": {
+          "role": "operator",
+          "id": "operator-1"
+        },
+        "operator_reviewed": true,
+        "redaction_attested": true,
+        "entries": [
+          {
+            "source_path": "artifacts/inert.txt",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "classification": "artifact",
+            "classification_rationale": "Operator classified a contained reviewed artifact with fresh confirmation and cleanup.",
+            "advisory_zone": "review_required",
+            "contains_executable_capability": true,
+            "escalation_confirmation_event_ref": "event-zone-confirm",
+            "cleanup_obligation_ref": "cleanup-1"
+          }
+        ]
+      },
+      "schema": "migration-artifact-review",
+      "valid": true
+    },
+    {
+      "id": "migration-artifact-review-missing-confirmation",
+      "record": {
+        "schema_version": 1,
+        "review_id": "migration-review-bad",
+        "inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operator": {
+          "role": "operator",
+          "id": "operator-1"
+        },
+        "operator_reviewed": true,
+        "redaction_attested": true,
+        "entries": [
+          {
+            "source_path": "artifacts/inert.txt",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "classification": "artifact",
+            "classification_rationale": "Operator classified a contained reviewed artifact with fresh confirmation and cleanup.",
+            "advisory_zone": "review_required",
+            "contains_executable_capability": true,
+            "escalation_confirmation_event_ref": null,
+            "cleanup_obligation_ref": "cleanup-1"
+          }
+        ]
+      },
+      "schema": "migration-artifact-review",
+      "valid": false
     }
   ],
   "schema_version": 1
