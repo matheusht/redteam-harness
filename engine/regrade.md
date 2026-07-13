@@ -127,7 +127,17 @@ tier to execute — it can be Helper-tier work that feeds the planning-tier verd
 Orchestrator/Hunter/Helper split (`CLAUDE.md` §2). `engine/roster.md` doesn't currently assign
 regrade a tier at all; this doc self-declares one, the same way `pocinator.md` had to.
 
-## 7. On "GPT regrade"
+## 7. Decision-0005 record output
+
+A regrade emits a committed `review` record (`review_type: regrade`) and then a
+`review.regrade_completed` event. The record binds the exact finding revision and claim-tuple hash,
+immutable input-set hash, applicable controls, replay freshness, prior reviewer-run IDs, and the
+fresh-context/disconfirming objective. The event changes no claim state. `escalation_found` creates an
+outstanding evidence route; a `reviewer_challenge` hypothesis must collect evidence before any later
+finding revision may claim the escalation. `confirmed_with_correction` routes to a contiguous operator-
+filed revision. External tools or the regrade model cannot file or self-adjudicate a finding.
+
+## 8. On "GPT regrade"
 
 Every real regrade pass in this harness's history uses a generic `"actor": "independent-regrade-agent"`
 label — never a model name. `engine/roster.md` names concrete model tiers for its three defined roles;

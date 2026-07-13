@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/historical-case-manifest.schema.json",
+  "title": "Decision 0005 offline historical case matrix",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "matrix_id", "cases", "policy"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "matrix_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "cases": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["case_id", "domain", "contamination_class", "decision5_informed", "lesson_presence", "reconstruction", "artifact_replay", "blinded_rerun", "target_identity", "scope_freshness", "zone2_may_be_required", "withheld_materials", "limitations"],
+      "properties": {
+        "case_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "domain": {"type": "string", "minLength": 1},
+        "contamination_class": {"enum": ["decision_informing", "historical_regression", "potential_holdout", "known_clean"]},
+        "decision5_informed": {"type": "boolean"},
+        "lesson_presence": {"enum": ["present", "absent", "unknown"]},
+        "reconstruction": {"enum": ["eligible", "needs_review", "blocked"]},
+        "artifact_replay": {"enum": ["eligible", "blocked", "not_applicable"]},
+        "blinded_rerun": {"enum": ["regression_only", "holdout_eligible", "blocked"]},
+        "target_identity": {"enum": ["pinned", "missing", "unknown"]},
+        "scope_freshness": {"enum": ["fresh_hermetic", "stale", "missing"]},
+        "zone2_may_be_required": {"type": "boolean"},
+        "withheld_materials": {"type": "array", "items": {"enum": ["findings", "reports", "progress", "pocs", "case_memory", "judge_packet"]}, "uniqueItems": true},
+        "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true}
+      }
+    }},
+    "policy": {"type": "object", "additionalProperties": false, "required": ["target_contact", "artifact_execution", "zone2_creation", "historical_answers_exposed_to_runner"], "properties": {"target_contact": {"const": false}, "artifact_execution": {"const": false}, "zone2_creation": {"const": false}, "historical_answers_exposed_to_runner": {"const": false}}}
+  }
+}

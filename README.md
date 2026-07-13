@@ -45,6 +45,17 @@ docs/           architecture + decisions + field-notes (cross-engagement methodo
 **Plane rule:** Plane 1 is read-only knowledge; Plane 3 is write-only memory. The portable harness
 (Plane 1+2) travels; each engagement's Plane 3 wiki lives with its target.
 
+## Decision 0005 record kernel
+
+New version-3 engagements use `python3 tools/run-engagement.py <subcommand> ...` as the sole public
+Plane-3 authority. Append-only ledgers are authoritative; snapshots and Markdown are derived. See
+`docs/decision-0005-implementation-architecture.md` and
+`docs/decision-0005-implementation-report.md` for commands, trust boundaries, migration, telemetry,
+and the precise distinction between conformance, regression parity, and efficacy.
+
+The retrospective and A/B tools are offline evaluators only. They do not contact targets, authorize
+Zone-2 work, file reports, promote memory/cards, or prove efficacy.
+
 ## Conformance (run before promoting any card / casebook change)
 
 ```

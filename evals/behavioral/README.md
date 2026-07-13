@@ -77,13 +77,18 @@ drops them (or overclaims) confirms it → FDR → block.
 
 ```
 python3 tools/build-behavioral-campaign.py
-python3 tools/run-behavioral-eval.py --campaign evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/campaign-manifest.json
+python3 tools/run-behavioral-eval.py --campaign evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/campaign-manifest.json
 python3 tools/run-behavioral-eval.py --self-test
 ```
 
-## Canonical campaign: `behavioral-canonical-v2-2026-06-27`
+## Canonical campaign: `behavioral-canonical-v3-2026-07-10`
 
-Canonical campaign + candidate manifests + real diffs. `fake`-backend run (`runs/fake-completed-*`):
+Revision 3 preserves the revision-2 candidate set and rotates only the frozen conformance-checker pin
+after Decision 0005 introduced approved full Draft 2020-12 record validation. Revision 2 and its runs
+remain immutable historical evidence; no old result is re-pinned. Revision 3 has no new efficacy claim.
+
+The revision-2 canonical campaign + candidate manifests + real diffs produced this historical
+`fake`-backend result (`runs/fake-completed-*`):
 no-op `cand-baseline` → **probe** (a no-op can never `allow`); `cand-efficient-task-reframing` →
 **allow** by broker-measured cost cut (non-promotable for the fake backend); `cand-decomposition` →
 **probe**; `cand-degraded` (test fixture, promotion-excluded) → **block** (confirms contamination →

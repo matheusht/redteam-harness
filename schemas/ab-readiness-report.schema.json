@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/ab-readiness-report.schema.json",
+  "title": "Decision 0005 A/B readiness report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "study_id",
+    "preregistration_hash",
+    "status",
+    "blockers",
+    "checks",
+    "execution",
+    "claims"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "report_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "study_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "preregistration_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "status": {
+      "const": "not_ready"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "execution_not_authorized",
+          "model_or_budget_unfrozen",
+          "pilot_variance_unavailable",
+          "sample_size_unregistered",
+          "adjudication_panel_unregistered",
+          "tie_rule_unregistered",
+          "judge_packet_unsealed",
+          "no_eligible_holdout_manifest",
+          "signed_scope_or_environment_missing",
+          "study_evidence_missing_or_invalid",
+          "reviewed_transition_implementation_absent"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_hashes_verified",
+        "arm_labels_unique",
+        "treatments_distinct",
+        "safety_overlay_shared",
+        "historical_cases_excluded_from_holdout",
+        "full_git_trees_verified"
+      ],
+      "properties": {
+        "source_hashes_verified": {
+          "type": "boolean"
+        },
+        "arm_labels_unique": {
+          "type": "boolean"
+        },
+        "treatments_distinct": {
+          "type": "boolean"
+        },
+        "safety_overlay_shared": {
+          "type": "boolean"
+        },
+        "historical_cases_excluded_from_holdout": {
+          "type": "boolean"
+        },
+        "full_git_trees_verified": {
+          "type": "boolean"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_contact",
+        "arm_runs",
+        "artifact_execution",
+        "zone2_creation",
+        "results_fabricated"
+      ],
+      "properties": {
+        "target_contact": {
+          "const": false
+        },
+        "arm_runs": {
+          "const": 0
+        },
+        "artifact_execution": {
+          "const": false
+        },
+        "zone2_creation": {
+          "const": false
+        },
+        "results_fabricated": {
+          "const": false
+        }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ab_readiness",
+        "regression_parity",
+        "efficacy"
+      ],
+      "properties": {
+        "ab_readiness": {
+          "const": "not_ready"
+        },
+        "regression_parity": {
+          "const": "not_demonstrated"
+        },
+        "efficacy": {
+          "const": "not_demonstrated"
+        }
+      }
+    }
+  }
+}

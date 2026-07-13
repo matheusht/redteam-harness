@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/research-common.schema.json",
+  "title": "Decision 0005 research common definitions",
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "non_empty": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "relative_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "id_refs": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+    "hash_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "previous_hash", "record_hash"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "previous_hash": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "record_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "id"],
+      "properties": {
+        "role": {"enum": ["orchestrator", "hunter", "helper", "reviewer", "operator", "broker", "migration"]},
+        "id": {"$ref": "#/$defs/id"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor"],
+      "properties": {
+        "actor": {"$ref": "#/$defs/actor"},
+        "model": {"type": ["string", "null"]},
+        "provider": {"type": ["string", "null"]},
+        "prompt_version": {"type": ["string", "null"]},
+        "card_versions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "tool_versions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wall_seconds", "model_seconds", "tool_seconds", "target_calls", "model_calls", "human_review_seconds"],
+      "properties": {
+        "wall_seconds": {"type": "number", "minimum": 0},
+        "model_seconds": {"type": "number", "minimum": 0},
+        "tool_seconds": {"type": "number", "minimum": 0},
+        "target_calls": {"type": "integer", "minimum": 0},
+        "model_calls": {"type": "integer", "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "cost_usd": {"type": ["number", "null"], "minimum": 0},
+        "human_review_seconds": {"type": "number", "minimum": 0}
+      }
+    }
+  }
+}

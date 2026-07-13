@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/report-manifest.schema.json",
+  "title": "Decision 0005 revision-bound report manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "engagement_id",
+    "generated_at",
+    "finding_id",
+    "finding_revision",
+    "finding_digest",
+    "adjudication_review_ref",
+    "adjudication_review_digest",
+    "template_version",
+    "renderer_version",
+    "report_path",
+    "report_digest",
+    "operator_status",
+    "included_claim_ids",
+    "omitted_claims",
+    "claim_proof_matrix_hash",
+    "generator_provenance",
+    "historical_reason"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "report_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "generated_at": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+    },
+    "finding_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "finding_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "finding_digest": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "adjudication_review_ref": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "adjudication_review_digest": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "template_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "renderer_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_path": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+    },
+    "report_digest": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "operator_status": {
+      "enum": [
+        "draft",
+        "accepted",
+        "rejected"
+      ]
+    },
+    "included_claim_ids": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs",
+      "minItems": 1
+    },
+    "omitted_claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim_id",
+          "rationale"
+        ],
+        "properties": {
+          "claim_id": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "claim_proof_matrix_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "generator_provenance": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"
+    },
+    "historical_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

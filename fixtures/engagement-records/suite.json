@@ -1,0 +1,5607 @@
+{
+  "cases": [
+    {
+      "id": "finding-v3-minimum",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": true
+    },
+    {
+      "id": "finding-v3-rich",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "narrow impact",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": [
+            "deployment prevalence unknown"
+          ]
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": [
+            {
+              "id": "CWE-862",
+              "namespace": "CWE"
+            }
+          ]
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 2,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": 1
+      },
+      "schema": "finding-v3",
+      "valid": true
+    },
+    {
+      "id": "finding-v3-legacy-import",
+      "record": {
+        "adjudication": {
+          "justification": "Historical evidence is incomplete."
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "needs_review",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "legacy_import": {
+          "missing_legacy_evidence": [
+            "scope",
+            "environment",
+            "attempts",
+            "controls",
+            "replay",
+            "adjudication"
+          ],
+          "source_artifact_ref": "legacy-artifact-1",
+          "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "Legacy source artifact only; live controls unavailable.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [],
+              "claim_id": "claim-mechanism",
+              "control_refs": [],
+              "replay_refs": []
+            },
+            {
+              "applicability_rationale": "Legacy source artifact only; live controls unavailable.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [],
+              "claim_id": "claim-reach",
+              "control_refs": [],
+              "replay_refs": []
+            },
+            {
+              "applicability_rationale": "Legacy source artifact only; live controls unavailable.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [],
+              "claim_id": "claim-impact",
+              "control_refs": [],
+              "replay_refs": []
+            }
+          ],
+          "contamination_disposition": "unresolved",
+          "control_applicability": {
+            "negative": "not_applicable",
+            "positive": "not_applicable",
+            "rationale": "Historical controls are unavailable.",
+            "replay": "not_applicable"
+          },
+          "evidence_refs": [],
+          "fresh_state_properties": [],
+          "negative_control_refs": [],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [],
+          "replay_refs": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "target_refs": []
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": true
+    },
+    {
+      "id": "finding-v3-unknown-property",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "base_model": "forbidden",
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "attempt-v2-minimum",
+      "record": {
+        "action_summary": "Inspected the pinned source path.",
+        "actor": {
+          "id": "hunter-1",
+          "role": "hunter"
+        },
+        "assessment": "suspected_signal",
+        "attempt_id": "attempt-1",
+        "contamination": {
+          "note": "",
+          "sources": [],
+          "status": "none_observed"
+        },
+        "control_of": [],
+        "cost": {
+          "cost_usd": null,
+          "human_review_seconds": 0,
+          "input_tokens": null,
+          "model_calls": 0,
+          "model_seconds": 0,
+          "output_tokens": null,
+          "target_calls": 0,
+          "tool_seconds": 1,
+          "wall_seconds": 1
+        },
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "experiment_ref": "experiment-1",
+        "hypothesis_ref": "hypothesis-1",
+        "kind": "source_trace",
+        "observation": {
+          "source": "source_inspection",
+          "statement": "The call path lacks the expected gate."
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "hunter-1",
+            "role": "hunter"
+          },
+          "card_versions": [
+            "card-v1"
+          ],
+          "model": "test-model",
+          "prompt_version": "p1",
+          "provider": "test",
+          "tool_versions": []
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "redaction_attestation": true,
+        "schema_version": 2,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "sequence": 1,
+        "surface": "local source"
+      },
+      "schema": "attempt-v2",
+      "valid": true
+    },
+    {
+      "id": "attempt-v2-rich",
+      "record": {
+        "action_summary": "Inspected the pinned source path.",
+        "actor": {
+          "id": "hunter-1",
+          "role": "hunter"
+        },
+        "assessment": "held",
+        "attempt_id": "attempt-2",
+        "contamination": {
+          "note": "",
+          "sources": [],
+          "status": "none_observed"
+        },
+        "control_of": [
+          "attempt-1"
+        ],
+        "cost": {
+          "cost_usd": null,
+          "human_review_seconds": 0,
+          "input_tokens": null,
+          "model_calls": 0,
+          "model_seconds": 0,
+          "output_tokens": null,
+          "target_calls": 0,
+          "tool_seconds": 1,
+          "wall_seconds": 1
+        },
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "experiment_ref": "experiment-1",
+        "hypothesis_ref": "hypothesis-1",
+        "kind": "negative_control",
+        "observation": {
+          "source": "runtime",
+          "statement": "The safe sibling rejected the same caller."
+        },
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "provenance": {
+          "actor": {
+            "id": "hunter-1",
+            "role": "hunter"
+          },
+          "card_versions": [
+            "card-v1"
+          ],
+          "model": "test-model",
+          "prompt_version": "p1",
+          "provider": "test",
+          "tool_versions": []
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "redaction_attestation": true,
+        "schema_version": 2,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "sequence": 2,
+        "surface": "local source"
+      },
+      "schema": "attempt-v2",
+      "valid": true
+    },
+    {
+      "id": "attempt-v2-confirmed-outcome",
+      "record": {
+        "action_summary": "Inspected the pinned source path.",
+        "actor": {
+          "id": "hunter-1",
+          "role": "hunter"
+        },
+        "assessment": "confirmed",
+        "attempt_id": "attempt-1",
+        "contamination": {
+          "note": "",
+          "sources": [],
+          "status": "none_observed"
+        },
+        "control_of": [],
+        "cost": {
+          "cost_usd": null,
+          "human_review_seconds": 0,
+          "input_tokens": null,
+          "model_calls": 0,
+          "model_seconds": 0,
+          "output_tokens": null,
+          "target_calls": 0,
+          "tool_seconds": 1,
+          "wall_seconds": 1
+        },
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "experiment_ref": "experiment-1",
+        "hypothesis_ref": "hypothesis-1",
+        "kind": "source_trace",
+        "observation": {
+          "source": "source_inspection",
+          "statement": "The call path lacks the expected gate."
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "hunter-1",
+            "role": "hunter"
+          },
+          "card_versions": [
+            "card-v1"
+          ],
+          "model": "test-model",
+          "prompt_version": "p1",
+          "provider": "test",
+          "tool_versions": []
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "redaction_attestation": true,
+        "schema_version": 2,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "sequence": 1,
+        "surface": "local source"
+      },
+      "schema": "attempt-v2",
+      "valid": false
+    },
+    {
+      "id": "artifact-minimum",
+      "record": {
+        "acquisition_method": "operator",
+        "advisory_zone": "clear_local",
+        "artifact_id": "artifact-1",
+        "cleanup_obligation_ref": null,
+        "contains_executable_capability": false,
+        "created_at": "2026-07-10T12:00:00Z",
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "immutable": true,
+        "media_type": "text/plain",
+        "previous_hash": null,
+        "producer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "redaction_status": "redacted",
+        "relative_path": "evidence/output.txt",
+        "schema_version": 1,
+        "sensitivity": "internal",
+        "sequence": 1,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "supersedes_artifact_id": null,
+        "target_refs": [
+          "target-1"
+        ]
+      },
+      "schema": "artifact",
+      "valid": true
+    },
+    {
+      "id": "artifact-rich",
+      "record": {
+        "acquisition_method": "operator",
+        "advisory_zone": "review_required",
+        "artifact_id": "artifact-2",
+        "cleanup_obligation_ref": "cleanup-1",
+        "contains_executable_capability": true,
+        "created_at": "2026-07-10T12:00:00Z",
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": "event-confirm-1",
+        "immutable": true,
+        "media_type": "text/plain",
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "producer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "redaction_status": "redacted",
+        "relative_path": "evidence/local-poc.txt",
+        "schema_version": 1,
+        "sensitivity": "internal",
+        "sequence": 2,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "supersedes_artifact_id": "artifact-1",
+        "target_refs": [
+          "target-1"
+        ]
+      },
+      "schema": "artifact",
+      "valid": true
+    },
+    {
+      "id": "artifact-missing-conditional",
+      "record": {
+        "acquisition_method": "operator",
+        "advisory_zone": "review_required",
+        "artifact_id": "artifact-2",
+        "cleanup_obligation_ref": "cleanup-1",
+        "contains_executable_capability": true,
+        "created_at": "2026-07-10T12:00:00Z",
+        "engagement_id": "eng-1",
+        "environment_ref": "env-1",
+        "escalation_confirmation_event_ref": null,
+        "immutable": true,
+        "media_type": "text/plain",
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "producer": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "redaction_status": "redacted",
+        "relative_path": "evidence/local-poc.txt",
+        "schema_version": 1,
+        "sensitivity": "internal",
+        "sequence": 2,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "supersedes_artifact_id": "artifact-1",
+        "target_refs": [
+          "target-1"
+        ]
+      },
+      "schema": "artifact",
+      "valid": false
+    },
+    {
+      "id": "review-minimum",
+      "record": {
+        "conflicting_evidence": [],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "attempt-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": null,
+        "independence": {
+          "disconfirming_objective": "Try to refute the proposed signal.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-1",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-review-1"
+        },
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "input_refs": [
+          "attempt-1"
+        ],
+        "proposed_finding_id": null,
+        "rationale": "The distinctive source signal is present.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "required_next_actions": [
+          "independent adjudication"
+        ],
+        "review_id": "review-1",
+        "review_type": "signal",
+        "schema_version": 1,
+        "verdict": "strong"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-rich",
+      "record": {
+        "bounded_space": "Two pinned entrypoints and their shared guard.",
+        "conflicting_evidence": [],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "eng-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": null,
+        "hypothesis_dispositions": [
+          {
+            "hypothesis_ref": "hypothesis-1",
+            "rationale": "Matched control rules out the mechanism.",
+            "status": "closed"
+          }
+        ],
+        "independence": {
+          "disconfirming_objective": "Try to refute the proposed signal.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-1",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-review-2"
+        },
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "input_refs": [
+          "attempt-1"
+        ],
+        "omitted_branch_challenge": "Cold review found no unmodeled sibling entrypoint.",
+        "proposed_finding_id": null,
+        "rationale": "The distinctive source signal is present.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "required_next_actions": [
+          "independent adjudication"
+        ],
+        "residual_uncertainty": [
+          "future versions not assessed"
+        ],
+        "review_id": "review-2",
+        "review_type": "coverage",
+        "schema_version": 1,
+        "verdict": "coverage_dry"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-missing-conditional",
+      "record": {
+        "conflicting_evidence": [],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "eng-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": null,
+        "hypothesis_dispositions": [
+          {
+            "hypothesis_ref": "hypothesis-1",
+            "rationale": "Matched control rules out the mechanism.",
+            "status": "closed"
+          }
+        ],
+        "independence": {
+          "disconfirming_objective": "Try to refute the proposed signal.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-1",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-review-2"
+        },
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "input_refs": [
+          "attempt-1"
+        ],
+        "omitted_branch_challenge": "Cold review found no unmodeled sibling entrypoint.",
+        "proposed_finding_id": null,
+        "rationale": "The distinctive source signal is present.",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "required_next_actions": [
+          "independent adjudication"
+        ],
+        "residual_uncertainty": [
+          "future versions not assessed"
+        ],
+        "review_id": "review-2",
+        "review_type": "coverage",
+        "schema_version": 1,
+        "verdict": "coverage_dry"
+      },
+      "schema": "review",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-duplicate-claim-id",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-incomplete-claim-proof-map",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-required-positive-control-missing",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "required",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-empty-per-claim-proof",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [],
+              "attempt_refs": [],
+              "claim_id": "claim-mechanism",
+              "control_refs": [],
+              "replay_refs": []
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [
+                "attempt-2"
+              ],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "required",
+            "positive": "not_applicable",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "finding-v3-positive-control-not-bound-per-claim",
+      "record": {
+        "adjudication": {
+          "justification": "Primary evidence and matched controls establish the bounded mechanism.",
+          "review_ref": "review-1"
+        },
+        "change_reason": "initial adjudication",
+        "claim_state": "supported",
+        "claims": {
+          "attacker_model": "unprivileged caller",
+          "conflicting_evidence": [],
+          "impact_claims": [
+            {
+              "claim_id": "claim-impact",
+              "evidence_refs": [
+                "artifact-1"
+              ],
+              "statement": "Owned test data is disclosed.",
+              "status": "demonstrated"
+            }
+          ],
+          "mechanism": {
+            "claim_id": "claim-mechanism",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "Input crosses a missing authorization gate."
+          },
+          "preconditions": [
+            "reachable public API"
+          ],
+          "reachability": {
+            "causal_spine": [
+              "entrypoint",
+              "missing gate",
+              "state transition"
+            ],
+            "claim_id": "claim-reach",
+            "evidence_refs": [
+              "artifact-1"
+            ],
+            "statement": "The public entrypoint reaches the guarded state transition."
+          },
+          "uncertainty": []
+        },
+        "classification": {
+          "domain": "source-audit",
+          "severity": {
+            "label": "low",
+            "rationale": "bounded local effect",
+            "system": "operator",
+            "vector": null
+          },
+          "weakness_identifiers": []
+        },
+        "engagement_id": "eng-1",
+        "finding_id": "F-1",
+        "proof": {
+          "claim_proofs": [
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-mechanism",
+              "control_refs": [],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-reach",
+              "control_refs": [],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            },
+            {
+              "applicability_rationale": "The same primary, control, and replay establish this atomic claim.",
+              "artifact_refs": [
+                "artifact-1"
+              ],
+              "attempt_refs": [
+                "attempt-1"
+              ],
+              "claim_id": "claim-impact",
+              "control_refs": [],
+              "replay_refs": [
+                "attempt-3"
+              ]
+            }
+          ],
+          "contamination_disposition": "ruled_out",
+          "control_applicability": {
+            "negative": "not_applicable",
+            "positive": "required",
+            "rationale": "A matched negative and fresh replay are required; no stable positive control exists.",
+            "replay": "required"
+          },
+          "evidence_refs": [
+            "artifact-1"
+          ],
+          "fresh_state_properties": [
+            "fresh checkout"
+          ],
+          "negative_control_refs": [
+            "attempt-2"
+          ],
+          "positive_control_refs": [
+            "attempt-4"
+          ],
+          "primary_attempt_refs": [
+            "attempt-1"
+          ],
+          "replay_refs": [
+            "attempt-3"
+          ]
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "revision": 1,
+        "schema_version": 3,
+        "scope_provenance": {
+          "environment_ref": "env-1",
+          "provenance": {
+            "actor": {
+              "id": "reviewer-1",
+              "role": "reviewer"
+            },
+            "card_versions": [],
+            "model": null,
+            "prompt_version": null,
+            "provider": null,
+            "tool_versions": []
+          },
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "target_refs": [
+            "target-1"
+          ]
+        },
+        "search_linkage": {
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [
+            "hypothesis-1"
+          ]
+        },
+        "supersedes_revision": null
+      },
+      "schema": "finding-v3",
+      "valid": false
+    },
+    {
+      "id": "engagement-event-minimum",
+      "record": {
+        "actor": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "engagement_id": "eng-1",
+        "entity_refs": [
+          "eng-1"
+        ],
+        "event_id": "event-scope-1",
+        "event_type": "scope.attested",
+        "evidence_refs": [],
+        "ex_ante": null,
+        "payload": {
+          "operator_id": "operator-1",
+          "record_kernel": "decision-0005-v1",
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "scope_snapshot_path": "scope-attestations/0000000000000000000000000000000000000000000000000000000000000000.md",
+          "signed_date": "2026-07-10",
+          "supersedes_scope_hash": null
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "rationale": "Signed scope bytes attested.",
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "review_refs": [],
+        "schema_version": 1,
+        "sequence": 1,
+        "state_changes": [
+          {
+            "current": "active",
+            "dimension": "engagement",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "active",
+            "dimension": "coverage",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "pending",
+            "dimension": "memory",
+            "entity_id": "eng-1",
+            "previous": null
+          }
+        ]
+      },
+      "schema": "engagement-event",
+      "valid": true
+    },
+    {
+      "id": "engagement-event-rich",
+      "record": {
+        "actor": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "engagement_id": "eng-1",
+        "entity_refs": [
+          "eng-1"
+        ],
+        "event_id": "event-observation-1",
+        "event_type": "observation.recorded",
+        "evidence_refs": [],
+        "ex_ante": {
+          "ordinal": "strong",
+          "probability": 0.6,
+          "recorded_before_outcome": true
+        },
+        "payload": {
+          "entity_id": "observation-1",
+          "entity_type": "observation",
+          "reason": "bounded fixture",
+          "status": "recorded"
+        },
+        "previous_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "rationale": "Observation captured with an ex ante expectation.",
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "review_refs": [],
+        "schema_version": 1,
+        "sequence": 2,
+        "state_changes": []
+      },
+      "schema": "engagement-event",
+      "valid": true
+    },
+    {
+      "id": "engagement-event-unknown-type",
+      "record": {
+        "actor": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "engagement_id": "eng-1",
+        "entity_refs": [
+          "eng-1"
+        ],
+        "event_id": "event-scope-1",
+        "event_type": "free.form",
+        "evidence_refs": [],
+        "ex_ante": null,
+        "payload": {
+          "operator_id": "operator-1",
+          "record_kernel": "decision-0005-v1",
+          "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "signed_date": "2026-07-10",
+          "supersedes_scope_hash": null
+        },
+        "previous_hash": null,
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "rationale": "Signed scope bytes attested.",
+        "record_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "review_refs": [],
+        "schema_version": 1,
+        "sequence": 1,
+        "state_changes": [
+          {
+            "current": "active",
+            "dimension": "engagement",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "active",
+            "dimension": "coverage",
+            "entity_id": "eng-1",
+            "previous": null
+          },
+          {
+            "current": "pending",
+            "dimension": "memory",
+            "entity_id": "eng-1",
+            "previous": null
+          }
+        ]
+      },
+      "schema": "engagement-event",
+      "valid": false
+    },
+    {
+      "id": "state-snapshot-minimum",
+      "record": {
+        "active_blockers": [],
+        "active_environment_ref": null,
+        "artifact_count": 0,
+        "attempt_count": 0,
+        "candidates": {},
+        "cleanup": {
+          "obligations": [],
+          "open_count": 0,
+          "recorded": false
+        },
+        "control_candidates": [],
+        "coverage": "active",
+        "engagement_id": "eng-1",
+        "environment_preflights": {},
+        "event_count": 1,
+        "findings": {},
+        "hypotheses": {},
+        "integrity_errors": [],
+        "last_event_id": "event-scope-1",
+        "ledger_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "memory_disposition": null,
+        "operator_priors": [],
+        "outstanding_reviews": [],
+        "proof_reviews": {},
+        "report_refs": [],
+        "reports": {},
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "source_hashes": {
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "submission_refs": []
+      },
+      "schema": "state-snapshot",
+      "valid": true
+    },
+    {
+      "id": "state-snapshot-rich",
+      "record": {
+        "active_blockers": [
+          "review pending"
+        ],
+        "active_environment_ref": "preflight-1",
+        "artifact_count": 1,
+        "attempt_count": 2,
+        "candidates": {
+          "candidate-1": {
+            "activation_strength": "strong",
+            "card_ids": [
+              "card-1"
+            ],
+            "ex_ante": {
+              "ordinal": "strong",
+              "probability": 0.6,
+              "recorded_before_outcome": true
+            },
+            "rationale": "selected fixture",
+            "routing_review_ref": "event-routing-1",
+            "source_observation_ref": "event-observation-1",
+            "status": "selected"
+          }
+        },
+        "cleanup": {
+          "obligations": [],
+          "open_count": 0,
+          "recorded": false
+        },
+        "control_candidates": [],
+        "coverage": "blocked",
+        "engagement_id": "eng-1",
+        "environment_preflights": {},
+        "event_count": 5,
+        "findings": {
+          "F-1": {
+            "adjudication_review_ref": "review-1",
+            "change_reason": "Initial adjudication.",
+            "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+            "revision": 1,
+            "status": "needs_review"
+          }
+        },
+        "hypotheses": {
+          "hypothesis-1": {
+            "attacker_path": [
+              "entry",
+              "branch",
+              "state"
+            ],
+            "bounded_space": "One local path.",
+            "card_ids": [
+              "card-1"
+            ],
+            "completion_criteria": [
+              "matched control"
+            ],
+            "conflicting_evidence_refs": [],
+            "constraints": [
+              "local only"
+            ],
+            "control_refs": [],
+            "cost_estimate": {
+              "cost_usd": null,
+              "human_review_seconds": 0,
+              "input_tokens": null,
+              "model_calls": 0,
+              "model_seconds": 0,
+              "output_tokens": null,
+              "target_calls": 0,
+              "tool_seconds": 0,
+              "wall_seconds": 0
+            },
+            "decisive_falsifiers": [
+              "matched sibling also lacks check"
+            ],
+            "expected_confirming_evidence": [
+              {
+                "description": "guard trace and state transition",
+                "evidence_type": "trace",
+                "required": true
+              }
+            ],
+            "experiment_refs": [],
+            "impact_ceiling": "owned fixture only",
+            "lens_ids": [
+              "authz"
+            ],
+            "next_experiment": "trace branch",
+            "next_route": null,
+            "origin_ref": "candidate-1",
+            "origin_type": "candidate",
+            "rationale": "running fixture",
+            "statement": "Bounded test hypothesis.",
+            "status": "running",
+            "supporting_evidence_refs": [],
+            "suspected_invariant": "A check should dominate the state transition.",
+            "trust_boundary": "public entry to guarded state",
+            "unresolved_questions": []
+          }
+        },
+        "integrity_errors": [],
+        "last_event_id": "event-scope-1",
+        "ledger_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "memory_disposition": null,
+        "operator_priors": [],
+        "outstanding_reviews": [],
+        "proof_reviews": {},
+        "report_refs": [],
+        "reports": {},
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "source_hashes": {
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "submission_refs": []
+      },
+      "schema": "state-snapshot",
+      "valid": true
+    },
+    {
+      "id": "state-snapshot-unknown-property",
+      "record": {
+        "active_blockers": [],
+        "active_environment_ref": null,
+        "artifact_count": 0,
+        "attempt_count": 0,
+        "candidates": {},
+        "cleanup": {
+          "obligations": [],
+          "open_count": 0,
+          "recorded": false
+        },
+        "control_candidates": [],
+        "coverage": "active",
+        "engagement_id": "eng-1",
+        "environment_preflights": {},
+        "event_count": 1,
+        "findings": {},
+        "hypotheses": {},
+        "integrity_errors": [],
+        "last_event_id": "event-scope-1",
+        "ledger_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "manual_note": "forbidden",
+        "memory_disposition": null,
+        "operator_priors": [],
+        "outstanding_reviews": [],
+        "proof_reviews": {},
+        "report_refs": [],
+        "reports": {},
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "source_hashes": {
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "submission_refs": []
+      },
+      "schema": "state-snapshot",
+      "valid": false
+    },
+    {
+      "id": "environment-preflight-minimum",
+      "record": {
+        "collector": {
+          "collector_version": "decision5-preflight-v1",
+          "exit_code": 1,
+          "operation": "package_identity",
+          "reproducible": true,
+          "reproduction_argv": [
+            "python3",
+            "test.py"
+          ],
+          "stderr_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "stdout_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "engagement_id": "eng-1",
+        "fidelity_complete": false,
+        "identity": {
+          "account_role": null,
+          "build_identity": null,
+          "configuration_hash": null,
+          "dependency_lock_hash": null,
+          "dirty_tree_hash": null,
+          "endpoint_identity": null,
+          "expected_identity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "feature_flags": [],
+          "git_commit": null,
+          "runtime_digest": null,
+          "runtime_identity": null,
+          "source_identity": null
+        },
+        "identity_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "missing_fidelity": [
+          {
+            "field": "source_identity",
+            "reason": "legacy fixture"
+          }
+        ],
+        "mode": "package",
+        "preflight_id": "preflight-1",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "safety": {
+          "account_labels": [],
+          "advisory_zone": "clear_local",
+          "cleanup_open_count": 0,
+          "credentials_present": false,
+          "scope_attested": true,
+          "secret_pattern_classes": [],
+          "secret_scan_status": "clean",
+          "zone2_authorization_granted": false,
+          "operator_redaction_attested": true
+        },
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "blocked",
+        "target_refs": []
+      },
+      "schema": "environment-preflight",
+      "valid": true
+    },
+    {
+      "id": "environment-preflight-rich",
+      "record": {
+        "collector": {
+          "collector_version": "decision5-preflight-v1",
+          "exit_code": 0,
+          "operation": "git_identity",
+          "reproducible": true,
+          "reproduction_argv": [
+            "python3",
+            "test.py"
+          ],
+          "stderr_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "stdout_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "engagement_id": "eng-1",
+        "fidelity_complete": true,
+        "identity": {
+          "account_role": "owner",
+          "build_identity": "build-1",
+          "configuration_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "dependency_lock_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "dirty_tree_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "endpoint_identity": "local",
+          "expected_identity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "feature_flags": [
+            "flag-a"
+          ],
+          "git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runtime_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "runtime_identity": "python",
+          "source_identity": "repo"
+        },
+        "identity_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "missing_fidelity": [],
+        "mode": "git",
+        "preflight_id": "preflight-2",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "safety": {
+          "account_labels": [],
+          "advisory_zone": "clear_local",
+          "cleanup_open_count": 0,
+          "credentials_present": false,
+          "scope_attested": true,
+          "secret_pattern_classes": [],
+          "secret_scan_status": "clean",
+          "zone2_authorization_granted": false,
+          "operator_redaction_attested": true
+        },
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "ready",
+        "target_refs": []
+      },
+      "schema": "environment-preflight",
+      "valid": true
+    },
+    {
+      "id": "environment-preflight-unknown-property",
+      "record": {
+        "collector": {
+          "collector_version": "decision5-preflight-v1",
+          "exit_code": 1,
+          "operation": "package_identity",
+          "reproducible": true,
+          "reproduction_argv": [
+            "python3",
+            "test.py"
+          ],
+          "stderr_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "stdout_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "engagement_id": "eng-1",
+        "fidelity_complete": false,
+        "identity": {
+          "account_role": null,
+          "build_identity": null,
+          "configuration_hash": null,
+          "dependency_lock_hash": null,
+          "dirty_tree_hash": null,
+          "endpoint_identity": null,
+          "expected_identity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "feature_flags": [],
+          "git_commit": null,
+          "runtime_digest": null,
+          "runtime_identity": null,
+          "source_identity": null
+        },
+        "identity_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "missing_fidelity": [
+          {
+            "field": "source_identity",
+            "reason": "legacy fixture"
+          }
+        ],
+        "mode": "package",
+        "preflight_id": "preflight-1",
+        "provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": null,
+          "provider": null,
+          "tool_versions": []
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "safety": {
+          "account_labels": [],
+          "advisory_zone": "clear_local",
+          "cleanup_open_count": 0,
+          "credentials_present": false,
+          "scope_attested": true,
+          "secret_pattern_classes": [],
+          "secret_scan_status": "clean",
+          "zone2_authorization_granted": false,
+          "operator_redaction_attested": true
+        },
+        "schema_version": 1,
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "status": "blocked",
+        "target_refs": [],
+        "unknown": "forbidden"
+      },
+      "schema": "environment-preflight",
+      "valid": false
+    },
+    {
+      "id": "report-manifest-minimum",
+      "record": {
+        "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "adjudication_review_ref": "review-1",
+        "claim_proof_matrix_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        "engagement_id": "eng-1",
+        "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "finding_id": "F-1",
+        "finding_revision": 1,
+        "generated_at": "2026-07-10T12:00:00Z",
+        "generator_provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": "report-v1",
+          "provider": null,
+          "tool_versions": [
+            "report-v1"
+          ]
+        },
+        "historical_reason": null,
+        "included_claim_ids": [
+          "claim-1"
+        ],
+        "omitted_claims": [],
+        "operator_status": "draft",
+        "renderer_version": "v1",
+        "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "report_id": "report-1",
+        "report_path": "reports/report-1.md",
+        "schema_version": 1,
+        "template_version": "v1"
+      },
+      "schema": "report-manifest",
+      "valid": true
+    },
+    {
+      "id": "report-manifest-rich",
+      "record": {
+        "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "adjudication_review_ref": "review-1",
+        "claim_proof_matrix_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        "engagement_id": "eng-1",
+        "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "finding_id": "F-1",
+        "finding_revision": 2,
+        "generated_at": "2026-07-10T12:00:00Z",
+        "generator_provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": "report-v1",
+          "provider": null,
+          "tool_versions": [
+            "report-v1"
+          ]
+        },
+        "historical_reason": null,
+        "included_claim_ids": [
+          "claim-1"
+        ],
+        "omitted_claims": [],
+        "operator_status": "accepted",
+        "renderer_version": "v1",
+        "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "report_id": "report-2",
+        "report_path": "reports/report-1.md",
+        "schema_version": 1,
+        "template_version": "v1"
+      },
+      "schema": "report-manifest",
+      "valid": true
+    },
+    {
+      "id": "report-manifest-unknown-property",
+      "record": {
+        "adjudication_review_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "adjudication_review_ref": "review-1",
+        "claim_proof_matrix_hash": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        "engagement_id": "eng-1",
+        "finding_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "finding_id": "F-1",
+        "finding_revision": 1,
+        "generated_at": "2026-07-10T12:00:00Z",
+        "generator_provenance": {
+          "actor": {
+            "id": "operator-1",
+            "role": "operator"
+          },
+          "card_versions": [],
+          "model": null,
+          "prompt_version": "report-v1",
+          "provider": null,
+          "tool_versions": [
+            "report-v1"
+          ]
+        },
+        "historical_reason": null,
+        "included_claim_ids": [
+          "claim-1"
+        ],
+        "omitted_claims": [],
+        "operator_status": "draft",
+        "renderer_version": "v1",
+        "report_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "report_id": "report-1",
+        "report_path": "reports/report-1.md",
+        "schema_version": 1,
+        "template_version": "v1",
+        "unknown": "forbidden"
+      },
+      "schema": "report-manifest",
+      "valid": false
+    },
+    {
+      "id": "memory-disposition-minimum",
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-1",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "no_novel_lesson",
+        "lesson_kind": "none",
+        "lesson_summary": null,
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "not_applicable",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": []
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "no_novel_lesson",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      },
+      "schema": "memory-disposition",
+      "valid": true
+    },
+    {
+      "id": "memory-disposition-rich",
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-2",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "negative",
+        "lesson_summary": "A scrubbed domain-neutral control pattern.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      },
+      "schema": "memory-disposition",
+      "valid": true
+    },
+    {
+      "id": "memory-disposition-unknown-property",
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-1",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "no_novel_lesson",
+        "lesson_kind": "none",
+        "lesson_summary": null,
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "not_applicable",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": []
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "no_novel_lesson",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        },
+        "unknown": "forbidden"
+      },
+      "schema": "memory-disposition",
+      "valid": false
+    },
+    {
+      "id": "migration-manifest-minimum",
+      "record": {
+        "engagement_id": "eng-1",
+        "entries": [],
+        "migration_id": "migration-1",
+        "operator": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "outcome_counts": {
+          "errors": 0,
+          "imported": 0,
+          "needs_review": 0,
+          "skipped": 0
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "source_inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "schema": "migration-manifest",
+      "valid": true
+    },
+    {
+      "id": "migration-manifest-rich",
+      "record": {
+        "engagement_id": "eng-1",
+        "entries": [
+          {
+            "disposition": "imported",
+            "imported_finding_id": "F-legacy-1",
+            "imported_revision": 1,
+            "missing_legacy_evidence": [
+              "attempts",
+              "controls"
+            ],
+            "source_artifact_ref": "artifact-legacy-1",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "source_path": "legacy/F-1.json"
+          }
+        ],
+        "migration_id": "migration-2",
+        "operator": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "outcome_counts": {
+          "errors": 0,
+          "imported": 1,
+          "needs_review": 1,
+          "skipped": 0
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "source_inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "schema": "migration-manifest",
+      "valid": true
+    },
+    {
+      "id": "migration-manifest-unknown-property",
+      "record": {
+        "engagement_id": "eng-1",
+        "entries": [],
+        "migration_id": "migration-1",
+        "operator": {
+          "id": "operator-1",
+          "role": "operator"
+        },
+        "outcome_counts": {
+          "errors": 0,
+          "imported": 0,
+          "needs_review": 0,
+          "skipped": 0
+        },
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "schema_version": 1,
+        "source_inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "unknown": "forbidden"
+      },
+      "schema": "migration-manifest",
+      "valid": false
+    },
+    {
+      "id": "review-regrade-escalation-valid",
+      "record": {
+        "blocked_reason": null,
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "control_applicability": [
+          {
+            "applicable": true,
+            "attempt_ref": "attempt-2",
+            "rationale": "Matched negative."
+          }
+        ],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "escalation_claims": [
+          "Adjacent composition may increase reach."
+        ],
+        "evidence_refs": [
+          "attempt-1"
+        ],
+        "finding_revision": 2,
+        "independence": {
+          "disconfirming_objective": "Refute reachability.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-2",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-regrade-2"
+        },
+        "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_refs": [
+          "finding-1"
+        ],
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proposed_finding_id": "F-1",
+        "rationale": "Fresh regrade found a distinct escalation requiring evidence.",
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "replay_freshness": [
+          {
+            "attempt_ref": "attempt-3",
+            "fresh": true,
+            "rationale": "Fresh checkout."
+          }
+        ],
+        "required_next_actions": [
+          "collect escalation evidence"
+        ],
+        "review_id": "review-regrade-fixture",
+        "review_type": "regrade",
+        "schema_version": 1,
+        "verdict": "escalation_found"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-poc-claim-mismatch-valid",
+      "record": {
+        "blocked_reason": null,
+        "claim_mismatches": [
+          "Impact differs from finding."
+        ],
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "corrections": [
+          "correct report claim"
+        ],
+        "end_to_end_composition_reviewed": false,
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": 2,
+        "high_value": true,
+        "independence": {
+          "disconfirming_objective": "Break end-to-end composition.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-3",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-poc-1"
+        },
+        "input_hash": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "input_refs": [
+          "finding-1"
+        ],
+        "module_level_only": true,
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proof_profile_ref": "artifact-1",
+        "proposed_finding_id": "F-1",
+        "rationale": "Proof demonstrates a different claim tuple.",
+        "recorded_at": "2026-07-10T13:01:00Z",
+        "required_next_actions": [
+          "rerender report"
+        ],
+        "review_id": "review-poc-fixture",
+        "review_type": "pocinator",
+        "reward_hack_indicators": [],
+        "schema_version": 1,
+        "verdict": "claim_mismatch"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-poc-module-only-verified-invalid",
+      "record": {
+        "blocked_reason": null,
+        "claim_mismatches": [],
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "corrections": [
+          "correct report claim"
+        ],
+        "end_to_end_composition_reviewed": false,
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "evidence_refs": [
+          "artifact-1"
+        ],
+        "finding_revision": 2,
+        "high_value": true,
+        "independence": {
+          "disconfirming_objective": "Break end-to-end composition.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-3",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-poc-1"
+        },
+        "input_hash": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+        "input_refs": [
+          "finding-1"
+        ],
+        "module_level_only": true,
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proof_profile_ref": "artifact-1",
+        "proposed_finding_id": "F-1",
+        "rationale": "Proof demonstrates a different claim tuple.",
+        "recorded_at": "2026-07-10T13:01:00Z",
+        "required_next_actions": [
+          "rerender report"
+        ],
+        "review_id": "review-poc-invalid-verified",
+        "review_type": "pocinator",
+        "reward_hack_indicators": [],
+        "schema_version": 1,
+        "verdict": "verified"
+      },
+      "schema": "review",
+      "valid": false
+    },
+    {
+      "id": "review-regrade-correction-valid",
+      "record": {
+        "blocked_reason": null,
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "control_applicability": [
+          {
+            "applicable": true,
+            "attempt_ref": "attempt-2",
+            "rationale": "Matched negative."
+          }
+        ],
+        "corrections": [
+          "Narrow deployment prevalence."
+        ],
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "escalation_claims": [],
+        "evidence_refs": [
+          "attempt-1"
+        ],
+        "finding_revision": 2,
+        "independence": {
+          "disconfirming_objective": "Refute reachability.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-2",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-regrade-2"
+        },
+        "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_refs": [
+          "finding-1"
+        ],
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proposed_finding_id": "F-1",
+        "rationale": "Mechanism holds with narrower deployment claim.",
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "replay_freshness": [
+          {
+            "attempt_ref": "attempt-3",
+            "fresh": true,
+            "rationale": "Fresh checkout."
+          }
+        ],
+        "required_next_actions": [
+          "file contiguous corrected revision"
+        ],
+        "review_id": "review-regrade-correction",
+        "review_type": "regrade",
+        "schema_version": 1,
+        "verdict": "confirmed_with_correction"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "review-regrade-blocked-valid",
+      "record": {
+        "blocked_reason": "Pinned build unavailable.",
+        "claim_tuple_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "conflicting_evidence": [],
+        "control_applicability": [
+          {
+            "applicable": true,
+            "attempt_ref": "attempt-2",
+            "rationale": "Matched negative."
+          }
+        ],
+        "corrections": [],
+        "engagement_id": "eng-1",
+        "entity_ref": "F-1",
+        "escalation_claims": [],
+        "evidence_refs": [
+          "attempt-1"
+        ],
+        "finding_revision": 2,
+        "independence": {
+          "disconfirming_objective": "Refute reachability.",
+          "fresh_context": true,
+          "originating_run_id": "run-origin-1",
+          "prior_verdict_visible": false,
+          "reviewer_id": "reviewer-2",
+          "reviewer_model": "test-model",
+          "reviewer_run_id": "run-regrade-2"
+        },
+        "input_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "input_refs": [
+          "finding-1"
+        ],
+        "prior_review_run_ids": [
+          "run-review-1"
+        ],
+        "proposed_finding_id": "F-1",
+        "rationale": "Environment unavailable; no truth verdict.",
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "replay_freshness": [
+          {
+            "attempt_ref": "attempt-3",
+            "fresh": true,
+            "rationale": "Fresh checkout."
+          }
+        ],
+        "required_next_actions": [
+          "restore pinned build"
+        ],
+        "review_id": "review-regrade-blocked",
+        "review_type": "regrade",
+        "schema_version": 1,
+        "verdict": "blocked"
+      },
+      "schema": "review",
+      "valid": true
+    },
+    {
+      "id": "memory-disposition-refutation",
+      "schema": "memory-disposition",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-refutation",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "refutation",
+        "lesson_summary": "Sanitized refutation lesson.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-disposition-reward_hacked_proof",
+      "schema": "memory-disposition",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-reward-hacked-proof",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "reward_hacked_proof",
+        "lesson_summary": "Sanitized reward hacked proof lesson.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-disposition-environment_failure",
+      "schema": "memory-disposition",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-environment-failure",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "environment_failure",
+        "lesson_summary": "Sanitized environment failure lesson.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-promote-unsanitized",
+      "schema": "memory-disposition",
+      "valid": false,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-2",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "negative",
+        "lesson_summary": "A scrubbed domain-neutral control pattern.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "blocked",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "operator",
+            "id": "operator-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-model-reviewer",
+      "schema": "memory-disposition",
+      "valid": false,
+      "record": {
+        "schema_version": 1,
+        "disposition_id": "memory-2",
+        "engagement_id": "eng-1",
+        "recorded_at": "2026-07-10T12:00:00Z",
+        "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "disposition": "promote",
+        "lesson_kind": "negative",
+        "lesson_summary": "A scrubbed domain-neutral control pattern.",
+        "rationale": "No reusable lesson survived review.",
+        "candidate_refs": [
+          "candidate-1"
+        ],
+        "source_refs": {
+          "event_refs": [],
+          "candidate_refs": [
+            "candidate-1"
+          ],
+          "hypothesis_refs": [],
+          "attempt_refs": [],
+          "artifact_refs": [],
+          "review_refs": [],
+          "finding_refs": [],
+          "environment_refs": []
+        },
+        "sanitization": {
+          "status": "sanitized",
+          "secret_scan_status": "clean",
+          "target_identifiers_removed": true,
+          "credential_values_removed": true,
+          "harmful_recipe_removed": true,
+          "notes": "No lesson content exists to sanitize.",
+          "target_terms_checked": [
+            "eng-1"
+          ]
+        },
+        "human_review": {
+          "reviewer": {
+            "role": "model",
+            "id": "model-1"
+          },
+          "reviewed_at": "2026-07-10T12:00:00Z",
+          "decision": "promote",
+          "rationale": "Operator found no novel lesson.",
+          "source_material_compared": true,
+          "abstraction_only": true,
+          "plane1_pr_required": true
+        },
+        "reopening_condition": null,
+        "provenance": {
+          "actor": {
+            "role": "operator",
+            "id": "operator-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "research-telemetry-minimum",
+      "schema": "research-telemetry",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "export_id": "telemetry-eng-1",
+        "engagement_id": "eng-1",
+        "classification": "telemetry",
+        "source_hashes": {
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "denominator": {
+          "eligible_count": 0,
+          "exported_count": 0,
+          "complete": true
+        },
+        "candidates": [],
+        "cost_totals": {
+          "wall_seconds": null,
+          "model_seconds": null,
+          "tool_seconds": null,
+          "target_calls": null,
+          "model_calls": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": null
+        },
+        "calibration_eligibility": {
+          "eligible": false,
+          "reasons": [
+            "missing_denominator",
+            "small_sample"
+          ]
+        },
+        "policy": {
+          "automatic_card_deletion": false,
+          "automatic_prompt_change": false,
+          "bandit_enabled": false
+        },
+        "cost_coverage": {
+          "attempt_count": 0,
+          "attempts_with_cost": 0,
+          "review_count": 0,
+          "reviews_with_cost": 0
+        },
+        "cost_dimension_coverage": {
+          "wall_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "tool_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "target_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "input_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "output_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "cost_usd": {
+            "records": 0,
+            "measured": 0
+          },
+          "human_review_seconds": {
+            "records": 0,
+            "measured": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "research-telemetry-rich",
+      "schema": "research-telemetry",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "export_id": "telemetry-eng-1",
+        "engagement_id": "eng-1",
+        "classification": "telemetry",
+        "source_hashes": {
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "denominator": {
+          "eligible_count": 1,
+          "exported_count": 1,
+          "complete": true
+        },
+        "candidates": [
+          {
+            "candidate_id": "candidate-1",
+            "eligible_at": "2026-07-10T12:00:00Z",
+            "funnel_states": [
+              "eligible",
+              "selected",
+              "confirmed"
+            ],
+            "card_ids": [
+              "card-1"
+            ],
+            "ex_ante": {
+              "recorded_at": "2026-07-10T12:00:00Z",
+              "recorded_before_outcome": true,
+              "probability": 0.75,
+              "ordinal": "strong"
+            },
+            "outcome": {
+              "label": "positive",
+              "independent": true,
+              "recorded_at": "2026-07-10T13:00:00Z",
+              "review_ref": "review-outcome-1"
+            },
+            "attempt_refs": [
+              "attempt-1"
+            ],
+            "review_refs": [
+              "review-outcome-1"
+            ],
+            "finding_refs": [
+              "F-1"
+            ],
+            "cost": {
+              "wall_seconds": 0,
+              "model_seconds": 0,
+              "tool_seconds": 0,
+              "target_calls": 0,
+              "model_calls": 0,
+              "input_tokens": null,
+              "output_tokens": null,
+              "cost_usd": null,
+              "human_review_seconds": 0
+            },
+            "funnel_history": [
+              {
+                "state": "eligible",
+                "recorded_at": "2026-07-10T12:00:00Z",
+                "source_ref": "event-candidate-1",
+                "rationale": "Candidate entered the complete denominator.",
+                "source_kind": "event",
+                "source_sequence": 1,
+                "source_revision": null
+              },
+              {
+                "state": "selected",
+                "recorded_at": "2026-07-10T12:01:00Z",
+                "source_ref": "event-selected-1",
+                "rationale": "Candidate selected.",
+                "source_kind": "event",
+                "source_sequence": 2,
+                "source_revision": null
+              },
+              {
+                "state": "confirmed",
+                "recorded_at": "2026-07-10T13:00:00Z",
+                "source_ref": "review-outcome-1",
+                "rationale": "Independent positive outcome.",
+                "source_kind": "review",
+                "source_sequence": 0,
+                "source_revision": null
+              }
+            ]
+          }
+        ],
+        "cost_totals": {
+          "wall_seconds": 0,
+          "model_seconds": 0,
+          "tool_seconds": 0,
+          "target_calls": 0,
+          "model_calls": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": 0
+        },
+        "calibration_eligibility": {
+          "eligible": false,
+          "reasons": [
+            "small_sample"
+          ]
+        },
+        "policy": {
+          "automatic_card_deletion": false,
+          "automatic_prompt_change": false,
+          "bandit_enabled": false
+        },
+        "cost_coverage": {
+          "attempt_count": 1,
+          "attempts_with_cost": 1,
+          "review_count": 1,
+          "reviews_with_cost": 1
+        },
+        "cost_dimension_coverage": {
+          "wall_seconds": {
+            "records": 2,
+            "measured": 2
+          },
+          "model_seconds": {
+            "records": 2,
+            "measured": 2
+          },
+          "tool_seconds": {
+            "records": 2,
+            "measured": 2
+          },
+          "target_calls": {
+            "records": 2,
+            "measured": 2
+          },
+          "model_calls": {
+            "records": 2,
+            "measured": 2
+          },
+          "input_tokens": {
+            "records": 2,
+            "measured": 0
+          },
+          "output_tokens": {
+            "records": 2,
+            "measured": 0
+          },
+          "cost_usd": {
+            "records": 2,
+            "measured": 0
+          },
+          "human_review_seconds": {
+            "records": 2,
+            "measured": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "research-telemetry-unknown-property",
+      "schema": "research-telemetry",
+      "valid": false,
+      "record": {
+        "schema_version": 1,
+        "export_id": "telemetry-eng-1",
+        "engagement_id": "eng-1",
+        "classification": "telemetry",
+        "source_hashes": {
+          "events.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "attempts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "artifacts.jsonl": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "denominator": {
+          "eligible_count": 0,
+          "exported_count": 0,
+          "complete": true
+        },
+        "candidates": [],
+        "cost_totals": {
+          "wall_seconds": null,
+          "model_seconds": null,
+          "tool_seconds": null,
+          "target_calls": null,
+          "model_calls": null,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": null
+        },
+        "calibration_eligibility": {
+          "eligible": false,
+          "reasons": [
+            "missing_denominator",
+            "small_sample"
+          ]
+        },
+        "policy": {
+          "automatic_card_deletion": false,
+          "automatic_prompt_change": false,
+          "bandit_enabled": false
+        },
+        "unknown": "forbidden",
+        "cost_coverage": {
+          "attempt_count": 0,
+          "attempts_with_cost": 0,
+          "review_count": 0,
+          "reviews_with_cost": 0
+        },
+        "cost_dimension_coverage": {
+          "wall_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "tool_seconds": {
+            "records": 0,
+            "measured": 0
+          },
+          "target_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "model_calls": {
+            "records": 0,
+            "measured": 0
+          },
+          "input_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "output_tokens": {
+            "records": 0,
+            "measured": 0
+          },
+          "cost_usd": {
+            "records": 0,
+            "measured": 0
+          },
+          "human_review_seconds": {
+            "records": 0,
+            "measured": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "review-candidate-outcome",
+      "schema": "review",
+      "valid": true,
+      "record": {
+        "schema_version": 1,
+        "review_id": "review-candidate-outcome",
+        "engagement_id": "eng-1",
+        "review_type": "candidate_outcome",
+        "proposed_finding_id": null,
+        "entity_ref": "candidate-1",
+        "finding_revision": null,
+        "recorded_at": "2026-07-10T13:00:00Z",
+        "input_refs": [],
+        "input_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "evidence_refs": [],
+        "rationale": "Independent held-out outcome is positive.",
+        "conflicting_evidence": [],
+        "verdict": "positive",
+        "corrections": [],
+        "required_next_actions": [],
+        "independence": {
+          "reviewer_id": "reviewer-2",
+          "reviewer_run_id": "run-2",
+          "reviewer_model": null,
+          "fresh_context": true,
+          "prior_verdict_visible": false,
+          "disconfirming_objective": "Determine outcome without routing confidence.",
+          "originating_run_id": "run-1"
+        },
+        "review_cost": {
+          "wall_seconds": 1,
+          "model_seconds": 0,
+          "tool_seconds": 0,
+          "target_calls": 0,
+          "model_calls": 0,
+          "input_tokens": null,
+          "output_tokens": null,
+          "cost_usd": null,
+          "human_review_seconds": 1
+        }
+      }
+    },
+    {
+      "id": "historical-case-manifest-minimum",
+      "record": {
+        "schema_version": 1,
+        "matrix_id": "matrix-min",
+        "cases": [
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-skills-symlink",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          }
+        ],
+        "policy": {
+          "artifact_execution": false,
+          "historical_answers_exposed_to_runner": false,
+          "target_contact": false,
+          "zone2_creation": false
+        }
+      },
+      "schema": "historical-case-manifest",
+      "valid": true
+    },
+    {
+      "id": "historical-case-manifest-rich",
+      "record": {
+        "cases": [
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-skills-symlink",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "netflix-zuul-stopfilterprocessing",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "api",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "cosmos-iavl-negative-version",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "distributed-systems",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "matomo-coreupdater",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "cosmos-cometbft-leads",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "distributed-systems",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-flags-prototype-pollution",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-workflow-token",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "not_applicable",
+            "blinded_rerun": "regression_only",
+            "case_id": "alsco-royal",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          },
+          {
+            "artifact_replay": "not_applicable",
+            "blinded_rerun": "regression_only",
+            "case_id": "duplogreenengine-rpc-sweep",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "api",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "netflix-atlas-spectator-vercel-ms",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "source-review",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "cybench-xbow-subsets",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "benchmark",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          },
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "false-discovery-known-clean",
+            "contamination_class": "known_clean",
+            "decision5_informed": true,
+            "domain": "hermetic",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "missing",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": false
+          }
+        ],
+        "matrix_id": "decision5-historical-regression-v1",
+        "policy": {
+          "artifact_execution": false,
+          "historical_answers_exposed_to_runner": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "schema_version": 1
+      },
+      "schema": "historical-case-manifest",
+      "valid": true
+    },
+    {
+      "id": "historical-case-manifest-unknown-property",
+      "record": {
+        "schema_version": 1,
+        "matrix_id": "matrix-min",
+        "cases": [
+          {
+            "artifact_replay": "blocked",
+            "blinded_rerun": "regression_only",
+            "case_id": "vercel-skills-symlink",
+            "contamination_class": "decision_informing",
+            "decision5_informed": true,
+            "domain": "web",
+            "lesson_presence": "present",
+            "limitations": [
+              "Historical material informed Decision 0005 and is not an unbiased efficacy holdout.",
+              "No target or artifact execution is authorized by this matrix."
+            ],
+            "reconstruction": "needs_review",
+            "scope_freshness": "stale",
+            "target_identity": "unknown",
+            "withheld_materials": [
+              "findings",
+              "reports",
+              "progress",
+              "pocs",
+              "case_memory",
+              "judge_packet"
+            ],
+            "zone2_may_be_required": true
+          }
+        ],
+        "policy": {
+          "artifact_execution": false,
+          "historical_answers_exposed_to_runner": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "unexpected": true
+      },
+      "schema": "historical-case-manifest",
+      "valid": false
+    },
+    {
+      "id": "retrospective-evaluation-minimum",
+      "record": {
+        "artifact_replay": {
+          "blocked": 10,
+          "case_count": 12,
+          "eligible": 0,
+          "executed": 0,
+          "not_applicable": 2,
+          "status": "not_run"
+        },
+        "blinded_rerun": {
+          "blocked": 0,
+          "case_count": 12,
+          "holdout_eligible": 0,
+          "paired_runs_executed": 0,
+          "regression_only": 12,
+          "status": "not_run"
+        },
+        "case_matrix_hash": "sha256:32715e1065aadae1c3b6638f10559c735cf920d0f9a9f6aa34b05bf14d96e24b",
+        "claims": {
+          "architecture_conformance": "demonstrated",
+          "demonstrated_efficacy": "not_demonstrated",
+          "historical_reconstruction": "not_demonstrated",
+          "prospective_release": "not_qualified",
+          "regression_parity": "not_demonstrated"
+        },
+        "evaluation_id": "decision5-retrospective-v1",
+        "hard_gates": {
+          "artifact_integrity_violations": null,
+          "known_clean_invalid_accepts": null,
+          "report_link_violations": null,
+          "safety_violations": 0,
+          "secrets_stored": 0,
+          "unsupported_impact_regression": "not_measured"
+        },
+        "inventory_hash": "sha256:09041202dad535776f7dbadaa17f4a789e1963358fd2acaca08e417561675077",
+        "policy": {
+          "artifact_execution": false,
+          "invented_results": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "record_reconstruction": {
+          "exact_resume": "not_run",
+          "invented_attempts": 0,
+          "needs_review": 136154,
+          "representable": 0,
+          "source_bytes_modified": false,
+          "source_count": 136154
+        },
+        "schema_version": 1
+      },
+      "schema": "retrospective-evaluation",
+      "valid": true
+    },
+    {
+      "id": "retrospective-evaluation-rich",
+      "record": {
+        "artifact_replay": {
+          "blocked": 10,
+          "case_count": 12,
+          "eligible": 0,
+          "executed": 0,
+          "not_applicable": 2,
+          "status": "not_run"
+        },
+        "blinded_rerun": {
+          "blocked": 0,
+          "case_count": 12,
+          "holdout_eligible": 0,
+          "paired_runs_executed": 0,
+          "regression_only": 12,
+          "status": "not_run"
+        },
+        "case_matrix_hash": "sha256:32715e1065aadae1c3b6638f10559c735cf920d0f9a9f6aa34b05bf14d96e24b",
+        "claims": {
+          "architecture_conformance": "demonstrated",
+          "demonstrated_efficacy": "not_demonstrated",
+          "historical_reconstruction": "not_demonstrated",
+          "prospective_release": "not_qualified",
+          "regression_parity": "not_demonstrated"
+        },
+        "evaluation_id": "decision5-retrospective-v1",
+        "hard_gates": {
+          "artifact_integrity_violations": null,
+          "known_clean_invalid_accepts": null,
+          "report_link_violations": null,
+          "safety_violations": 0,
+          "secrets_stored": 0,
+          "unsupported_impact_regression": "not_measured"
+        },
+        "inventory_hash": "sha256:09041202dad535776f7dbadaa17f4a789e1963358fd2acaca08e417561675077",
+        "policy": {
+          "artifact_execution": false,
+          "invented_results": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "record_reconstruction": {
+          "exact_resume": "not_run",
+          "invented_attempts": 0,
+          "needs_review": 136154,
+          "representable": 0,
+          "source_bytes_modified": false,
+          "source_count": 136154
+        },
+        "schema_version": 1
+      },
+      "schema": "retrospective-evaluation",
+      "valid": true
+    },
+    {
+      "id": "retrospective-evaluation-unknown-property",
+      "record": {
+        "artifact_replay": {
+          "blocked": 10,
+          "case_count": 12,
+          "eligible": 0,
+          "executed": 0,
+          "not_applicable": 2,
+          "status": "not_run"
+        },
+        "blinded_rerun": {
+          "blocked": 0,
+          "case_count": 12,
+          "holdout_eligible": 0,
+          "paired_runs_executed": 0,
+          "regression_only": 12,
+          "status": "not_run"
+        },
+        "case_matrix_hash": "sha256:32715e1065aadae1c3b6638f10559c735cf920d0f9a9f6aa34b05bf14d96e24b",
+        "claims": {
+          "architecture_conformance": "demonstrated",
+          "demonstrated_efficacy": "not_demonstrated",
+          "historical_reconstruction": "not_demonstrated",
+          "prospective_release": "not_qualified",
+          "regression_parity": "not_demonstrated"
+        },
+        "evaluation_id": "decision5-retrospective-v1",
+        "hard_gates": {
+          "artifact_integrity_violations": null,
+          "known_clean_invalid_accepts": null,
+          "report_link_violations": null,
+          "safety_violations": 0,
+          "secrets_stored": 0,
+          "unsupported_impact_regression": "not_measured"
+        },
+        "inventory_hash": "sha256:09041202dad535776f7dbadaa17f4a789e1963358fd2acaca08e417561675077",
+        "policy": {
+          "artifact_execution": false,
+          "invented_results": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "record_reconstruction": {
+          "exact_resume": "not_run",
+          "invented_attempts": 0,
+          "needs_review": 136154,
+          "representable": 0,
+          "source_bytes_modified": false,
+          "source_count": 136154
+        },
+        "schema_version": 1,
+        "unexpected": true
+      },
+      "schema": "retrospective-evaluation",
+      "valid": false
+    },
+    {
+      "id": "ab-preregistration-minimum",
+      "record": {
+        "adjudication": {
+          "blind_arm_labels": true,
+          "cold_primary_evidence": true,
+          "evidence_ref": null,
+          "independent_panel_registered": false,
+          "judge_packet_sealed": false,
+          "tie_rule_registered": false
+        },
+        "allowed_actions": [
+          "Only actions in the future signed hermetic case scope."
+        ],
+        "analysis_plan": "paired_case_deltas_exact_counts_publish_all_cases_no_unplanned_peeking",
+        "arms": [
+          {
+            "blind_label": "arm-x",
+            "source": {
+              "commit": "34351f0431ed5d1faa04b6237961ca89abdebecb",
+              "files": [
+                {
+                  "path": "engine/loop.md",
+                  "sha256": "sha256:f157386d9fd20cfa85508d016db702a383da2c25e9b87c308175f06d69c6977a"
+                },
+                {
+                  "path": "engine/persistence.md",
+                  "sha256": "sha256:36993322e676cbcc8ed1c20763ac665250c4a9a5c5e9bcab5e28c2024419d031"
+                },
+                {
+                  "path": "engine/pocinator.md",
+                  "sha256": "sha256:13809386b752b1bb20176134b7d73cc7a5f92547eee2f9340aff4d86ef62ceec"
+                },
+                {
+                  "path": "engine/regrade.md",
+                  "sha256": "sha256:0ba58974b8073d2b760c656013b07e9e525c0792a3ece28dcd4a595275bc9f7e"
+                },
+                {
+                  "path": "engine/routing.md",
+                  "sha256": "sha256:3a4345b3dfb325528842f9937a92311c558af91d643db154cf764152935e48b2"
+                },
+                {
+                  "path": "schemas/attempt.schema.json",
+                  "sha256": "sha256:d504b5cd9786354e59d7c98c4a18b0a8d5e52cdf0eca018fe48ac0a8bbbb888b"
+                },
+                {
+                  "path": "schemas/finding.schema.json",
+                  "sha256": "sha256:51cc94678a1954943ab891987a3f8f1096c15acb7f71a5a657947c88a1a2a6ad"
+                }
+              ],
+              "git_tree": "641b2d6a5d286d61241c66601bd188ad41b072aa",
+              "tree_hash": "sha256:ed99e9bbc7193d5a7fbdc989a9b543daae97c0678e48dacd48d7014b80c3158a"
+            },
+            "treatment": "staged_baseline"
+          },
+          {
+            "blind_label": "arm-y",
+            "source": {
+              "commit": "ee8e265c2d4b5a661b7da667805b05e1a9e67a83",
+              "files": [
+                {
+                  "path": "engine/loop.md",
+                  "sha256": "sha256:01d86e01d7c2266a13fc46bd76601b0574c2a212eb9de1d366410f242bdf782a"
+                },
+                {
+                  "path": "engine/persistence.md",
+                  "sha256": "sha256:4fae97f3dfc136d58d208c5786876ce4c88676d6a6204046ee6ad0fb397eb6dc"
+                },
+                {
+                  "path": "engine/pocinator.md",
+                  "sha256": "sha256:6624e9ed7b67382c2d3fb6220aa293212523c28654eabfd7c63a53622538f2e0"
+                },
+                {
+                  "path": "engine/regrade.md",
+                  "sha256": "sha256:ff8863c3ea4163ed4c848a9d696fa49176851ce49495e0ae90551d4ec6b7b145"
+                },
+                {
+                  "path": "engine/routing.md",
+                  "sha256": "sha256:3a4345b3dfb325528842f9937a92311c558af91d643db154cf764152935e48b2"
+                },
+                {
+                  "path": "schemas/artifact.schema.json",
+                  "sha256": "sha256:f8ac5ff5c13e77db5e103aa0f6b4671d88522944eb977a48832f6d7bbc1a9349"
+                },
+                {
+                  "path": "schemas/attempt-v2.schema.json",
+                  "sha256": "sha256:26b6d936e2f89cf16ee01701ddace88fbf4279ae9e695716cb6debd8cd02c271"
+                },
+                {
+                  "path": "schemas/engagement-event.schema.json",
+                  "sha256": "sha256:621c5959db986639cc11393a8ad0c4274bfb834eb980eab6080ab16604d92955"
+                },
+                {
+                  "path": "schemas/environment-preflight.schema.json",
+                  "sha256": "sha256:00f22fdc9b7f360dde0d293d6215313484f5ffa869661530090dcdca2ee694f8"
+                },
+                {
+                  "path": "schemas/finding-v3.schema.json",
+                  "sha256": "sha256:013b0234e41067e0ff5f77dccb63ded73077ac9cf209a70e106bd9ae56c6a423"
+                },
+                {
+                  "path": "schemas/memory-disposition.schema.json",
+                  "sha256": "sha256:14485db62fae90b4de8808329334d2239498584b7b60faaf71d845ef159a4bf6"
+                },
+                {
+                  "path": "schemas/report-manifest.schema.json",
+                  "sha256": "sha256:73034f27f363add11b3add97cadb4f6dec0017a734e66a66cfa6b96d71b6d5bd"
+                },
+                {
+                  "path": "schemas/research-telemetry.schema.json",
+                  "sha256": "sha256:c20ff2be8a02e66d5ec26a45936ae29fd156b7026fedb7e1f54e784fe1fca63f"
+                },
+                {
+                  "path": "schemas/review.schema.json",
+                  "sha256": "sha256:fd37d233463ba509d7b12b94bec7c9bc1313b42d9ea02ebf46a4a07ae69123d6"
+                },
+                {
+                  "path": "tools/engagement_state.py",
+                  "sha256": "sha256:2df5e76ba0ba6ddff03d210b739dabf6a1b7f10a69b3ef32a4c3a57390e3daaa"
+                },
+                {
+                  "path": "tools/environment_preflight.py",
+                  "sha256": "sha256:d5e134b5841be4bfdb0b2adf3ed8c0dbffd14afa8087907e417641ee18b1284a"
+                },
+                {
+                  "path": "tools/memory_disposition.py",
+                  "sha256": "sha256:f459abb1e1ef945c00de386e57fbf269df8736d99145c60556af4c362e31a4eb"
+                },
+                {
+                  "path": "tools/reporting.py",
+                  "sha256": "sha256:876463955069ca55573e422683d59dae9bc510e30f37ffa2f34f83fccb9f9a72"
+                },
+                {
+                  "path": "tools/research_telemetry.py",
+                  "sha256": "sha256:2e8483b2f5071e1e66254578bb307b57f5e2961bff923a2bf27c316f5642d881"
+                },
+                {
+                  "path": "tools/run-engagement.py",
+                  "sha256": "sha256:60100b4d1a18b704dc7b303a9eef4f67af34e28217cfd6cf9e6ef9a0995e4ba3"
+                }
+              ],
+              "git_tree": "5266945506ca92efef2932f8563bbbfe836c384e",
+              "tree_hash": "sha256:37f0ae416fa39631a136164ec3e517cab9dbf1774275b8ed12c4fdae277aeb80"
+            },
+            "treatment": "decision_0005_kernel"
+          }
+        ],
+        "blocked_run_treatment": "publish_and_exclude_from_effect_imputation",
+        "case_isolation_plan_ref": null,
+        "co_primary_endpoints": [
+          "rigor_non_inferiority",
+          "resolution_benefit"
+        ],
+        "common_safety_overlay": {
+          "commit": "ee8e265c2d4b5a661b7da667805b05e1a9e67a83",
+          "files": [
+            {
+              "path": "AGENTS.md",
+              "sha256": "sha256:bbc01628bec07dd64c9229e4314a513c161ad07c7e6606cbaae8d7f9856c747b"
+            },
+            {
+              "path": "engagements/_TEMPLATE/scope.md",
+              "sha256": "sha256:2bfe520a65dbb7e65628b23d9a9d1f9b505a3688937d1929c438f5969f85b27d"
+            },
+            {
+              "path": "engine/gates.md",
+              "sha256": "sha256:3950a267cf540d52f39ac174048052a3e0794bf3772aaa3ecb10f8bb05ec9386"
+            },
+            {
+              "path": "skills/oracles/adjudication-oracle.md",
+              "sha256": "sha256:0c92317387a92d331fec3b5fd9dd71ede06ac4e32f0afbaf8ec755784ef0233a"
+            }
+          ],
+          "git_tree": "5266945506ca92efef2932f8563bbbfe836c384e",
+          "tree_hash": "sha256:5debeb216f72a1d923a1ed7b6510d7d4bfb841294673a5a0b5e16e0799ddca9c"
+        },
+        "contamination_rules": [
+          "Independent sessions, filesystems, target copies, and no shared notes.",
+          "Withhold findings, reports, PoCs, progress, case memory, and judge packets until outputs freeze."
+        ],
+        "endpoint_definitions": {
+          "resolution_minimum_effect": null,
+          "rigor_non_inferiority_margin": 0.0
+        },
+        "exclusion_rules": [
+          "Any historical case or lesson that informed Decision 0005.",
+          "Any case requiring shared live state or contact with an old target."
+        ],
+        "execution_authorized": false,
+        "exploratory": true,
+        "inclusion_rules": [
+          "Sealed local known-truth cases not used to design Decision 0005.",
+          "Pinned target identity and hermetic signed scope available before assignment."
+        ],
+        "lane": "sealed_known_truth",
+        "matching": {
+          "call_budget": null,
+          "filesystem_isolation": true,
+          "model_provider_version": null,
+          "model_runtime_hash": null,
+          "session_isolation": true,
+          "starting_information": "identical_recon_only",
+          "target_copy": "independent_per_arm",
+          "time_budget": null,
+          "tool_runtime_hash": null,
+          "tools": []
+        },
+        "minimum_practical_effect": null,
+        "no_peeking": true,
+        "power_basis": "unavailable",
+        "root_cause_deduplication": [
+          "Deduplicate by mechanism, reachability boundary, and oracle-distinct root cause."
+        ],
+        "safety": {
+          "cleanup_required": true,
+          "identical_root_gates": true,
+          "operator_only_filing": true,
+          "shared_live_state_forbidden": true,
+          "zone2_fresh_confirmation": true
+        },
+        "safety_stops": [
+          "Stop on scope drift, identity drift, cleanup debt, secret-shaped content, or any Zone-2 step without fresh confirmation."
+        ],
+        "sample_size": null,
+        "schema_version": 1,
+        "secondary_endpoints": [
+          "persistence recovery",
+          "valid coverage closure",
+          "time and cost to resolution",
+          "human review burden",
+          "forced-resume correctness",
+          "report claim-to-proof completeness"
+        ],
+        "status": "draft_not_authorized",
+        "study_evidence_ref": null,
+        "study_id": "decision5-prospective-pilot-draft-v1",
+        "target_strata": [
+          {
+            "difficulty": "to_be_registered",
+            "domain": "to_be_registered",
+            "mode": "hermetic",
+            "size": "to_be_registered",
+            "truth_class": "unknown"
+          }
+        ],
+        "withheld_material_manifest_ref": null
+      },
+      "schema": "ab-preregistration",
+      "valid": true
+    },
+    {
+      "id": "ab-preregistration-rich",
+      "record": {
+        "adjudication": {
+          "blind_arm_labels": true,
+          "cold_primary_evidence": true,
+          "evidence_ref": null,
+          "independent_panel_registered": false,
+          "judge_packet_sealed": false,
+          "tie_rule_registered": false
+        },
+        "allowed_actions": [
+          "Only actions in the future signed hermetic case scope."
+        ],
+        "analysis_plan": "paired_case_deltas_exact_counts_publish_all_cases_no_unplanned_peeking",
+        "arms": [
+          {
+            "blind_label": "arm-x",
+            "source": {
+              "commit": "34351f0431ed5d1faa04b6237961ca89abdebecb",
+              "files": [
+                {
+                  "path": "engine/loop.md",
+                  "sha256": "sha256:f157386d9fd20cfa85508d016db702a383da2c25e9b87c308175f06d69c6977a"
+                },
+                {
+                  "path": "engine/persistence.md",
+                  "sha256": "sha256:36993322e676cbcc8ed1c20763ac665250c4a9a5c5e9bcab5e28c2024419d031"
+                },
+                {
+                  "path": "engine/pocinator.md",
+                  "sha256": "sha256:13809386b752b1bb20176134b7d73cc7a5f92547eee2f9340aff4d86ef62ceec"
+                },
+                {
+                  "path": "engine/regrade.md",
+                  "sha256": "sha256:0ba58974b8073d2b760c656013b07e9e525c0792a3ece28dcd4a595275bc9f7e"
+                },
+                {
+                  "path": "engine/routing.md",
+                  "sha256": "sha256:3a4345b3dfb325528842f9937a92311c558af91d643db154cf764152935e48b2"
+                },
+                {
+                  "path": "schemas/attempt.schema.json",
+                  "sha256": "sha256:d504b5cd9786354e59d7c98c4a18b0a8d5e52cdf0eca018fe48ac0a8bbbb888b"
+                },
+                {
+                  "path": "schemas/finding.schema.json",
+                  "sha256": "sha256:51cc94678a1954943ab891987a3f8f1096c15acb7f71a5a657947c88a1a2a6ad"
+                }
+              ],
+              "git_tree": "641b2d6a5d286d61241c66601bd188ad41b072aa",
+              "tree_hash": "sha256:ed99e9bbc7193d5a7fbdc989a9b543daae97c0678e48dacd48d7014b80c3158a"
+            },
+            "treatment": "staged_baseline"
+          },
+          {
+            "blind_label": "arm-y",
+            "source": {
+              "commit": "ee8e265c2d4b5a661b7da667805b05e1a9e67a83",
+              "files": [
+                {
+                  "path": "engine/loop.md",
+                  "sha256": "sha256:01d86e01d7c2266a13fc46bd76601b0574c2a212eb9de1d366410f242bdf782a"
+                },
+                {
+                  "path": "engine/persistence.md",
+                  "sha256": "sha256:4fae97f3dfc136d58d208c5786876ce4c88676d6a6204046ee6ad0fb397eb6dc"
+                },
+                {
+                  "path": "engine/pocinator.md",
+                  "sha256": "sha256:6624e9ed7b67382c2d3fb6220aa293212523c28654eabfd7c63a53622538f2e0"
+                },
+                {
+                  "path": "engine/regrade.md",
+                  "sha256": "sha256:ff8863c3ea4163ed4c848a9d696fa49176851ce49495e0ae90551d4ec6b7b145"
+                },
+                {
+                  "path": "engine/routing.md",
+                  "sha256": "sha256:3a4345b3dfb325528842f9937a92311c558af91d643db154cf764152935e48b2"
+                },
+                {
+                  "path": "schemas/artifact.schema.json",
+                  "sha256": "sha256:f8ac5ff5c13e77db5e103aa0f6b4671d88522944eb977a48832f6d7bbc1a9349"
+                },
+                {
+                  "path": "schemas/attempt-v2.schema.json",
+                  "sha256": "sha256:26b6d936e2f89cf16ee01701ddace88fbf4279ae9e695716cb6debd8cd02c271"
+                },
+                {
+                  "path": "schemas/engagement-event.schema.json",
+                  "sha256": "sha256:621c5959db986639cc11393a8ad0c4274bfb834eb980eab6080ab16604d92955"
+                },
+                {
+                  "path": "schemas/environment-preflight.schema.json",
+                  "sha256": "sha256:00f22fdc9b7f360dde0d293d6215313484f5ffa869661530090dcdca2ee694f8"
+                },
+                {
+                  "path": "schemas/finding-v3.schema.json",
+                  "sha256": "sha256:013b0234e41067e0ff5f77dccb63ded73077ac9cf209a70e106bd9ae56c6a423"
+                },
+                {
+                  "path": "schemas/memory-disposition.schema.json",
+                  "sha256": "sha256:14485db62fae90b4de8808329334d2239498584b7b60faaf71d845ef159a4bf6"
+                },
+                {
+                  "path": "schemas/report-manifest.schema.json",
+                  "sha256": "sha256:73034f27f363add11b3add97cadb4f6dec0017a734e66a66cfa6b96d71b6d5bd"
+                },
+                {
+                  "path": "schemas/research-telemetry.schema.json",
+                  "sha256": "sha256:c20ff2be8a02e66d5ec26a45936ae29fd156b7026fedb7e1f54e784fe1fca63f"
+                },
+                {
+                  "path": "schemas/review.schema.json",
+                  "sha256": "sha256:fd37d233463ba509d7b12b94bec7c9bc1313b42d9ea02ebf46a4a07ae69123d6"
+                },
+                {
+                  "path": "tools/engagement_state.py",
+                  "sha256": "sha256:2df5e76ba0ba6ddff03d210b739dabf6a1b7f10a69b3ef32a4c3a57390e3daaa"
+                },
+                {
+                  "path": "tools/environment_preflight.py",
+                  "sha256": "sha256:d5e134b5841be4bfdb0b2adf3ed8c0dbffd14afa8087907e417641ee18b1284a"
+                },
+                {
+                  "path": "tools/memory_disposition.py",
+                  "sha256": "sha256:f459abb1e1ef945c00de386e57fbf269df8736d99145c60556af4c362e31a4eb"
+                },
+                {
+                  "path": "tools/reporting.py",
+                  "sha256": "sha256:876463955069ca55573e422683d59dae9bc510e30f37ffa2f34f83fccb9f9a72"
+                },
+                {
+                  "path": "tools/research_telemetry.py",
+                  "sha256": "sha256:2e8483b2f5071e1e66254578bb307b57f5e2961bff923a2bf27c316f5642d881"
+                },
+                {
+                  "path": "tools/run-engagement.py",
+                  "sha256": "sha256:60100b4d1a18b704dc7b303a9eef4f67af34e28217cfd6cf9e6ef9a0995e4ba3"
+                }
+              ],
+              "git_tree": "5266945506ca92efef2932f8563bbbfe836c384e",
+              "tree_hash": "sha256:37f0ae416fa39631a136164ec3e517cab9dbf1774275b8ed12c4fdae277aeb80"
+            },
+            "treatment": "decision_0005_kernel"
+          }
+        ],
+        "blocked_run_treatment": "publish_and_exclude_from_effect_imputation",
+        "case_isolation_plan_ref": null,
+        "co_primary_endpoints": [
+          "rigor_non_inferiority",
+          "resolution_benefit"
+        ],
+        "common_safety_overlay": {
+          "commit": "ee8e265c2d4b5a661b7da667805b05e1a9e67a83",
+          "files": [
+            {
+              "path": "AGENTS.md",
+              "sha256": "sha256:bbc01628bec07dd64c9229e4314a513c161ad07c7e6606cbaae8d7f9856c747b"
+            },
+            {
+              "path": "engagements/_TEMPLATE/scope.md",
+              "sha256": "sha256:2bfe520a65dbb7e65628b23d9a9d1f9b505a3688937d1929c438f5969f85b27d"
+            },
+            {
+              "path": "engine/gates.md",
+              "sha256": "sha256:3950a267cf540d52f39ac174048052a3e0794bf3772aaa3ecb10f8bb05ec9386"
+            },
+            {
+              "path": "skills/oracles/adjudication-oracle.md",
+              "sha256": "sha256:0c92317387a92d331fec3b5fd9dd71ede06ac4e32f0afbaf8ec755784ef0233a"
+            }
+          ],
+          "git_tree": "5266945506ca92efef2932f8563bbbfe836c384e",
+          "tree_hash": "sha256:5debeb216f72a1d923a1ed7b6510d7d4bfb841294673a5a0b5e16e0799ddca9c"
+        },
+        "contamination_rules": [
+          "Independent sessions, filesystems, target copies, and no shared notes.",
+          "Withhold findings, reports, PoCs, progress, case memory, and judge packets until outputs freeze."
+        ],
+        "endpoint_definitions": {
+          "resolution_minimum_effect": null,
+          "rigor_non_inferiority_margin": 0.0
+        },
+        "exclusion_rules": [
+          "Any historical case or lesson that informed Decision 0005.",
+          "Any case requiring shared live state or contact with an old target."
+        ],
+        "execution_authorized": false,
+        "exploratory": true,
+        "inclusion_rules": [
+          "Sealed local known-truth cases not used to design Decision 0005.",
+          "Pinned target identity and hermetic signed scope available before assignment."
+        ],
+        "lane": "sealed_known_truth",
+        "matching": {
+          "call_budget": null,
+          "filesystem_isolation": true,
+          "model_provider_version": null,
+          "model_runtime_hash": null,
+          "session_isolation": true,
+          "starting_information": "identical_recon_only",
+          "target_copy": "independent_per_arm",
+          "time_budget": null,
+          "tool_runtime_hash": null,
+          "tools": []
+        },
+        "minimum_practical_effect": null,
+        "no_peeking": true,
+        "power_basis": "unavailable",
+        "root_cause_deduplication": [
+          "Deduplicate by mechanism, reachability boundary, and oracle-distinct root cause."
+        ],
+        "safety": {
+          "cleanup_required": true,
+          "identical_root_gates": true,
+          "operator_only_filing": true,
+          "shared_live_state_forbidden": true,
+          "zone2_fresh_confirmation": true
+        },
+        "safety_stops": [
+          "Stop on scope drift, identity drift, cleanup debt, secret-shaped content, or any Zone-2 step without fresh confirmation."
+        ],
+        "sample_size": null,
+        "schema_version": 1,
+        "secondary_endpoints": [
+          "persistence recovery",
+          "valid coverage closure",
+          "time and cost to resolution",
+          "human review burden",
+          "forced-resume correctness",
+          "report claim-to-proof completeness"
+        ],
+        "status": "draft_not_authorized",
+        "study_evidence_ref": null,
+        "study_id": "decision5-prospective-pilot-draft-v1",
+        "target_strata": [
+          {
+            "difficulty": "to_be_registered",
+            "domain": "to_be_registered",
+            "mode": "hermetic",
+            "size": "to_be_registered",
+            "truth_class": "unknown"
+          }
+        ],
+        "withheld_material_manifest_ref": null
+      },
+      "schema": "ab-preregistration",
+      "valid": true
+    },
+    {
+      "id": "ab-preregistration-unknown-property",
+      "record": {
+        "adjudication": {
+          "blind_arm_labels": true,
+          "cold_primary_evidence": true,
+          "evidence_ref": null,
+          "independent_panel_registered": false,
+          "judge_packet_sealed": false,
+          "tie_rule_registered": false
+        },
+        "allowed_actions": [
+          "Only actions in the future signed hermetic case scope."
+        ],
+        "analysis_plan": "paired_case_deltas_exact_counts_publish_all_cases_no_unplanned_peeking",
+        "arms": [
+          {
+            "blind_label": "arm-x",
+            "source": {
+              "commit": "34351f0431ed5d1faa04b6237961ca89abdebecb",
+              "files": [
+                {
+                  "path": "engine/loop.md",
+                  "sha256": "sha256:f157386d9fd20cfa85508d016db702a383da2c25e9b87c308175f06d69c6977a"
+                },
+                {
+                  "path": "engine/persistence.md",
+                  "sha256": "sha256:36993322e676cbcc8ed1c20763ac665250c4a9a5c5e9bcab5e28c2024419d031"
+                },
+                {
+                  "path": "engine/pocinator.md",
+                  "sha256": "sha256:13809386b752b1bb20176134b7d73cc7a5f92547eee2f9340aff4d86ef62ceec"
+                },
+                {
+                  "path": "engine/regrade.md",
+                  "sha256": "sha256:0ba58974b8073d2b760c656013b07e9e525c0792a3ece28dcd4a595275bc9f7e"
+                },
+                {
+                  "path": "engine/routing.md",
+                  "sha256": "sha256:3a4345b3dfb325528842f9937a92311c558af91d643db154cf764152935e48b2"
+                },
+                {
+                  "path": "schemas/attempt.schema.json",
+                  "sha256": "sha256:d504b5cd9786354e59d7c98c4a18b0a8d5e52cdf0eca018fe48ac0a8bbbb888b"
+                },
+                {
+                  "path": "schemas/finding.schema.json",
+                  "sha256": "sha256:51cc94678a1954943ab891987a3f8f1096c15acb7f71a5a657947c88a1a2a6ad"
+                }
+              ],
+              "git_tree": "641b2d6a5d286d61241c66601bd188ad41b072aa",
+              "tree_hash": "sha256:ed99e9bbc7193d5a7fbdc989a9b543daae97c0678e48dacd48d7014b80c3158a"
+            },
+            "treatment": "staged_baseline"
+          },
+          {
+            "blind_label": "arm-y",
+            "source": {
+              "commit": "ee8e265c2d4b5a661b7da667805b05e1a9e67a83",
+              "files": [
+                {
+                  "path": "engine/loop.md",
+                  "sha256": "sha256:01d86e01d7c2266a13fc46bd76601b0574c2a212eb9de1d366410f242bdf782a"
+                },
+                {
+                  "path": "engine/persistence.md",
+                  "sha256": "sha256:4fae97f3dfc136d58d208c5786876ce4c88676d6a6204046ee6ad0fb397eb6dc"
+                },
+                {
+                  "path": "engine/pocinator.md",
+                  "sha256": "sha256:6624e9ed7b67382c2d3fb6220aa293212523c28654eabfd7c63a53622538f2e0"
+                },
+                {
+                  "path": "engine/regrade.md",
+                  "sha256": "sha256:ff8863c3ea4163ed4c848a9d696fa49176851ce49495e0ae90551d4ec6b7b145"
+                },
+                {
+                  "path": "engine/routing.md",
+                  "sha256": "sha256:3a4345b3dfb325528842f9937a92311c558af91d643db154cf764152935e48b2"
+                },
+                {
+                  "path": "schemas/artifact.schema.json",
+                  "sha256": "sha256:f8ac5ff5c13e77db5e103aa0f6b4671d88522944eb977a48832f6d7bbc1a9349"
+                },
+                {
+                  "path": "schemas/attempt-v2.schema.json",
+                  "sha256": "sha256:26b6d936e2f89cf16ee01701ddace88fbf4279ae9e695716cb6debd8cd02c271"
+                },
+                {
+                  "path": "schemas/engagement-event.schema.json",
+                  "sha256": "sha256:621c5959db986639cc11393a8ad0c4274bfb834eb980eab6080ab16604d92955"
+                },
+                {
+                  "path": "schemas/environment-preflight.schema.json",
+                  "sha256": "sha256:00f22fdc9b7f360dde0d293d6215313484f5ffa869661530090dcdca2ee694f8"
+                },
+                {
+                  "path": "schemas/finding-v3.schema.json",
+                  "sha256": "sha256:013b0234e41067e0ff5f77dccb63ded73077ac9cf209a70e106bd9ae56c6a423"
+                },
+                {
+                  "path": "schemas/memory-disposition.schema.json",
+                  "sha256": "sha256:14485db62fae90b4de8808329334d2239498584b7b60faaf71d845ef159a4bf6"
+                },
+                {
+                  "path": "schemas/report-manifest.schema.json",
+                  "sha256": "sha256:73034f27f363add11b3add97cadb4f6dec0017a734e66a66cfa6b96d71b6d5bd"
+                },
+                {
+                  "path": "schemas/research-telemetry.schema.json",
+                  "sha256": "sha256:c20ff2be8a02e66d5ec26a45936ae29fd156b7026fedb7e1f54e784fe1fca63f"
+                },
+                {
+                  "path": "schemas/review.schema.json",
+                  "sha256": "sha256:fd37d233463ba509d7b12b94bec7c9bc1313b42d9ea02ebf46a4a07ae69123d6"
+                },
+                {
+                  "path": "tools/engagement_state.py",
+                  "sha256": "sha256:2df5e76ba0ba6ddff03d210b739dabf6a1b7f10a69b3ef32a4c3a57390e3daaa"
+                },
+                {
+                  "path": "tools/environment_preflight.py",
+                  "sha256": "sha256:d5e134b5841be4bfdb0b2adf3ed8c0dbffd14afa8087907e417641ee18b1284a"
+                },
+                {
+                  "path": "tools/memory_disposition.py",
+                  "sha256": "sha256:f459abb1e1ef945c00de386e57fbf269df8736d99145c60556af4c362e31a4eb"
+                },
+                {
+                  "path": "tools/reporting.py",
+                  "sha256": "sha256:876463955069ca55573e422683d59dae9bc510e30f37ffa2f34f83fccb9f9a72"
+                },
+                {
+                  "path": "tools/research_telemetry.py",
+                  "sha256": "sha256:2e8483b2f5071e1e66254578bb307b57f5e2961bff923a2bf27c316f5642d881"
+                },
+                {
+                  "path": "tools/run-engagement.py",
+                  "sha256": "sha256:60100b4d1a18b704dc7b303a9eef4f67af34e28217cfd6cf9e6ef9a0995e4ba3"
+                }
+              ],
+              "git_tree": "5266945506ca92efef2932f8563bbbfe836c384e",
+              "tree_hash": "sha256:37f0ae416fa39631a136164ec3e517cab9dbf1774275b8ed12c4fdae277aeb80"
+            },
+            "treatment": "decision_0005_kernel"
+          }
+        ],
+        "blocked_run_treatment": "publish_and_exclude_from_effect_imputation",
+        "case_isolation_plan_ref": null,
+        "co_primary_endpoints": [
+          "rigor_non_inferiority",
+          "resolution_benefit"
+        ],
+        "common_safety_overlay": {
+          "commit": "ee8e265c2d4b5a661b7da667805b05e1a9e67a83",
+          "files": [
+            {
+              "path": "AGENTS.md",
+              "sha256": "sha256:bbc01628bec07dd64c9229e4314a513c161ad07c7e6606cbaae8d7f9856c747b"
+            },
+            {
+              "path": "engagements/_TEMPLATE/scope.md",
+              "sha256": "sha256:2bfe520a65dbb7e65628b23d9a9d1f9b505a3688937d1929c438f5969f85b27d"
+            },
+            {
+              "path": "engine/gates.md",
+              "sha256": "sha256:3950a267cf540d52f39ac174048052a3e0794bf3772aaa3ecb10f8bb05ec9386"
+            },
+            {
+              "path": "skills/oracles/adjudication-oracle.md",
+              "sha256": "sha256:0c92317387a92d331fec3b5fd9dd71ede06ac4e32f0afbaf8ec755784ef0233a"
+            }
+          ],
+          "git_tree": "5266945506ca92efef2932f8563bbbfe836c384e",
+          "tree_hash": "sha256:5debeb216f72a1d923a1ed7b6510d7d4bfb841294673a5a0b5e16e0799ddca9c"
+        },
+        "contamination_rules": [
+          "Independent sessions, filesystems, target copies, and no shared notes.",
+          "Withhold findings, reports, PoCs, progress, case memory, and judge packets until outputs freeze."
+        ],
+        "endpoint_definitions": {
+          "resolution_minimum_effect": null,
+          "rigor_non_inferiority_margin": 0.0
+        },
+        "exclusion_rules": [
+          "Any historical case or lesson that informed Decision 0005.",
+          "Any case requiring shared live state or contact with an old target."
+        ],
+        "execution_authorized": false,
+        "exploratory": true,
+        "inclusion_rules": [
+          "Sealed local known-truth cases not used to design Decision 0005.",
+          "Pinned target identity and hermetic signed scope available before assignment."
+        ],
+        "lane": "sealed_known_truth",
+        "matching": {
+          "call_budget": null,
+          "filesystem_isolation": true,
+          "model_provider_version": null,
+          "model_runtime_hash": null,
+          "session_isolation": true,
+          "starting_information": "identical_recon_only",
+          "target_copy": "independent_per_arm",
+          "time_budget": null,
+          "tool_runtime_hash": null,
+          "tools": []
+        },
+        "minimum_practical_effect": null,
+        "no_peeking": true,
+        "power_basis": "unavailable",
+        "root_cause_deduplication": [
+          "Deduplicate by mechanism, reachability boundary, and oracle-distinct root cause."
+        ],
+        "safety": {
+          "cleanup_required": true,
+          "identical_root_gates": true,
+          "operator_only_filing": true,
+          "shared_live_state_forbidden": true,
+          "zone2_fresh_confirmation": true
+        },
+        "safety_stops": [
+          "Stop on scope drift, identity drift, cleanup debt, secret-shaped content, or any Zone-2 step without fresh confirmation."
+        ],
+        "sample_size": null,
+        "schema_version": 1,
+        "secondary_endpoints": [
+          "persistence recovery",
+          "valid coverage closure",
+          "time and cost to resolution",
+          "human review burden",
+          "forced-resume correctness",
+          "report claim-to-proof completeness"
+        ],
+        "status": "draft_not_authorized",
+        "study_evidence_ref": null,
+        "study_id": "decision5-prospective-pilot-draft-v1",
+        "target_strata": [
+          {
+            "difficulty": "to_be_registered",
+            "domain": "to_be_registered",
+            "mode": "hermetic",
+            "size": "to_be_registered",
+            "truth_class": "unknown"
+          }
+        ],
+        "withheld_material_manifest_ref": null,
+        "unexpected": true
+      },
+      "schema": "ab-preregistration",
+      "valid": false
+    },
+    {
+      "id": "ab-readiness-report-minimum",
+      "record": {
+        "blockers": [
+          "model_or_budget_unfrozen",
+          "pilot_variance_unavailable",
+          "sample_size_unregistered",
+          "adjudication_panel_unregistered",
+          "tie_rule_unregistered",
+          "judge_packet_unsealed",
+          "no_eligible_holdout_manifest",
+          "signed_scope_or_environment_missing",
+          "reviewed_transition_implementation_absent"
+        ],
+        "checks": {
+          "arm_labels_unique": true,
+          "full_git_trees_verified": true,
+          "historical_cases_excluded_from_holdout": true,
+          "safety_overlay_shared": true,
+          "source_hashes_verified": true,
+          "treatments_distinct": true
+        },
+        "claims": {
+          "ab_readiness": "not_ready",
+          "efficacy": "not_demonstrated",
+          "regression_parity": "not_demonstrated"
+        },
+        "execution": {
+          "arm_runs": 0,
+          "artifact_execution": false,
+          "results_fabricated": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "preregistration_hash": "sha256:e5f4d07ab79c0a61bf8030f466c5b7f340f4d62616dd50b5337caa5b1e454357",
+        "report_id": "decision5-prospective-pilot-draft-v1-readiness",
+        "schema_version": 1,
+        "status": "not_ready",
+        "study_id": "decision5-prospective-pilot-draft-v1"
+      },
+      "schema": "ab-readiness-report",
+      "valid": true
+    },
+    {
+      "id": "ab-readiness-report-rich",
+      "record": {
+        "blockers": [
+          "model_or_budget_unfrozen",
+          "pilot_variance_unavailable",
+          "sample_size_unregistered",
+          "adjudication_panel_unregistered",
+          "tie_rule_unregistered",
+          "judge_packet_unsealed",
+          "no_eligible_holdout_manifest",
+          "signed_scope_or_environment_missing",
+          "reviewed_transition_implementation_absent"
+        ],
+        "checks": {
+          "arm_labels_unique": true,
+          "full_git_trees_verified": true,
+          "historical_cases_excluded_from_holdout": true,
+          "safety_overlay_shared": true,
+          "source_hashes_verified": true,
+          "treatments_distinct": true
+        },
+        "claims": {
+          "ab_readiness": "not_ready",
+          "efficacy": "not_demonstrated",
+          "regression_parity": "not_demonstrated"
+        },
+        "execution": {
+          "arm_runs": 0,
+          "artifact_execution": false,
+          "results_fabricated": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "preregistration_hash": "sha256:e5f4d07ab79c0a61bf8030f466c5b7f340f4d62616dd50b5337caa5b1e454357",
+        "report_id": "decision5-prospective-pilot-draft-v1-readiness",
+        "schema_version": 1,
+        "status": "not_ready",
+        "study_id": "decision5-prospective-pilot-draft-v1"
+      },
+      "schema": "ab-readiness-report",
+      "valid": true
+    },
+    {
+      "id": "ab-readiness-report-unknown-property",
+      "record": {
+        "blockers": [
+          "model_or_budget_unfrozen",
+          "pilot_variance_unavailable",
+          "sample_size_unregistered",
+          "adjudication_panel_unregistered",
+          "tie_rule_unregistered",
+          "judge_packet_unsealed",
+          "no_eligible_holdout_manifest",
+          "signed_scope_or_environment_missing",
+          "reviewed_transition_implementation_absent"
+        ],
+        "checks": {
+          "arm_labels_unique": true,
+          "full_git_trees_verified": true,
+          "historical_cases_excluded_from_holdout": true,
+          "safety_overlay_shared": true,
+          "source_hashes_verified": true,
+          "treatments_distinct": true
+        },
+        "claims": {
+          "ab_readiness": "not_ready",
+          "efficacy": "not_demonstrated",
+          "regression_parity": "not_demonstrated"
+        },
+        "execution": {
+          "arm_runs": 0,
+          "artifact_execution": false,
+          "results_fabricated": false,
+          "target_contact": false,
+          "zone2_creation": false
+        },
+        "preregistration_hash": "sha256:e5f4d07ab79c0a61bf8030f466c5b7f340f4d62616dd50b5337caa5b1e454357",
+        "report_id": "decision5-prospective-pilot-draft-v1-readiness",
+        "schema_version": 1,
+        "status": "not_ready",
+        "study_id": "decision5-prospective-pilot-draft-v1",
+        "unexpected": true
+      },
+      "schema": "ab-readiness-report",
+      "valid": false
+    },
+    {
+      "id": "ab-study-evidence-minimum",
+      "record": {
+        "schema_version": 1,
+        "evidence_id": "study-evidence-fixture",
+        "model_runtime_path": "model.json",
+        "model_runtime_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "tool_runtime_path": "tools.json",
+        "tool_runtime_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "holdouts": [
+          {
+            "case_id": "case-1",
+            "domain": "web",
+            "size": "small",
+            "mode": "hermetic",
+            "difficulty": "medium",
+            "truth_class": "known_clean",
+            "target_source_path": "target.tar",
+            "target_source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "decision5_informed": false,
+            "lesson_present": false,
+            "curator_id": "curator-1",
+            "curation_review_path": "curation.json",
+            "curation_review_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "pilot": {
+          "variance": 0.1,
+          "discordant_pair_rate": 0.2,
+          "minimum_practical_effect": 0.1,
+          "power": 0.8,
+          "alpha": 0.05,
+          "recommended_sample_size": 30,
+          "analysis_protocol_path": "analysis.md",
+          "analysis_protocol_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "adjudication": {
+          "panel_ids": [
+            "reviewer-1",
+            "reviewer-2"
+          ],
+          "protocol_path": "protocol.md",
+          "protocol_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "tie_rule_path": "tie.md",
+          "tie_rule_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "sealed_judge_packet_path": "judge.sealed",
+          "sealed_judge_packet_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "arm_labels_withheld": true
+        },
+        "isolation": [
+          {
+            "case_id": "case-1",
+            "scope_path": "scope.md",
+            "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "environment_manifest_path": "env.json",
+            "environment_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "arm_x_target_copy": "copy-x",
+            "arm_y_target_copy": "copy-y",
+            "arm_x_filesystem": "fs-x",
+            "arm_y_filesystem": "fs-y",
+            "arm_x_account_label": "acct-x",
+            "arm_y_account_label": "acct-y",
+            "withheld_materials_path": "withheld.json",
+            "withheld_materials_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "allowed_actions_path": "actions.json",
+            "allowed_actions_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "safety_stops_path": "stops.json",
+            "safety_stops_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "schema": "ab-study-evidence",
+      "valid": true
+    },
+    {
+      "id": "ab-study-evidence-rich",
+      "record": {
+        "schema_version": 1,
+        "evidence_id": "study-evidence-fixture",
+        "model_runtime_path": "model.json",
+        "model_runtime_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "tool_runtime_path": "tools.json",
+        "tool_runtime_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "holdouts": [
+          {
+            "case_id": "case-1",
+            "domain": "web",
+            "size": "small",
+            "mode": "hermetic",
+            "difficulty": "medium",
+            "truth_class": "known_clean",
+            "target_source_path": "target.tar",
+            "target_source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "decision5_informed": false,
+            "lesson_present": false,
+            "curator_id": "curator-1",
+            "curation_review_path": "curation.json",
+            "curation_review_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "pilot": {
+          "variance": 0.1,
+          "discordant_pair_rate": 0.2,
+          "minimum_practical_effect": 0.1,
+          "power": 0.8,
+          "alpha": 0.05,
+          "recommended_sample_size": 30,
+          "analysis_protocol_path": "analysis.md",
+          "analysis_protocol_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "adjudication": {
+          "panel_ids": [
+            "reviewer-1",
+            "reviewer-2"
+          ],
+          "protocol_path": "protocol.md",
+          "protocol_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "tie_rule_path": "tie.md",
+          "tie_rule_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "sealed_judge_packet_path": "judge.sealed",
+          "sealed_judge_packet_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "arm_labels_withheld": true
+        },
+        "isolation": [
+          {
+            "case_id": "case-1",
+            "scope_path": "scope.md",
+            "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "environment_manifest_path": "env.json",
+            "environment_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "arm_x_target_copy": "copy-x",
+            "arm_y_target_copy": "copy-y",
+            "arm_x_filesystem": "fs-x",
+            "arm_y_filesystem": "fs-y",
+            "arm_x_account_label": "acct-x",
+            "arm_y_account_label": "acct-y",
+            "withheld_materials_path": "withheld.json",
+            "withheld_materials_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "allowed_actions_path": "actions.json",
+            "allowed_actions_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "safety_stops_path": "stops.json",
+            "safety_stops_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "schema": "ab-study-evidence",
+      "valid": true
+    },
+    {
+      "id": "ab-study-evidence-unknown-property",
+      "record": {
+        "schema_version": 1,
+        "evidence_id": "study-evidence-fixture",
+        "model_runtime_path": "model.json",
+        "model_runtime_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "tool_runtime_path": "tools.json",
+        "tool_runtime_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "holdouts": [
+          {
+            "case_id": "case-1",
+            "domain": "web",
+            "size": "small",
+            "mode": "hermetic",
+            "difficulty": "medium",
+            "truth_class": "known_clean",
+            "target_source_path": "target.tar",
+            "target_source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "decision5_informed": false,
+            "lesson_present": false,
+            "curator_id": "curator-1",
+            "curation_review_path": "curation.json",
+            "curation_review_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "pilot": {
+          "variance": 0.1,
+          "discordant_pair_rate": 0.2,
+          "minimum_practical_effect": 0.1,
+          "power": 0.8,
+          "alpha": 0.05,
+          "recommended_sample_size": 30,
+          "analysis_protocol_path": "analysis.md",
+          "analysis_protocol_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "adjudication": {
+          "panel_ids": [
+            "reviewer-1",
+            "reviewer-2"
+          ],
+          "protocol_path": "protocol.md",
+          "protocol_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "tie_rule_path": "tie.md",
+          "tie_rule_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "sealed_judge_packet_path": "judge.sealed",
+          "sealed_judge_packet_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "arm_labels_withheld": true
+        },
+        "isolation": [
+          {
+            "case_id": "case-1",
+            "scope_path": "scope.md",
+            "scope_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "environment_manifest_path": "env.json",
+            "environment_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "arm_x_target_copy": "copy-x",
+            "arm_y_target_copy": "copy-y",
+            "arm_x_filesystem": "fs-x",
+            "arm_y_filesystem": "fs-y",
+            "arm_x_account_label": "acct-x",
+            "arm_y_account_label": "acct-y",
+            "withheld_materials_path": "withheld.json",
+            "withheld_materials_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "allowed_actions_path": "actions.json",
+            "allowed_actions_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "safety_stops_path": "stops.json",
+            "safety_stops_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "unexpected": true
+      },
+      "schema": "ab-study-evidence",
+      "valid": false
+    },
+    {
+      "id": "migration-artifact-review-minimum",
+      "record": {
+        "schema_version": 1,
+        "review_id": "migration-review-fixture",
+        "inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operator": {
+          "role": "operator",
+          "id": "operator-1"
+        },
+        "operator_reviewed": true,
+        "redaction_attested": true,
+        "entries": [
+          {
+            "source_path": "artifacts/inert.txt",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "classification": "artifact",
+            "classification_rationale": "Operator inspected inert text bytes.",
+            "advisory_zone": "clear_local",
+            "contains_executable_capability": false,
+            "escalation_confirmation_event_ref": null,
+            "cleanup_obligation_ref": null
+          }
+        ]
+      },
+      "schema": "migration-artifact-review",
+      "valid": true
+    },
+    {
+      "id": "migration-artifact-review-rich",
+      "record": {
+        "schema_version": 1,
+        "review_id": "migration-review-rich",
+        "inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operator": {
+          "role": "operator",
+          "id": "operator-1"
+        },
+        "operator_reviewed": true,
+        "redaction_attested": true,
+        "entries": [
+          {
+            "source_path": "artifacts/inert.txt",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "classification": "artifact",
+            "classification_rationale": "Operator classified a contained reviewed artifact with fresh confirmation and cleanup.",
+            "advisory_zone": "review_required",
+            "contains_executable_capability": true,
+            "escalation_confirmation_event_ref": "event-zone-confirm",
+            "cleanup_obligation_ref": "cleanup-1"
+          }
+        ]
+      },
+      "schema": "migration-artifact-review",
+      "valid": true
+    },
+    {
+      "id": "migration-artifact-review-missing-confirmation",
+      "record": {
+        "schema_version": 1,
+        "review_id": "migration-review-bad",
+        "inventory_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "operator": {
+          "role": "operator",
+          "id": "operator-1"
+        },
+        "operator_reviewed": true,
+        "redaction_attested": true,
+        "entries": [
+          {
+            "source_path": "artifacts/inert.txt",
+            "source_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "classification": "artifact",
+            "classification_rationale": "Operator classified a contained reviewed artifact with fresh confirmation and cleanup.",
+            "advisory_zone": "review_required",
+            "contains_executable_capability": true,
+            "escalation_confirmation_event_ref": null,
+            "cleanup_obligation_ref": "cleanup-1"
+          }
+        ]
+      },
+      "schema": "migration-artifact-review",
+      "valid": false
+    }
+  ],
+  "schema_version": 1
+}

@@ -74,9 +74,19 @@ done before; adopt it"). That is the harness's purpose: give the model real-enga
 on instead of training-set intuition. (`casebooks/`, `engine/routing.md`.)
 
 ## Terminal verdicts (what "done" means here)
-- **covered-dry** — the bounded space is fully enumerated and adjudicated; every vector held.
+- **covered-dry** — the bounded space is fully enumerated and adjudicated; every material route is
+  decisively `exhausted` or `closed`. A merely `held` route remains unresolved and cannot support dry.
 - **confirmed / chained** — found, and composed forward where a finding unlocks the next.
 - **real-but-capped** — the vuln is real but a held control bounds its impact, and the cap is proven.
+
+### Decision-0005 persistence records
+
+Record each material route as a `hypothesis.created` event and append evidence-rich status changes;
+do not collapse a broader mechanism when one implementation is refuted. Controls and replay are typed
+immutable attempts. `coverage_dry` is accepted only after a committed fresh-context coverage review
+matches every current hypothesis disposition. A signed-scope operator prior can explicitly reopen an
+exhausted hypothesis and coverage, while leaving claim state untouched. The reducer enforces these
+boundaries without prescribing how the researcher generates or revises hypotheses.
 
 A dry verdict is only credible once the space was *bounded* and *enumerated*; "dry after one pass" is
 the failure mode this whole doc exists to prevent.

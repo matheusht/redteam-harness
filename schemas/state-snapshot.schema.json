@@ -1,0 +1,699 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/state-snapshot.schema.json",
+  "title": "Decision 0005 deterministic engagement state snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "engagement_id",
+    "scope_hash",
+    "active_environment_ref",
+    "environment_preflights",
+    "last_event_id",
+    "event_count",
+    "ledger_hash",
+    "attempt_count",
+    "artifact_count",
+    "active_blockers",
+    "candidates",
+    "control_candidates",
+    "operator_priors",
+    "hypotheses",
+    "findings",
+    "outstanding_reviews",
+    "proof_reviews",
+    "coverage",
+    "reports",
+    "report_refs",
+    "submission_refs",
+    "cleanup",
+    "memory_disposition",
+    "source_hashes",
+    "integrity_errors"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "scope_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "active_environment_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_event_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "ledger_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "attempt_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "candidates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "rationale",
+          "source_observation_ref",
+          "routing_review_ref",
+          "activation_strength",
+          "card_ids",
+          "ex_ante"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "queued",
+              "selected",
+              "closed",
+              "deferred"
+            ]
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "source_observation_ref": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "routing_review_ref": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "activation_strength": {
+            "enum": [
+              "strong",
+              "weak"
+            ]
+          },
+          "card_ids": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+          },
+          "ex_ante": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recorded_before_outcome"
+            ],
+            "properties": {
+              "probability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "ordinal": {
+                "enum": [
+                  "negative",
+                  "weak",
+                  "strong"
+                ]
+              },
+              "recorded_before_outcome": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "operator_priors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "prior_id",
+          "prior_statement",
+          "entity_refs",
+          "strength",
+          "rationale"
+        ],
+        "properties": {
+          "event_id": {
+            "type": "string"
+          },
+          "prior_id": {
+            "type": "string"
+          },
+          "prior_statement": {
+            "type": "string"
+          },
+          "entity_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strength": {
+            "enum": [
+              "weak",
+              "strong"
+            ]
+          },
+          "rationale": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "hypotheses": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "rationale",
+          "origin_type",
+          "origin_ref",
+          "statement",
+          "suspected_invariant",
+          "trust_boundary",
+          "attacker_path",
+          "impact_ceiling",
+          "bounded_space",
+          "lens_ids",
+          "card_ids",
+          "expected_confirming_evidence",
+          "decisive_falsifiers",
+          "cost_estimate",
+          "constraints",
+          "next_experiment",
+          "completion_criteria",
+          "experiment_refs",
+          "control_refs",
+          "supporting_evidence_refs",
+          "conflicting_evidence_refs",
+          "unresolved_questions",
+          "next_route"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "queued",
+              "selected",
+              "running",
+              "held",
+              "exhausted",
+              "deferred",
+              "blocked",
+              "closed"
+            ]
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "origin_type": {
+            "enum": [
+              "candidate",
+              "operator_prior",
+              "reviewer_challenge",
+              "confirmed_primitive",
+              "target_model"
+            ]
+          },
+          "origin_ref": {
+            "type": "string"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "suspected_invariant": {
+            "type": "string"
+          },
+          "trust_boundary": {
+            "type": "string"
+          },
+          "attacker_path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "impact_ceiling": {
+            "type": "string"
+          },
+          "bounded_space": {
+            "type": "string"
+          },
+          "lens_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "card_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decisive_falsifiers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "next_experiment": {
+            "type": "string"
+          },
+          "completion_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "experiment_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "control_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supporting_evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conflicting_evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unresolved_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "next_route": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cost_estimate": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/cost"
+          },
+          "expected_confirming_evidence": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "revision",
+          "status",
+          "digest",
+          "adjudication_review_ref",
+          "change_reason"
+        ],
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "enum": [
+              "needs_review",
+              "supported",
+              "confirmed",
+              "contaminated",
+              "refuted"
+            ]
+          },
+          "digest": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "adjudication_review_ref": {
+            "oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]
+          },
+          "change_reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "outstanding_reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "review_type",
+          "entity_ref",
+          "review_ref",
+          "reason",
+          "status",
+          "hypothesis_ref",
+          "opened_at"
+        ],
+        "properties": {
+          "review_type": {
+            "type": "string"
+          },
+          "entity_ref": {
+            "type": "string"
+          },
+          "review_ref": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "routed",
+              "evidence_collected",
+              "correction_required",
+              "blocked"
+            ]
+          },
+          "hypothesis_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "opened_at": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "coverage": {
+      "enum": [
+        "active",
+        "blocked",
+        "coverage_dry"
+      ]
+    },
+    "report_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "submission_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "open_count",
+        "obligations",
+        "recorded"
+      ],
+      "properties": {
+        "open_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "obligations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "obligation_id",
+              "status"
+            ],
+            "properties": {
+              "obligation_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "recorded": {
+          "type": "boolean"
+        }
+      }
+    },
+    "memory_disposition": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "disposition",
+            "disposition_ref",
+            "disposition_digest"
+          ],
+          "properties": {
+            "disposition": {
+              "enum": [
+                "promote",
+                "defer",
+                "no_novel_lesson"
+              ]
+            },
+            "disposition_ref": {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+            },
+            "disposition_digest": {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+            }
+          }
+        }
+      ]
+    },
+    "source_hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "events.jsonl",
+        "attempts.jsonl",
+        "artifacts.jsonl"
+      ],
+      "properties": {
+        "events.jsonl": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "attempts.jsonl": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "artifacts.jsonl": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "integrity_errors": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "control_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "routing_event_id",
+          "source_observation_ref",
+          "card_ids",
+          "status",
+          "rationale"
+        ],
+        "properties": {
+          "routing_event_id": {
+            "type": "string"
+          },
+          "source_observation_ref": {
+            "type": "string"
+          },
+          "card_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "const": "likely_held"
+          },
+          "rationale": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "proof_reviews": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_revision",
+          "claim_tuple_hash",
+          "verdict",
+          "review_refs",
+          "reviewer_ids",
+          "terminal_status"
+        ],
+        "properties": {
+          "finding_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "claim_tuple_hash": {
+            "type": "string"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "review_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "terminal_status": {
+            "enum": [
+              "verified",
+              "route_back",
+              "pending_second_review",
+              "second_review_confirmed",
+              "blocked"
+            ]
+          },
+          "reviewer_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "reports": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "finding_id",
+          "finding_revision",
+          "status",
+          "manifest_digest",
+          "historical_reason"
+        ],
+        "properties": {
+          "finding_id": {
+            "type": "string"
+          },
+          "finding_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "accepted",
+              "submitted",
+              "historical"
+            ]
+          },
+          "manifest_digest": {
+            "type": "string"
+          },
+          "historical_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "environment_preflights": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "identity_hash",
+          "scope_hash"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "ready",
+              "blocked",
+              "needs_review"
+            ]
+          },
+          "identity_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "scope_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          }
+        }
+      }
+    }
+  }
+}

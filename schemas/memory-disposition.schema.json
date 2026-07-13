@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/memory-disposition.schema.json",
+  "title": "Decision 0005 mandatory terminal memory disposition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "disposition_id",
+    "engagement_id",
+    "recorded_at",
+    "scope_hash",
+    "disposition",
+    "lesson_kind",
+    "lesson_summary",
+    "rationale",
+    "candidate_refs",
+    "source_refs",
+    "sanitization",
+    "human_review",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "disposition_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "recorded_at": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+    },
+    "scope_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "disposition": {
+      "enum": [
+        "promote",
+        "defer",
+        "no_novel_lesson"
+      ]
+    },
+    "lesson_kind": {
+      "enum": [
+        "positive",
+        "negative",
+        "refutation",
+        "reward_hacked_proof",
+        "environment_failure",
+        "mixed",
+        "none"
+      ]
+    },
+    "lesson_summary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 2000
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "candidate_refs": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_refs",
+        "candidate_refs",
+        "hypothesis_refs",
+        "attempt_refs",
+        "artifact_refs",
+        "review_refs",
+        "finding_refs",
+        "environment_refs"
+      ],
+      "properties": {
+        "event_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "candidate_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "hypothesis_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "attempt_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "artifact_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "review_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "finding_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        },
+        "environment_refs": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"
+        }
+      }
+    },
+    "sanitization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "secret_scan_status",
+        "target_identifiers_removed",
+        "credential_values_removed",
+        "harmful_recipe_removed",
+        "notes",
+        "target_terms_checked"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "sanitized",
+            "not_applicable",
+            "blocked"
+          ]
+        },
+        "secret_scan_status": {
+          "enum": [
+            "clean",
+            "needs_review"
+          ]
+        },
+        "target_identifiers_removed": {
+          "type": "boolean"
+        },
+        "credential_values_removed": {
+          "type": "boolean"
+        },
+        "harmful_recipe_removed": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "target_terms_checked": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "human_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer",
+        "reviewed_at",
+        "decision",
+        "rationale",
+        "source_material_compared",
+        "abstraction_only",
+        "plane1_pr_required"
+      ],
+      "properties": {
+        "reviewer": {
+          "allOf": [
+            {
+              "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"
+            },
+            {
+              "properties": {
+                "role": {
+                  "const": "operator"
+                }
+              }
+            }
+          ]
+        },
+        "reviewed_at": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+        },
+        "decision": {
+          "enum": [
+            "promote",
+            "defer",
+            "no_novel_lesson"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "source_material_compared": {
+          "const": true
+        },
+        "abstraction_only": {
+          "const": true
+        },
+        "plane1_pr_required": {
+          "const": true
+        }
+      }
+    },
+    "reopening_condition": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 2000
+    },
+    "provenance": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "promote"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "properties": {
+          "lesson_kind": {
+            "not": {
+              "const": "none"
+            }
+          },
+          "lesson_summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "candidate_refs": {
+            "minItems": 1
+          },
+          "sanitization": {
+            "properties": {
+              "status": {
+                "const": "sanitized"
+              },
+              "secret_scan_status": {
+                "const": "clean"
+              },
+              "target_identifiers_removed": {
+                "const": true
+              },
+              "credential_values_removed": {
+                "const": true
+              },
+              "harmful_recipe_removed": {
+                "const": true
+              },
+              "target_terms_checked": {
+                "minItems": 1
+              }
+            }
+          },
+          "human_review": {
+            "properties": {
+              "decision": {
+                "const": "promote"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "defer"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "required": [
+          "reopening_condition"
+        ],
+        "properties": {
+          "lesson_kind": {
+            "not": {
+              "const": "none"
+            }
+          },
+          "lesson_summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "candidate_refs": {
+            "minItems": 1
+          },
+          "reopening_condition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "human_review": {
+            "properties": {
+              "decision": {
+                "const": "defer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "no_novel_lesson"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "properties": {
+          "lesson_kind": {
+            "const": "none"
+          },
+          "lesson_summary": {
+            "type": "null"
+          },
+          "candidate_refs": {
+            "maxItems": 0
+          },
+          "sanitization": {
+            "properties": {
+              "status": {
+                "const": "not_applicable"
+              }
+            }
+          },
+          "human_review": {
+            "properties": {
+              "decision": {
+                "const": "no_novel_lesson"
+              }
+            }
+          },
+          "reopening_condition": {
+            "type": [
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

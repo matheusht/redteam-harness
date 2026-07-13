@@ -13,6 +13,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Install pinned conformance dependencies
+        run: python3 -m pip install --disable-pip-version-check -r requirements-ci.txt
+      - name: Decision 0005 engagement-record schema gate (self-test)
+        run: python3 tools/run-engagement.py --self-test
+      - name: Decision 0005 migration dry-run and reviewed-apply gate (self-test)
+        run: python3 tools/migrate-decision5.py --self-test
+      - name: Decision 0005 bounded retrospective evaluator (self-test)
+        run: python3 tools/evaluate-retrospective.py --self-test
+      - name: Decision 0005 prospective A/B readiness freezer (self-test)
+        run: python3 tools/prepare-ab-study.py --self-test
       - name: Structural conformance (cards, routes, casebooks, secrets, evidence contract, corpora)
         run: python3 tools/check-conformance.py
       - name: Campaign / candidate contract gate (self-test)
@@ -39,13 +49,15 @@ jobs:
         run: python3 tools/run-experiment-lifecycle.py --self-test
       - name: DSPy spike — routing normalizer baseline (deterministic, self-test)
         run: python3 experiments/dspy-routing-normalizer/normalize.py --self-test
-      # Frozen-input integrity is gated against the CURRENT canonical campaign, not historical shadow
-      # ones. The gepa-shadow campaigns (Phase 8 / 2026-06-26) are archived: their frozen_inputs pin
+      # Frozen-input integrity is gated against the CURRENT canonical campaign, not historical
+      # revisions. Revision 3 rotates the checker pin for Decision 0005 full-schema validation; revision
+      # 2 remains immutable and superseded. The gepa-shadow campaigns (Phase 8 / 2026-06-26) are archived:
+      # their frozen_inputs pin
       # Phase-8-era tool and gold hashes that later evaluator hardening (10F/10G/10H0) and gold rotation
       # legitimately drifted — the drift detector working as designed. See each campaign's SUPERSEDED.md.
       # Re-pinning historical revisions to silence CI is forbidden (it would rewrite superseded history).
       - name: Canonical behavioral campaign frozen-input integrity
-        run: python3 tools/hash-campaign-inputs.py --check evals/behavioral/campaigns/behavioral-canonical-v2-2026-06-27/campaign-manifest.json
+        run: python3 tools/hash-campaign-inputs.py --check evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/campaign-manifest.json
       # The promotion bundle hash-pin / drift machinery is exercised by render-promotion-bundle --self-test
       # (verify_drift: intact -> clean, tampered gold -> drift). There is no live promotion bundle to pin
       # against until a real-model qualification produces one.

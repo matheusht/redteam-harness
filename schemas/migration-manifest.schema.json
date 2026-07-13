@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/migration-manifest.schema.json",
+  "title": "Decision 0005 legacy migration manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "migration_id",
+    "engagement_id",
+    "recorded_at",
+    "source_inventory_hash",
+    "operator",
+    "entries",
+    "outcome_counts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "migration_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "engagement_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "recorded_at": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+    },
+    "source_inventory_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "operator": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_path",
+          "source_hash",
+          "disposition",
+          "source_artifact_ref",
+          "imported_finding_id",
+          "imported_revision",
+          "missing_legacy_evidence"
+        ],
+        "properties": {
+          "source_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "source_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "source_artifact_ref": {
+            "oneOf": [
+              {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imported_finding_id": {
+            "oneOf": [
+              {
+                "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imported_revision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "missing_legacy_evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "disposition": {
+            "enum": [
+              "imported",
+              "needs_review",
+              "skipped"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "disposition": {
+                  "const": "imported"
+                }
+              },
+              "required": [
+                "disposition"
+              ]
+            },
+            "then": {
+              "properties": {
+                "source_artifact_ref": {
+                  "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+                },
+                "imported_finding_id": {
+                  "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+                },
+                "imported_revision": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "outcome_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "imported",
+        "needs_review",
+        "skipped",
+        "errors"
+      ],
+      "properties": {
+        "imported": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "needs_review": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "errors": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

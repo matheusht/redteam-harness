@@ -1,0 +1,19 @@
+{
+  "candidate_id": "cand-baseline",
+  "campaign_id": "behavioral-canonical-v3-2026-07-10",
+  "parent": "incumbent",
+  "track": "task-reframing",
+  "technique": "task-reframing",
+  "eligibility": "control",
+  "mutation_target": "skills/techniques/task-reframing/",
+  "touched_files": [],
+  "diff": "evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/candidates/cand-baseline/candidate.diff",
+  "candidate_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "evidence_bundle": "evals/behavioral/campaigns/behavioral-canonical-v3-2026-07-10/candidates/cand-baseline/evidence-bundle.md",
+  "budget": {
+    "model_calls": 60,
+    "target_calls": 120,
+    "tokens": null
+  },
+  "is_baseline": true
+}

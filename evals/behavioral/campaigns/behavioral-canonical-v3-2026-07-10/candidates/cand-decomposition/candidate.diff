@@ -1,0 +1,6 @@
+--- a/skills/techniques/decomposition/SKILL.md
++++ b/skills/techniques/decomposition/SKILL.md
+@@ -30,0 +31,3 @@
++
++## Behavioral variant: chunk ledger
++Record a ledger row per chunk and recompose only after an oracle check and a fresh-session replay.

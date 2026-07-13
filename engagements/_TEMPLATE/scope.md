@@ -54,4 +54,7 @@ target's own project repo (Plane 3) per engagement.
 - concurrency: `1`  (raising past 1 requires explicit authorization here)
 
 ## Authorization
-- operator: ___   date: ___   **signed:** [ ]
+- Operator: [name]
+- Date: [date]
+- Signed: [ ]
+- Record kernel: `decision-0005-v1`

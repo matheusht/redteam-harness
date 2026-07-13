@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/ab-study-evidence.schema.json",
+  "title": "Immutable evidence required before A/B operator authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "model_runtime_hash",
+    "tool_runtime_hash",
+    "holdouts",
+    "pilot",
+    "adjudication",
+    "isolation",
+    "model_runtime_path",
+    "tool_runtime_path"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "evidence_id": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+    },
+    "model_runtime_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "tool_runtime_hash": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+    },
+    "holdouts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id",
+          "domain",
+          "size",
+          "mode",
+          "difficulty",
+          "truth_class",
+          "target_source_hash",
+          "decision5_informed",
+          "lesson_present",
+          "target_source_path",
+          "curator_id",
+          "curation_review_path",
+          "curation_review_hash"
+        ],
+        "properties": {
+          "case_id": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          },
+          "size": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "difficulty": {
+            "type": "string",
+            "minLength": 1
+          },
+          "truth_class": {
+            "enum": [
+              "known_vulnerable",
+              "known_clean",
+              "unknown"
+            ]
+          },
+          "target_source_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "decision5_informed": {
+            "const": false
+          },
+          "lesson_present": {
+            "const": false
+          },
+          "target_source_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "curator_id": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "curation_review_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "curation_review_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          }
+        }
+      }
+    },
+    "pilot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variance",
+        "discordant_pair_rate",
+        "minimum_practical_effect",
+        "power",
+        "alpha",
+        "recommended_sample_size",
+        "analysis_protocol_hash",
+        "analysis_protocol_path"
+      ],
+      "properties": {
+        "variance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discordant_pair_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "minimum_practical_effect": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "power": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "alpha": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "recommended_sample_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "analysis_protocol_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "analysis_protocol_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        }
+      }
+    },
+    "adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "panel_ids",
+        "protocol_hash",
+        "tie_rule_hash",
+        "sealed_judge_packet_hash",
+        "arm_labels_withheld",
+        "protocol_path",
+        "tie_rule_path",
+        "sealed_judge_packet_path"
+      ],
+      "properties": {
+        "panel_ids": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "protocol_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "tie_rule_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "sealed_judge_packet_hash": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "arm_labels_withheld": {
+          "const": true
+        },
+        "protocol_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "tie_rule_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "sealed_judge_packet_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        }
+      }
+    },
+    "isolation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id",
+          "scope_hash",
+          "environment_hash",
+          "arm_x_target_copy",
+          "arm_y_target_copy",
+          "arm_x_filesystem",
+          "arm_y_filesystem",
+          "arm_x_account_label",
+          "arm_y_account_label",
+          "withheld_materials_hash",
+          "allowed_actions_hash",
+          "safety_stops_hash",
+          "scope_path",
+          "environment_manifest_path",
+          "withheld_materials_path",
+          "allowed_actions_path",
+          "safety_stops_path"
+        ],
+        "properties": {
+          "case_id": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "scope_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "environment_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "arm_x_target_copy": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "arm_y_target_copy": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "arm_x_filesystem": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "arm_y_filesystem": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "arm_x_account_label": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "arm_y_account_label": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+          },
+          "withheld_materials_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "allowed_actions_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "safety_stops_hash": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+          },
+          "scope_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "environment_manifest_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "withheld_materials_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "allowed_actions_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          },
+          "safety_stops_path": {
+            "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+          }
+        }
+      }
+    },
+    "model_runtime_path": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+    },
+    "tool_runtime_path": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+    }
+  }
+}
