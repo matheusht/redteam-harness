@@ -25,7 +25,13 @@ HackerOne's "new report" flow is not one big text box. Confirmed field structure
 1. **Asset** — a searchable picker over the program's in-scope assets (repos, domains). Pick the
    exact one your affected files live in. Each option shows its own severity ceiling and bounty
    eligibility inline.
-2. **Title** — short, one line.
+2. **Title** — short, one line, **hard-capped at 150 characters**. Confirmed by a real submission
+   attempt (kube-aggregator engagement, 2026-07-08) where a title following the general skill's
+   "component + vulnerability class" template ran to 177 characters and was rejected by the form. Count
+   the actual title string before finalizing a report, don't estimate — a title packing in the full
+   mechanism *and* the CVE-precedent class name *and* a parenthetical tends to overrun this quietly.
+   Front-load component + core defect + impact class; move anything else (CVE-class callouts, extra
+   mechanism detail) into the Summary, which has no such cap.
 3. **Weakness** — a CWE picker (searchable dropdown). Pick the CWE that matches the actual root
    defect, not the closest-sounding name. A prototype-chain lookup bypassing an authorization check is
    CWE-863 (Incorrect Authorization), not automatically CWE-1321 (commonly labeled "Prototype
@@ -111,14 +117,17 @@ disclosed precedent for the exact same bug shape is genuinely split even among w
 in one worked example, a prior CVE against the very same project scored Integrity Low, a comparable
 bug in a different but structurally similar framework (a generic middleware auth bypass) scored
 Integrity High, and a third comparable (a path-normalization bypass) scored Integrity None. When
-metric-definition reasoning alone doesn't converge, search for and cite the closest real, disclosed
-CVEs/GHSAs for the same shape of bug, and match their convention (particularly for Scope, which real
-scorers apply inconsistently with the "different security authority" reasoning a researcher might
-construct from first principles) rather than defending a novel scoring choice from definitions alone
-— this is both more defensible to a triager and closer to what the platform's own reviewers will
-likely expect. Spawning an independent, fresh-context reviewer specifically to research this
-precedent (distinct from a regrade of the finding's validity) is a good use of a narrow, targeted
-subagent when the stakes (bounty tier) hinge on a single contested metric.
+metric-definition reasoning alone doesn't converge, load `skills/oracles/severity-precedent-oracle.md`
+(the `oracles.severity-precedent` card): find the finding's bug-class bucket, read the per-metric
+convention (IN / CONTESTED / THIN) and the named discriminator for the contested metric, and cite the
+closest CVEs the card lists. Match the convention rather than defending a novel scoring choice from
+definitions alone, which is both more defensible to a triager and closer to what the platform's own
+reviewers will likely expect. Depart from the convention only with an explicit argument grounded in the
+card's shown distribution (e.g. "this is the boundary-crossing case the S:C minority covers, here is the
+concrete pivot"). The card's CVSS 3.1 conventions are solid but its 4.0 pools are thin (NVD backlog), so
+confirm the program's actual CVSS version first and never carry a 3.1 convention across into 4.0. Only
+fall back to spawning a fresh precedent-research subagent (distinct from a regrade of the finding's
+validity) if the class is thin or absent from the card.
 
 ## Platform-specific reputation mechanic worth knowing before you submit
 
