@@ -45,16 +45,35 @@ target's own project repo (Plane 3) per engagement.
 - self → stored/persistent → cross-user: ceiling = `<rung>`
 
 ## Impact-demo authorization (Zone-2)
-- **impact_demo_authorized:** `no`  ← default. If `yes`, list exactly what artifact classes are
-  authorized and the containment required. Even when `yes`, a live human-confirm fires before any
-  artifact is created.
+- **impact_demo_authorized:** `no`  ← default. If `yes`, fill every field below; otherwise Zone-2 fails closed.
+- **zone2_authorized_categories:** `none`
+- **zone2_escalation_ceiling:** `none`
+- **zone2_containment:** `none`
+
+Categories are comma-separated exact identifiers (currently `zone2_artifact_creation`); the ceiling
+must be exactly `artifact_creation`; containment must be specific and non-placeholder. Duplicate or
+unbackticked authorization fields fail closed. Even when all fields authorize the exact category, a live human-confirm displays the digest-bound
+action, scope, environment, expiry, and cleanup binding before any artifact is created.
 
 ## Accounts / fixtures
 - accounts (owned, same-org if cross-user): ___
 - concurrency: `1`  (raising past 1 requires explicit authorization here)
 
+## Independent reviewer identity
+- Reviewer allowed signers file: `<engagement-relative or operator-controlled path>`
+- Reviewer allowed signers SHA256: `<sha256:...>`
+- Reviewer signatures use namespace: `llm-redteam-harness-review-v1`
+
+## Authority lanes
+- Notebook work may continue inside the signed scope while an exact dependent action is `pending_authority`.
+- Approval is digest-, lane-, environment-, executor/session-, and expiry-bound; it is never retrospective.
+- Real-world / Zone-2 creation still requires a fresh live confirmation immediately before bytes/effects.
+
 ## Authorization
+- Operator allowed signers file: `<operator-controlled path; private key stays outside agent access>`
+- Operator allowed signers SHA256: `<sha256:...>`
+- Operator signatures use namespace: `llm-redteam-harness-operator-v1`
 - Operator: [name]
 - Date: [date]
 - Signed: [ ]
-- Record kernel: `decision-0005-v1`
+- Record kernel: `decision-0006-v1`

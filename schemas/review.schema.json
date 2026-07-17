@@ -33,6 +33,12 @@
     "engagement_id": {
       "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
     },
+    "operation_class": {
+      "const": "notebook"
+    },
+    "provenance": {
+      "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"
+    },
     "review_type": {
       "enum": [
         "signal",
@@ -116,6 +122,9 @@
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
         },
         "reviewer_run_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "reviewer_session_id": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
         },
         "reviewer_model": {

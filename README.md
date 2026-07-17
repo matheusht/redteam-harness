@@ -45,12 +45,17 @@ docs/           architecture + decisions + field-notes (cross-engagement methodo
 **Plane rule:** Plane 1 is read-only knowledge; Plane 3 is write-only memory. The portable harness
 (Plane 1+2) travels; each engagement's Plane 3 wiki lives with its target.
 
-## Decision 0005 record kernel
+## Decision 0005/0006 record kernel
+
+Decision 0006 keeps Decision 0005's evidence and authority boundaries while allowing the local
+broker to maintain truthful Notebook records non-interactively. Consequential transitions use
+lane-local digest-bound authority requests; Zone-2 remains freshly confirmed before creation.
 
 New version-3 engagements use `python3 tools/run-engagement.py <subcommand> ...` as the sole public
 Plane-3 authority. Append-only ledgers are authoritative; snapshots and Markdown are derived. See
-`docs/decision-0005-implementation-architecture.md` and
-`docs/decision-0005-implementation-report.md` for commands, trust boundaries, migration, telemetry,
+`docs/decision-0005-implementation-architecture.md`,
+`docs/decision-0005-implementation-report.md`, and
+`docs/decision-0006-agent-autonomous-record-kernel.md` for commands, trust boundaries, migration, telemetry,
 and the precise distinction between conformance, regression parity, and efficacy.
 
 The retrospective and A/B tools are offline evaluators only. They do not contact targets, authorize

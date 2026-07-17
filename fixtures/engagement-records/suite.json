@@ -894,6 +894,7 @@
         "advisory_zone": "review_required",
         "artifact_id": "artifact-2",
         "cleanup_obligation_ref": "cleanup-1",
+        "cleanup_obligation_id": "cleanup-obligation-1",
         "contains_executable_capability": true,
         "created_at": "2026-07-10T12:00:00Z",
         "engagement_id": "eng-1",

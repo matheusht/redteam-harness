@@ -34,6 +34,7 @@
       "required": ["actor"],
       "properties": {
         "actor": {"$ref": "#/$defs/actor"},
+        "session_id": {"oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
         "model": {"type": ["string", "null"]},
         "provider": {"type": ["string", "null"]},
         "prompt_version": {"type": ["string", "null"]},

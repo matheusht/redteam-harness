@@ -1,5 +1,10 @@
 # Decision 0005 implementation and evidence report
 
+> Decision 0006 is additive. It preserves every Decision-0005 truth, safety, filing, submission,
+> memory, and closure boundary while replacing agent bookkeeping stalls with fail-closed Notebook
+> capabilities and lane-local digest-bound authority. See
+> [`decision-0006-agent-autonomous-record-kernel.md`](decision-0006-agent-autonomous-record-kernel.md).
+
 Date: 2026-07-10  
 Branch: `decision-0005/research-kernel`  
 Decision: `docs/decisions/0005-reasoning-directed-evidence-constrained-research.md`
