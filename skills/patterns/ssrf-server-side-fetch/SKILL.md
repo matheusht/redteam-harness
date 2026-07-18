@@ -18,6 +18,8 @@ activation:
     - "a webhook, callback URL, avatar importer, link previewer, import-from-url, or document fetcher accepts a client-named destination and performs the fetch asynchronously"
     - "the server follows a redirect from an allowed/client-supplied URL to a second destination; redirect-follow bypass is a distinct sub-shape"
     - "a sibling/newer route or tool constrains the destination to an allowlist while this one does not (the differential says the team knows it needs constraining — co-activate pattern.legacy-route-differential)"
+    - "the outbound call is made straight from the client-supplied value with no pre-fetch destination check in front of the sink — e.g. a bare `http.Get(originUrl)` / `file_get_contents($_REQUEST['url'])` guarded (if at all) only by a scheme-prefix check, not a host/IP allowlist (diff-derived: the removed unguarded `return http.Get(originUrl)` in CVE-2025-59146, the `preg_match('/^http[s]{0,1}:\\/\\//' )`-only check in CVE-2024-36414 — see the anchors section)"
+    - "an absolute-URL / same-origin check treats a scheme-optional or protocol-relative form as already-safe, or a redirect/rebuild step trusts a request-supplied value (e.g. the `Host` header) to reconstruct the fetch target (diff-derived: axios's optional-scheme `isAbsoluteURL` regex in CVE-2024-39338, the `Host`-header-sourced `originalHost.value` in Next.js CVE-2024-34351)"
   weak:
     - "the fetch destination is client-influenced but partly templated (a path or id appended to a fixed host) — reachability depends on how much of the host the client controls"
     - "a redirect is followed server-side, so an allowlisted host can bounce to an arbitrary one"
@@ -25,6 +27,7 @@ activation:
     - "the destination is validated against a strict allowlist of external hosts before the fetch, with redirects disabled and internal/loopback/link-local ranges denied → defense holds, record as held"
     - "the 'url' is actually an opaque server-side id the client cannot steer to a network destination"
     - "the supplied URL is only reflected, stored, or queued, and no server-side fetch reaches a controlled canary endpoint"
+    - "a destination allowlist/filter function (host+IP allowlist, private-IP denial) or a strict input-format constraint is invoked immediately before the outbound sink, and the scheme-capture in any absolute-URL check is mandatory (not optional) → likely held (diff-derived: `is_allowed_hostname()` gating the outbound call in CVE-2024-31461, `ValidateURLWithFetchSetting(...)` inserted right before `http.Get(originUrl)` in CVE-2025-59146, the mandatory-scheme `isAbsoluteURL` regex in CVE-2024-39338)"
 ---
 
 # Server-side fetch of a client-supplied URL
@@ -80,6 +83,47 @@ disablement around it.
 - The response echoes or stores the supplied URL but no controlled canary receives a server-side
   request → activation may remain, confirmation is refuted or `needs_review`.
 
+## Real disclosed anchor(s) for this class (fix-diff-derived)
+Priors/taxonomy from real disclosed GHSA fix commits — the vulnerable pre-patch shape and the guard
+the fix added. Verbatim hunks + primary sources in `skills/oracles/references/ghsa-fix-diff-corpus.md`
+(SSRF bucket). **These are all *fixed* bugs, not live-bug claims:** a target matching a removed-line
+shape is a lead to run through the review-gated funnel above, never a confirmation. The class splits
+by which guard the fix inserted in front of the outbound sink.
+
+**Destination allowlist / filter (bound), `dest-allowlist`:**
+- **CVE-2024-31461** (plane, GHSA-j77v-w36v-63v6, fixed 0.17-dev @ `4b0ccea`): the Jira-importer took
+  an attacker-supplied `hostname` and fetched it with no destination check → `is_allowed_hostname()`
+  restricting the base domain to a fixed Atlassian-host set, invoked before the request. Authenticated
+  workspace-admin.
+- **CVE-2025-59146** (new-api, GHSA-xxv6-m6fx-vfhh, fixed 0.9.0.5 @ `ef63416`): any authenticated user
+  could hand the LLM-gateway a URL to fetch with no validation → `ValidateURLWithFetchSetting(...)`
+  (private-IP + domain/IP filter) inserted immediately before `http.Get(originUrl)`. Reached cloud
+  metadata (`169.254.169.254`) for credential theft.
+
+**Input canonicalization / format-constraint, `canonicalization`:**
+- **CVE-2020-13379** (grafana, GHSA-wc9w-wvq2-ffm9, fixed 6.7.4/7.0.2 @ `ba953be`): the unauthenticated
+  avatar handler took the trailing path segment verbatim as the fetch hash → a 32-hex-char MD5 regex
+  (`validMD5`) applied before the outbound gravatar fetch. Pre-auth.
+- **CVE-2024-39338** (axios, GHSA-8hc4-vh64-cxmj, fixed 1.7.4 @ `07a661a`): `isAbsoluteURL()`'s scheme
+  group was optional, so a protocol-relative `//attacker-host` was misclassified as already-absolute
+  and skipped `baseURL` merging → the scheme capture made mandatory (one-token regex fix). Library-level.
+
+**Trusted-source param-binding, `param-binding`:**
+- **CVE-2024-34351** (next.js, GHSA-fr5h-rqp8-mj6g, fixed 14.1.1 @ `8f7a6ca`): a Server Action redirect
+  rebuilt the internal fetch URL from the attacker-controllable `Host` header (`originalHost.value`) →
+  sourced from a trusted server env var (`__NEXT_PRIVATE_HOST`) first, falling back to the header.
+  Self-hosted deployments only.
+
+**Sink removal (no promotable guard signature), illustrative:**
+- **CVE-2024-36414** (SuiteCRM, GHSA-wg74-772c-8gr7, fixed 7.14.4/8.6.1 @ `504d6f0`) — **CONTESTED**
+  (illustrative): the Connectors `action_CallRest` AJAX action took a raw `url` param, checked only an
+  `http(s)://` prefix, then `file_get_contents()`'d and echoed it back → the entire fetch-and-echo body
+  was deleted outright, no replacement guard. Authenticated fetch-and-echo proxy.
+- **CVE-2025-64430** (parse-server, GHSA-x4qj-2f4q-r4rx, fixed 7.5.4/8.4.0-alpha.1 @ `8bbe3ef`) —
+  **CONTESTED** (illustrative): a Parse.File `_source` of `{format:'uri', uri:<attacker-controlled>}`
+  was fetched via raw `http.get(uri, ...)` with no destination check → the URI-fetch code path and its
+  call site were deleted outright, disabling URI-backed file uploads.
+
 ## Do not overclaim
 - "There is a url parameter" is an activation, not a finding. Name the destination class the fetch can
   be steered to, or it is only a coverage hit.
@@ -87,3 +131,9 @@ disablement around it.
   correct, honest verdict when scope does not permit the probe.
 - GraphQL or REST introspection alone is not SSRF. Route GraphQL global-id resolver issues separately
   and require a chained resolver canary before confirmation.
+- If the class's added-guard shape is already present for the reached sink — a destination
+  allowlist/filter invoked immediately before the outbound call, a mandatory-scheme (not optional)
+  absolute-URL check, or a trusted-source-bound rebuild of the fetch host (see the anchors above) —
+  this path is patched; do not claim strong activation without a further, specific reason (an
+  unguarded sibling route/tool, a redirect-follow bypass of the same allowlist). Presence of the guard
+  is a strong held signal, not a soundness proof.

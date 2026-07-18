@@ -15,12 +15,15 @@ activation:
     - "user input is reflected into an HTML/JS/attribute/URL context without contextual output encoding"
     - "user input reaches a client-side sink (innerHTML, document.write, eval, location assignment) via a traceable source"
     - "stored input (comment, profile field, filename, message) is rendered back to OTHER users without encoding"
+    - "a value is written directly into an HTML-rendering call (template interpolation, a `<span>` build-up, a DOM highlight helper) with no escaping function anywhere in that code path — a bare `${value}` splice or a `// todo: sanitize` marker that was never implemented (diff-derived: the unescaped `${errorCode}` interpolation in GHSA-9x4v-xfq5-m8x5 better-auth, the `// todo: sanitize` no-op in CVE-2022-2022 NocoDB — see the anchors section)"
+    - "an HTML sanitizer's denylist/allowlist match on attribute or tag names skips case/whitespace canonicalization before comparing, so a trailing-space or case-variant attribute name slips a dangerous value past the filter (diff-derived: the untrimmed `attr->nodeValue` compare in CVE-2024-37383 Roundcube)"
   weak:
     - "input is encoded in one context (e.g. HTML-entity-encoded) but reachable in a different context (attribute, JS string, URL) where that encoding is insufficient"
     - "a Content-Security-Policy is present but permissive (unsafe-inline, wide script-src) — reduces but does not eliminate exploitability"
   negative:
     - "output is contextually encoded for the sink it lands in, and CSP additionally blocks inline/eval execution → likely held"
     - "the input never reaches a render or DOM-sink path (e.g. used only server-side, or strictly typed/numeric)"
+    - "the value passes an explicit escape/sanitize call (HTML-entity encoding, `DOMPurify.sanitize()`) immediately before the sink, or an identifier-like value is bound/allowlisted (`intval()` + exact-match) before it is ever stored or rendered → likely held (diff-derived: `sanitize()` in GHSA-9x4v-xfq5-m8x5 better-auth, `DOMPurify.sanitize()` in CVE-2022-2022 NocoDB, `intval()` + `{1,2}` allowlist in GHSA-rrr4-h2pc-57g6 Talishar, the `trim()`'d denylist compare in CVE-2024-37383 Roundcube)"
 
 safe_signal:
   proxy: >
@@ -38,7 +41,7 @@ impact_escalation:
   requires: human_confirm
   containment: "benign canary execution only, no cookie/token exfiltration, no third-party callback infra, logged in engagement cleanup.md"
 
-oracle: [signal-oracle, adjudication-oracle]
+oracle: [signal-oracle, adjudication-oracle, ghsa-fix-diff]
 severity_rubric: { stored_any_user: critical, dom_based_reachable: high, stored_self_only: medium, reflected_requires_interaction: medium }
 
 procedure:
@@ -65,6 +68,48 @@ survived unescaped into the response body. Reproduced once in a fresh session wi
 3. **stored, any viewer** or **DOM-based, reachable from an untrusted source** — high/critical;
    cross-user execution demo needs **operator confirm before any artifact**.
 
+## Real disclosed anchor(s) for this class (fix-diff-derived)
+Priors/taxonomy from real disclosed GHSA fix commits — the vulnerable pre-patch shape and the guard
+the fix added. Verbatim hunks + primary sources in `skills/oracles/references/ghsa-fix-diff-corpus.md`
+(Cross-site scripting bucket); consult via the `ghsa-fix-diff` oracle. **These are all *fixed* bugs,
+not live-bug claims:** a target matching a removed-line shape is a lead to run through the funnel
+above, never a confirmation. The dominant guard shape is escape-before-sink; two secondary shapes
+cover values that can't be simply HTML-escaped (identifier-like fields, sanitizer denylist matches).
+
+**Escape-before-sink (`escape`):**
+- **GHSA-9x4v-xfq5-m8x5** (better-auth, fixed 1.1.16 @ `7ae340e2`): unauthenticated `error` query
+  param spliced raw as `${errorCode}` into the HTML error page → `sanitize()` HTML-entity-encode
+  wrapper at the interpolation site. Reflected, requires victim click.
+- **GHSA-ff9r-ww9c-43x8 / CVE-2026-25759** (Statamic, fixed 6.2.3 @ `6ed4f65f`): admin Command
+  Palette rendered raw content titles via fuzzysort `.highlight()` with no escaping → `escapeHtml()`
+  applied before the highlight call. Stored, content-creator payload executes for a higher-privileged
+  searcher (stored-XSS-to-privesc).
+- **CVE-2023-36656** (json-markup, a Jaeger UI dependency, fixed 1.1.4 @ `e7fb4df7`): JSON object
+  key string-concatenated raw into a `<span>` used via `dangerouslySetInnerHTML` → `escape(key)`
+  wrap at the concatenation site. Stored, any viewer of the trace.
+
+**Denylist → safe-API sanitizer (`sanitizer-swap`):**
+- **CVE-2022-2022** (NocoDB, fixed 0.91.7 @ `ffad5a31`): project title/slug stored with only a
+  `// todo: sanitize` marker and no actual sanitization → `DOMPurify.sanitize(projectBody.title)`
+  before store. Authenticated, stored for every viewer of the project dashboard.
+
+**Param-binding + exact-match allowlist (`exact-match-swap`, for identifier-like fields that
+can't be HTML-escaped):**
+- **CVE-2026-25144 / GHSA-rrr4-h2pc-57g6** (Talishar, commit-pinned @ `09dd00e5`): `playerID` GET
+  param used and rendered verbatim in a shared game page `<span>` → `intval()` bind + `{1,2}`
+  exact-match allowlist. Stored, rendered for every game participant.
+
+**Canonicalization-before-denylist-match (`canonicalize-then-match`):**
+- **CVE-2024-37383 / GHSA-8j3w-26mp-75xh** (Roundcube, fixed 1.5.7 / 1.6.7 @ `43aaaa52`): HTML
+  sanitizer's SVG `<animate attributeName>` denylist compare skipped whitespace trimming, so a
+  trailing-space `href ` slipped a `javascript:` URI past the filter → `trim()` added before the
+  `strtolower()` compare. Triggered when a victim opens a crafted HTML email.
+- **GHSA-65mj-f7p4-wggq / CVE-2025-66309** (Grav admin plugin, fixed 1.8.0-beta.27 @ `99f65329`)
+  — **CONTESTED** (illustrative; squashed multi-GHSA release bundle, non-promotable): Selectize
+  admin multi-select fields rendered option/item text with no default escaping → new `SafeRender`
+  default render functions HTML-escaping option/item text. Requires authenticated attacker plus
+  admin interaction.
+
 ## Not this card
 - Server-side template evaluation of attacker input (`{{7*7}}` → `49`) is `server-side-template-injection`,
   not XSS, even though both are injection-into-rendering bugs.
@@ -76,3 +121,8 @@ survived unescaped into the response body. Reproduced once in a fresh session wi
   browsers/frameworks won't execute it as-is. Prove execution or it's `needs_review`.
 - A reflected XSS with no realistic victim-interaction path (e.g. requires POST body only the
   attacker can set) is a weak claim — name the actual delivery vector or don't call it exploitable.
+- If the class's added-guard shape is already present in the target's source for the reached sink —
+  an escape/sanitize call immediately before the HTML sink, or a bind/allowlist check for an
+  identifier-like value (see the anchors above) — this path is patched; do not claim strong
+  activation without a further, specific reason. Presence of the guard is a strong held signal, not
+  a soundness proof.

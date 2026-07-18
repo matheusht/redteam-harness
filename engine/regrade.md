@@ -118,7 +118,13 @@ re-derivation scope, and folding one into the other would blur a boundary the re
 states cleanly. That precedent pass now has a concrete backing artifact:
 `skills/oracles/severity-precedent-oracle.md` (the `oracles.severity-precedent` card, 23 bug-class
 buckets built from re-verified NVD/GHSA/CVE-List vectors). A settled finding's contested-metric question
-routes to that card; regrade does not do the precedent research itself.
+routes to that card; regrade does not do the precedent research itself. A sibling, distinct pass mines
+the *code delta* rather than the CVSS vector: `oracles.ghsa-fix-diff`
+(`skills/oracles/ghsa-fix-diff-oracle.md`) supplies real disclosed fix-commit priors — the vulnerable
+removed-line shape vs the guard the fix adds — to Stage-0 sink-narrowing, Stage-5.25 novelty, and
+pocinator's lens-11 differential. It is also not a regrade of validity, and not a severity pass; it is
+a priors/taxonomy feed, and a target's structural match to a removed-line shape is a lead, never a
+finding.
 
 ## 6. Model tier
 
