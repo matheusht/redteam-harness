@@ -53,7 +53,11 @@ Anything other than `confirmed`/`confirmed_with_correction`/`escalation_found` r
 Not a CVSS-metric-precedent research pass — if a report's severity hinges on a single contested CVSS
 metric and needs disclosed-CVE precedent, that is the separate, narrower, later `oracles.severity-precedent`
 pass (`skills/oracles/severity-precedent-oracle.md`, cited from `skills/reporting/hackerone-reports.md`),
-not a full regrade re-litigation of the finding.
+not a full regrade re-litigation of the finding. Nor is it the code-delta precedent pass: matching a
+target's source against a disclosed fix's pre/post-patch shape is `oracles.ghsa-fix-diff`
+(`skills/oracles/ghsa-fix-diff-oracle.md`) — a priors/taxonomy feed for Stage-0 sink-narrowing,
+Stage-5.25 novelty, and pocinator's lens-11 differential, distinct from both regrade and the
+severity-precedent pass.
 
 ## Naming note
 Regrade in this harness has no vendor requirement — every real instance uses a generic

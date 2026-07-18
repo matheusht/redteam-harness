@@ -139,7 +139,13 @@ engagement's own passes, not an invented one.
     known-safe control strengthens confidence but isn't required to reach `verified`. Not every
     finding has one to exercise — a filter-chain-bypass PoC generally won't, while a dependency-CVE
     lead generally will (e.g. checking a pinned library version against disclosed-CVE-fixed ranges).
-    Don't force this lens where the finding shape doesn't offer it.
+    Don't force this lens where the finding shape doesn't offer it. **Worked example (the differential
+    this lens long shipped no example for):** when the class has a disclosed fix, `oracles.ghsa-fix-diff`
+    (`skills/oracles/ghsa-fix-diff-oracle.md`) supplies the concrete pre/post boundary — run the PoC
+    against the pinned *pre-fix* commit (must reproduce → positive control) and the *post-fix* commit
+    (must NOT reproduce → negative control), with the maintainers' own diff hunk as the traced
+    mechanism. A PoC that still fires against the post-fix commit is proving something other than the
+    disclosed bug — treat that as a refutation, not a passing differential.
 12. **Counterfactual-novice framing** (from a sensemaking-in-security-assessment study of expert
     bug-bounty hunters/consultants/CTF players) — prompt explicitly as *"where would a naive or
     reward-hacked verification stop and declare success here?"* rather than only "is this faithful?"

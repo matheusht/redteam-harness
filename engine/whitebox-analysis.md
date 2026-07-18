@@ -52,6 +52,16 @@ than the stage list**: *"stage names show the development progression if anythin
   stage feeding a grading panel feeding a verification stage, self-driven, with the operator setting
   the target ("exhaust this corpus") rather than sequencing every step.
 
+**Where the GHSA fix-diff oracle plugs in.** `oracles.ghsa-fix-diff`
+(`skills/oracles/ghsa-fix-diff-oracle.md`) supplies real disclosed fix-commit priors to two points in
+this funnel: the *removed-line* (vulnerable pre-patch) shape is a Stage-0/Stage-1 candidate-sink
+signature, and the pre/post-patch snapshot is the Stage-5.25 novelty discriminator —
+patched-historical vs genuine-new-instance vs regression, which a version-string check alone misses
+(the ~$6.4M Astroport-on-Terra fix-regression is the canonical miss). Priors and taxonomy only: a
+target matching a removed-line shape is a Stage-0 lead to drive through the funnel, never a Stage-4
+confirmation, and a matching added-guard is a strong-but-not-absolute held signal that still owes
+Stage-3 reachability.
+
 ## 2. Why rules alone don't scale to an arbitrary binary/codebase
 
 A rule (regex sink list, taint-rule set, static-analysis query) is a cheap, useful **Stage 1

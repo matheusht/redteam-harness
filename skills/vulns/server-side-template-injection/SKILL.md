@@ -15,12 +15,15 @@ activation:
     - "user input is concatenated into a template string (not passed as a template VARIABLE) before the engine renders it"
     - "template-syntax echo (e.g. `{{7*7}}`, `${7*7}`, `#{7*7}`, `<%= 7*7 %>`) returns an EVALUATED result (49) rather than the literal string"
     - "an error response leaks a template-engine name/stack trace (Jinja2, Twig, FreeMarker, Velocity, Handlebars, ERB, etc.)"
+    - "a client-controlled compile-time option, helper/path name, or template-author field (a Handlebars helper/path name, an EJS `outputFunctionName`/`localsName` view-option, a Pug `pretty` option, a Smarty `{function name=...}` tag) is spliced unescaped into the compiler's generated source string before it becomes executable code (diff-derived: the raw `name`/`opts.outputFunctionName`/`this.pp` string concatenation in CVE-2021-23369, CVE-2022-29078, CVE-2021-21353, CVE-2021-26120 — see the anchors section)"
+    - "the server exposes its Twig/Jinja rendering environment unsandboxed (a plain `Twig_Environment`/`jinja2.Environment()` with no SecurityPolicy/SandboxedEnvironment, or an internal Twig extension chain reachable from template source) to a template-author or config-value role (diff-derived: the bare `Twig_Environment` in CVE-2023-43661, the unsandboxed `jinja2.Environment()` in CVE-2026-33154, the exposed `core.setEscaper` extension chain in CVE-2024-28119)"
   weak:
     - "user input populates a template VARIABLE (the normal, safe use of templating) with no evidence it is ever treated as template source"
     - "a custom/sandboxed template dialect is in use whose expression language is restricted (may still allow a subset of primitives)"
   negative:
     - "user input is only ever passed as a bound template variable, never concatenated into the template source itself → likely held"
     - "the templating engine is fully sandboxed (no filesystem/process access from the expression language) even if expression evaluation is possible"
+    - "identifier-like compile-time fields (helper names, output-function names, pretty-print flags, `{function name=...}`) are validated against a strict identifier regex or escaped/JSON-stringified before being spliced into generated source, AND/OR rendering runs inside a sandbox with an explicit tags/filters/functions/methods allowlist → likely held (diff-derived: the `_JS_IDENTIFIER` regex in CVE-2022-29078, the `JSON.stringify(name)` swap in CVE-2021-23369, the Twig `SecurityPolicy`/`SandboxExtension` in CVE-2023-43661, the `SandboxedEnvironment` swap in CVE-2026-33154)"
 
 safe_signal:
   proxy: >
@@ -38,7 +41,7 @@ impact_escalation:
   requires: human_confirm
   containment: "read-only canary/flag retrieval via the engine's own primitives; no persistent write, no shell spawned outside the owned container, logged in engagement cleanup.md"
 
-oracle: [signal-oracle, adjudication-oracle]
+oracle: [signal-oracle, adjudication-oracle, ghsa-fix-diff]
 severity_rubric: { remote_code_execution: critical, filesystem_read: high, expression_evaluation_only: medium }
 
 procedure:
@@ -63,6 +66,56 @@ explanation.
 2. **filesystem read** via engine primitives (canary/flag retrieval) — high.
 3. **remote code execution** — critical; **operator confirm before any artifact**.
 
+## Real disclosed anchor(s) for this class (fix-diff-derived)
+Priors/taxonomy from real disclosed GHSA fix commits — the vulnerable pre-patch shape and the guard
+the fix added. Verbatim hunks + primary sources in `skills/oracles/references/ghsa-fix-diff-corpus.md`
+(Server-side template injection -> RCE bucket); consult via the `ghsa-fix-diff` oracle. **These are
+all *fixed* bugs, not live-bug claims:** a target matching a removed-line shape is a lead to run
+through the funnel above, never a confirmation. The class splits bimodally by where the untrusted
+value enters.
+
+**Value spliced into compiler-generated source (fix: escape/canonicalize or identifier-allowlist the
+value before it is concatenated), `canonicalization` / `identifier-allowlist`:**
+- **CVE-2021-23369** (handlebars.js, GHSA-f2jv-r9rf-7988, fixed 4.7.7 @ `f058970`): a helper/path
+  `name` spliced raw into `container.lookup(depths, "<name>")` inside the compiled function body →
+  `JSON.stringify(name)`. Reached via `Handlebars.compile(untrustedTemplateSource)`.
+- **CVE-2022-29078** (ejs, GHSA-phwq-j96m-2c2q, fixed 3.1.7 @ `15ee698`): `opts.outputFunctionName`
+  (and localsName/destructuredLocals) concatenated unescaped into the compiled function's prelude →
+  `_JS_IDENTIFIER` regex allowlist before splice. Reachable when Express view-options are populated
+  from request data.
+- **CVE-2021-21353** (pug-code-gen, GHSA-p493-635q-r6gr, fixed 2.0.3/3.0.2 @ `991e78f`): the compile
+  option `pretty` concatenated into `pug_indent.push('...')` inside a single-quoted JS literal →
+  whitespace-only validation + `stringify(...)`.
+- **CVE-2021-26120** (smarty, GHSA-3rpf-5rqv-689q, fixed 3.1.39 @ `165f1bd`): a `{function name=...}`
+  tag's raw name compiled directly into a generated PHP function definition → identifier regex
+  `^[a-zA-Z0-9_\x80-\xff]+$` rejects non-identifier names before compilation. Multi-tenant template
+  authors.
+- **CVE-2022-21686** (PrestaShop, GHSA-mrq4-7ch7-2465, fixed 1.7.8.3 @ `d02b469`): legacy admin `.tpl`
+  layout content `str_replace`-spliced back into Twig source and compiled verbatim → `escapeSmarty()`
+  wraps it as a raw string literal (`{{ '<escaped-content>' | raw }}`) so it is never parsed as Twig.
+  Authenticated admin session.
+
+**Rendering environment left unsandboxed for a template-author/config role (fix: wrap render in a
+sandbox/security-policy or denylist dangerous constructs), `template-sandbox` / `denylist-to-safe-api`:**
+- **CVE-2023-43661** (cachet, GHSA-hv79-p62r-wg3p, fixed 2.4 @ `6fb043e`): an authenticated user's
+  incident `template` field rendered by a bare `Twig_Environment` (no sandbox) → Twig
+  `SecurityPolicy`/`SandboxExtension` with an empty methods/functions allowlist. Authenticated,
+  non-admin API token sufficient.
+- **CVE-2026-33154** (dynaconf, GHSA-pxrr-hq57-q35p, fixed 3.2.13 @ `2fbb45e`): the `@jinja` config
+  resolver rendered attacker-influenced config values with a plain `jinja2.Environment()` →
+  `jinja2.sandbox.SandboxedEnvironment()` swap, catching `SecurityError`. Config-source triggered
+  (env var / .env / CI secrets), no auth needed.
+- **CVE-2024-28119** (Grav, GHSA-2m7x-c7px-hp58, fixed 1.7.45 @ `de1ccfa`): the internal Twig
+  environment was reachable from page/front-matter Twig with no restriction, letting
+  `core.setEscaper('system','system')` redefine the escaper to `system` → a regex denylist
+  (`Security::cleanDangerousTwig`) comments out `core.setEscaper`/`call_user_func`/etc. before render.
+  Weaker denylist-only guard; admin/editor-authored content.
+- **CVE-2026-33938** (handlebars.js, GHSA-3mfm-83xf-c92r, fixed 4.7.9 @ `68d8df5`) — **CONTESTED**
+  (illustrative only): a helper-mutated `@partial-block` data-frame carrying a type-confused
+  pre-parsed AST node let a crafted `PathExpression.depth` splice into generated JS →
+  `validateInputAst`/`isValidDepth` type-checks the AST before trusting it. Genuine guard but the
+  fix SHA is a multi-CVE omnibus with a non-contiguous hunk, so not promoted as a clean signature.
+
 ## Not this card
 - Output reflected into HTML that a BROWSER then interprets is `cross-site-scripting`, not SSTI —
   SSTI is evaluated server-side, before the response is ever sent to a client.
@@ -74,3 +127,9 @@ explanation.
   evaluation proof.
 - Do not assert RCE from expression-evaluation alone; name the exact primitive chain that would
   reach code execution, or stop at "expression evaluation confirmed."
+- If the class's added-guard shape is already present in the target's source for the reached sink —
+  an identifier-regex/escape/canonicalization check on the value before it is spliced into generated
+  template source, or the render call is wrapped in a sandbox with an explicit tags/filters/
+  functions/methods allowlist (see the anchors above) — this path is patched; do not claim strong
+  activation without a further, specific reason (an unguarded sibling sink, a reachable pre-guard
+  path). Presence of the guard is a strong held signal, not a soundness proof.
