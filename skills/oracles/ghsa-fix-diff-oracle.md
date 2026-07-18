@@ -65,22 +65,27 @@ invocable-by-id index; the verbatim hunks, sources, and per-anchor verdicts live
 
 ## Coverage honesty
 
-12 buckets mined this pass; **64 IN + 9 CONTESTED = 73 anchored fix diffs, 81 candidates dropped**
-(mostly closed-source vendors with no public fix commit, or version-bump-only SVN-mirror "fixed"
-SHAs). 5 buckets cleared the ≥6-clean-anchor bar (**BFLA, SSTI, XXE, prototype pollution, JWT**); the
-other 7 are **THIN** (illustrative, several one anchor short). **Not yet mined** (deferred, not
-dropped): XSS, CSRF, open redirect, request smuggling, memory-corruption RCE, cache poisoning, and
-the OAuth-flow pattern cards — fix-diff-clean GHSAs there are sparser and want a top-up pass.
+19 buckets mined across two passes; **108 IN + 19 CONTESTED = 127 anchored fix diffs, 136 candidates
+dropped** (mostly closed-source vendors with no public fix commit, or version-bump / release-tag
+"fixed" SHAs that resolve to a changelog bump rather than the real code diff). Buckets that clear the
+≥6-clean-anchor bar and assert a convention: **BFLA, SSTI, XXE, prototype pollution, JWT** (pass 1)
+plus **SSRF (7), OS command injection (7), insecure deserialization (6), HTTP request smuggling (8)**
+and **XSS (6, borderline)** after the top-up. Still **THIN** (illustrative, several one anchor short):
+IDOR/BOLA (4), auth bypass (4), SQL injection (4), path traversal (5 — 0 net-new this pass, both
+candidates dropped), CSRF (5), open redirect (5), file upload (3), crypto (5), OAuth-flow (5). **Not
+yet mined** (deferred, not dropped): memory-corruption RCE and cache poisoning.
 
 ## Reference (keyed by bug class → CWE). Full hunks + sources in the corpus.
 
-### SSRF (CWE-918) — THIN (5 IN / 2 CONTESTED / 9 dropped)
+### SSRF (CWE-918) — IN (7 IN / 2 CONTESTED / 12 dropped)
 - **Dominant guard shape:** a pre-fetch destination check inserted right before the outbound sink —
   a destination allowlist/filter (`bound`) or input canonicalization/format-constraint. Minority:
   param-binding (trusted-host) and outright sink removal.
 - **Closest anchors:** CVE-2020-13379 (grafana, MD5-regex canonicalization), CVE-2024-31461 (plane,
   hostname allowlist), CVE-2025-59146 (new-api, `ValidateURLWithFetchSetting` before `http.Get`),
-  axios (scheme-mandatory regex), next.js (trusted-host binding). CONTESTED: SuiteCRM, parse-server.
+  axios (scheme-mandatory regex), next.js (trusted-host binding), CVE-2026-53727 (css_parser,
+  `SsrfFilter` + scheme-allowlist — also closes a `file://`-redirect→LFI escalation), CVE-2026-4874
+  (keycloak, `isHostAllowedForClient` on the backchannel-logout host). CONTESTED: SuiteCRM, parse-server.
 - **Grounds:** `skills/patterns/ssrf-server-side-fetch`, `skills/vulns/information-disclosure`.
 
 ### IDOR / BOLA (CWE-639 / CWE-284) — THIN (4 IN / 2 CONTESTED / 13 dropped)
@@ -115,23 +120,30 @@ the OAuth-flow pattern cards — fix-diff-clean GHSAs there are sparser and want
 - **Grounds:** `skills/vulns/jwt-authentication-bypass`, `skills/patterns/legacy-route-differential`,
   `skills/patterns/transitive-sanitizer-reliance`.
 
-### Insecure deserialization → RCE (CWE-502) — THIN (3 IN / 0 CONTESTED / 10 dropped)
+### Insecure deserialization → RCE (CWE-502) — IN (6 IN / 0 CONTESTED / 10 dropped)
 - **Dominant guard shape:** `deser-type-filter` — an assignability/allowlist check
   (`Throwable.class.isAssignableFrom` / `SERIALIZABLE_PACKAGES` package-allowlist) inserted right
-  before the reflective `Class.forName()` + String-constructor instantiation.
-- **Weakest bucket, and the reason is itself a datapoint:** the CWE-502 seed is heavy with Apache
-  SVN-mirrored projects whose OSV "fixed" SHAs are version-bump-only commits; the adjudicator also
-  dropped Jenkins (CWE mismatch — per-function-authz mechanism) and PyYAML (SHA pointed at an
-  *unmerged proposal*, not the shipped 5.1 fix). Prime candidate for a targeted top-up.
+  before the reflective `Class.forName()` + String-constructor instantiation. The top-up adds three
+  non-Java variants: an unpredictable-token + escape-boundary check (serialize-javascript), a
+  recursive type-denylist over array/generic type args (MessagePack-CSharp), and an
+  unsafe-fallback-path denial that stops silently using the full unpickler (pytorch `weights_only`).
+- **Top-up recovered the bucket:** pass 1 was thin (Apache SVN-mirror "fixed" SHAs that are
+  version-bump-only, plus a Jenkins CWE mismatch and a PyYAML unmerged-proposal SHA); targeting
+  GitHub-native npm/NuGet/PyPI projects added 3 clean anchors to clear the bar.
+- **Closest anchors:** CVE-2017-7525 (jackson-databind, package-allowlist), CVE-2023-46604 (ActiveMQ),
+  CVE-2020-7660 (serialize-javascript, CSPRNG placeholder), CVE-2026-48517 (MessagePack-CSharp,
+  recursive type-denylist), CVE-2025-32434 (pytorch, restricted-unpickler enforcement).
 - **Grounds:** `skills/vulns/insecure-deserialization`.
 
-### OS command injection → RCE (CWE-78) — THIN (5 IN / 1 CONTESTED / 4 dropped)
+### OS command injection → RCE (CWE-78) — IN (7 IN / 1 CONTESTED / 8 dropped)
 - **Dominant guard shape:** `param-binding` — stop interpolating attacker input into a shell-parsed
   string; bind it as a positional argument / disable the shell (`shell:false`, `"$@"`). Secondary:
-  `canonicalization` (php Best-Fit byte remap, shell-quote line-terminator escape).
+  `canonicalization` (php Best-Fit byte remap, shell-quote line-terminator escape); the top-up adds
+  an executable-basename allowlist (PraisonAI) and a shell-metacharacter denylist+escape (greenshot).
 - **Closest anchors:** CVE-2026-9277 (shell-quote), CVE-2026-31975 (claudecodeui), CVE-2024-4577
-  (php-cgi), CVE-2025-64756 (node-glob), GHSA-hxwm-x553-x359 (@npmcli/git). CONTESTED: CVE-2025-49141
-  (haxcms — endpoint deletion, no added guard to promote).
+  (php-cgi), CVE-2025-64756 (node-glob), GHSA-hxwm-x553-x359 (@npmcli/git), GHSA-9qhq-v63v-fv3j
+  (PraisonAI, basename allowlist), CVE-2026-22035 (greenshot, metachar denylist). CONTESTED:
+  CVE-2025-49141 (haxcms — endpoint deletion, no added guard to promote).
 - **Grounds:** `skills/vulns/os-command-injection`, `skills/vulns/injection`.
 
 ### SQL injection (CWE-89) — THIN (4 IN / 1 CONTESTED / 10 dropped)
@@ -142,7 +154,7 @@ the OAuth-flow pattern cards — fix-diff-clean GHSAs there are sparser and want
   binding), Django (boolean-connector allowlist). CONTESTED: Sequelize (non-contiguous fix).
 - **Grounds:** `skills/vulns/sql-injection`.
 
-### Path traversal / LFI (CWE-22 / CWE-98) — THIN (5 IN / 1 CONTESTED / 8 dropped)
+### Path traversal / LFI (CWE-22 / CWE-98) — THIN (5 IN / 1 CONTESTED / 11 dropped; 0 net-new in the top-up — both candidates dropped as version-bump SHAs)
 - **Dominant guard shape:** `canonicalization` — absolutize / URL-decode / normalize the attacker
   path **before** a containment prefix-check (`filepath.Abs`, decode+normalize, `check_file_dir_name`).
   Variants: bound-containment (`inCwd` startsWith), denylist→safe-API (model lookup).
@@ -189,6 +201,92 @@ the OAuth-flow pattern cards — fix-diff-clean GHSAs there are sparser and want
 - **Closest anchors:** python-jose, pyjwt, fast-jwt (alg-confusion), node-jsonwebtoken (alg=none),
   hono (alg binding), pac4j (SignedJWT requirement).
 - **Grounds:** `skills/vulns/jwt-authentication-bypass`, `skills/patterns/jwt-claim-validation`.
+
+### CSRF (CWE-352) — THIN (5 IN / 1 CONTESTED / 5 dropped)
+- **Dominant guard shape:** an authenticity / same-origin check inserted before the state-changing
+  sink — an HTTP-method restriction (move the change off a bare `GET`/query-string onto a body-bound
+  `POST`), a server-side synchronizer / double-submit token check, or a `Content-Type: application/json`
+  gate that forces a CORS preflight a cross-origin form can't pass.
+- **Closest anchors:** GHSA-26v7-h57m-gh9m (new-api, GET→POST + query→JSON body), GHSA-jrq5-hg6x-j6g3
+  (goshs, double-submit token header), GHSA-ww7h-g2qf-7xv6 (TYPO3 form, `assertAllowedHttpMethod` POST),
+  GHSA-5j53-63w8-8625 (fastapi-users, double-submit OAuth-state cookie), GHSA-39hj-fxvw-758m (Sunshine,
+  JSON content-type gate). CONTESTED: GHSA-vvmr-8829-6whx (symfony, DI service-ordering fix — not a
+  single isolable guard).
+- **Grounds:** `skills/patterns/legacy-route-differential`, `skills/vulns/business-logic-abuse` (no
+  dedicated CSRF card).
+
+### Reflected / Stored / DOM XSS (CWE-79) — THIN (6 IN / 1 CONTESTED / 6 dropped)
+- **Dominant guard shape (bimodal by injection position):** `escape` — HTML-entity-encode the
+  attacker value immediately before HTML/template interpolation (better-auth, Statamic, json-markup);
+  `param-binding` + tiny exact-match allowlist for value-position input (Talishar `intval` + `1`/`2`
+  check); `denylist→safe-API` — run the untrusted string through a dedicated sanitizer before persisting
+  it (NocoDB `DOMPurify.sanitize()`); `canonicalization-before-denylist-match` — normalize (`trim()`)
+  before comparing against a hard-coded denylisted attribute name, closing a whitespace bypass
+  (Roundcube SVG `<animate>` sanitizer).
+- **Closest anchors:** better-auth (reflected, escape), Talishar (stored, param-binding+allowlist),
+  NocoDB (stored, DOMPurify), Statamic CMS (stored→privilege-escalation, escape), json-markup /
+  Jaeger UI (stored, escape — fix lives in the dependency, not jaeger-ui itself), Roundcube Webmail
+  (sanitizer-bypass, canonicalization). CONTESTED: Grav admin (GHSA-65mj-f7p4-wggq entangled inside a
+  squashed commit fixing four distinct GHSAs plus an unrelated rate-limit change).
+- **Thinness driver:** several otherwise-good candidates' OSV "fixed" SHA resolves to a version-bump
+  / release-tag commit, not the real code diff (GLPI, Open eClass) — the same failure mode flagged in
+  the CWE-502 bucket above. NukeViet and PrestaShop advisories name the fix location in prose but
+  supply no resolvable commit SHA at all.
+- **Grounds:** `skills/vulns/cross-site-scripting`.
+
+### HTTP request smuggling (CWE-444) — IN (8 IN / 1 CONTESTED / 2 dropped)
+- **Dominant guard shapes:** strict header/parser validation that fails closed — reject control chars
+  / bare-LF / empty header names / conflicting TE+CL, correct trailer-section boundary detection, or
+  an allow-list char table before header serialization.
+- **Closest anchors:** CVE-2021-43797 (netty, control-char block + OWS canon), CVE-2023-40175 (puma,
+  reject-empty-CL + trailer boundary), CVE-2023-27493 / CVE-2024-23326 (envoy, char-table allowlist /
+  status-code allowlist), CVE-2026-2332 (jetty, quoted-chunk-ext parser state), CVE-2025-58068
+  (eventlet, discard full trailer), CVE-2024-23452 (brpc, reject TE+CL), CVE-2023-25725 (haproxy,
+  reject empty header name across H1/H2/H3). CONTESTED: trafficserver (bare-LF, config-plumbing-entangled).
+- **Grounds:** `skills/vulns/http-protocol-abuse`.
+
+### Open redirect (CWE-601) — THIN (5 IN / 1 CONTESTED / 8 dropped)
+- **Dominant guard shape:** allow-list / relative-URL validation of the redirect target before
+  trusting it — reject absolute netloc + protocol-relative `//host`, or match against a configured
+  site/portal/registered-URI set. Minority: scheme/host stripping (rebuild from path+query only).
+- **Closest anchors:** CVE-2024-28113 (peering-manager, reject netloc + `//` bypass), CVE-2024-24818
+  (espocrm, site+portal allow-list), CVE-2024-28239 (directus, per-driver allow-list + `//host`
+  reject), CVE-2026-28415 (gradio, scheme/host stripping), CVE-2026-25649 (traccar, registered
+  redirect_uri equality). CONTESTED: CVE-2026-34442 (freescout, Host-header allow-list, entangled).
+- **Grounds:** boundary cross-ref for `skills/patterns/ssrf-server-side-fetch` (no dedicated open-redirect card).
+
+### Unrestricted file upload → RCE (CWE-434) — THIN (3 IN / 3 CONTESTED / 10 dropped)
+- **Dominant guard shape:** swap a client-controlled / denylist extension check for a server-side
+  allow-list or safe-API, or move uploads to a non-executable path.
+- **Closest anchors:** CVE-2024-24809 (traccar, denylist→safe-API), CVE-2025-0520 (showdoc,
+  exact-match-swap), GHSA-rf6j-xgqp-wjxg (openeclass, allowlist). CONTESTED: CVE-2023-23607 (Dasherr),
+  CVE-2026-24897 (Erugo, canonicalization), CVE-2025-32028 (haxcms-php) — each partial or entangled.
+- **Grounds:** `skills/vulns/arbitrary-file-upload`.
+
+### Cryptographic weakness (CWE-327 / CWE-916 / CWE-330) — THIN (5 IN / 1 CONTESTED / 7 dropped)
+- **Dominant guard shape:** replace a weak primitive with a strong one at the exact call site —
+  `Math.random`→CSPRNG (`crypto.randomBytes`/`randomInt`) for token generation (CWE-330); weak
+  hash/KDF→strong (MD5/SHA1→BCrypt/SHA256, iterations 1→250k) for password storage (CWE-327/916); or
+  delete the insecure API outright.
+- **Closest anchors:** CVE-2025-7783 (form-data, Math.random→randomBytes), CVE-2025-22150 (undici,
+  randomInt), CVE-2020-5229 (opencast, MD5→BCrypt), CVE-2023-46233 (crypto-js, SHA1→SHA256 + 250k
+  iters), CVE-2021-39182 (EnroCrypt, MD5 removed). CONTESTED: CVE-2024-29886 (serverpod,
+  SHA-256→Argon2id, migration-entangled).
+- **Grounds:** `skills/vulns/cryptographic-weakness`.
+
+### OAuth / OIDC flow flaws (CWE-287 / CWE-863) — THIN (5 IN / 2 CONTESTED / 7 dropped)
+- **Dominant guard shape:** bind/verify a flow parameter that was previously unchecked — PKCE
+  downgrade-prevention (reject a `code_verifier` when no `code_challenge` was issued), `client_id`
+  equality at code exchange, a client-confidentiality predicate on auto-approval, or a boolean-operator
+  fix in a rejection predicate. A distinct sub-shape (CONTESTED, mechanism-matched but off the
+  CWE-287/863 headline) is auth-code single-use made atomic (claim-and-delete / distributed lock).
+- **Closest anchors:** GHSA-mrx3-gxjx-hjqj (authentik, PKCE downgrade), GHSA-qgp8-v765-qxx9 (cloudflare
+  workers-oauth-provider, downgrade guard), GHSA-qh6q-598w-w6m2 (pocket-id, AND→OR fix),
+  GHSA-xqxv-4jc2-x56x (zitadel, `client_id` equality), GHSA-7w2c-w47h-789w (doorkeeper,
+  client-confidentiality predicate). CONTESTED: better-auth (atomic consume), sentry (distributed-lock
+  single-use).
+- **Grounds:** `skills/patterns/oauth-authorization-code-single-use`, `skills/patterns/oauth-client-binding`,
+  `skills/patterns/delegated-capability-attenuation`.
 
 ## Non-overclaim caveats (non-negotiable)
 
