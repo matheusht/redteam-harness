@@ -49,6 +49,7 @@ NEW_SCHEMA_FILES = (
     "engagement-event.schema.json",
     "state-snapshot.schema.json",
     "environment-preflight.schema.json",
+    "environment-preflight-v2.schema.json",
     "report-manifest.schema.json",
     "memory-disposition.schema.json",
     "migration-manifest.schema.json",
@@ -59,6 +60,7 @@ NEW_SCHEMA_FILES = (
     "ab-readiness-report.schema.json",
     "ab-study-evidence.schema.json",
     "migration-artifact-review.schema.json",
+    "flow-telemetry.schema.json",
 )
 SECRET_PATTERNS = {
     "authorization_header": re.compile(rb"authorization\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}", re.IGNORECASE),
@@ -91,6 +93,7 @@ RECORD_SCHEMA_FILES = {
     "engagement-event": "engagement-event.schema.json",
     "state-snapshot": "state-snapshot.schema.json",
     "environment-preflight": "environment-preflight.schema.json",
+    "environment-preflight-v2": "environment-preflight-v2.schema.json",
     "report-manifest": "report-manifest.schema.json",
     "memory-disposition": "memory-disposition.schema.json",
     "migration-manifest": "migration-manifest.schema.json",
@@ -101,6 +104,7 @@ RECORD_SCHEMA_FILES = {
     "ab-readiness-report": "ab-readiness-report.schema.json",
     "ab-study-evidence": "ab-study-evidence.schema.json",
     "migration-artifact-review": "migration-artifact-review.schema.json",
+    "flow-telemetry": "flow-telemetry.schema.json",
     "finding-v2-legacy": "finding.schema.json",
 }
 
@@ -386,6 +390,8 @@ def infer_schema_name(record: Any) -> str | None:
     if not isinstance(record, dict):
         return None
     version = record.get("schema_version")
+    if record.get("document_type") in {"runtime_observation", "flow_export"} and version == 1:
+        return "flow-telemetry"
     if "finding_id" in record and version == 3:
         return "finding-v3"
     if "id" in record and "engagement" in record and version in (None, 2):
@@ -404,6 +410,8 @@ def infer_schema_name(record: Any) -> str | None:
         return "state-snapshot"
     if "preflight_id" in record and version == 1:
         return "environment-preflight"
+    if "preflight_id" in record and version == 2:
+        return "environment-preflight-v2"
     if "report_id" in record and "finding_revision" in record and version == 1:
         return "report-manifest"
     if "disposition_id" in record and version == 1:
@@ -454,7 +462,7 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
     index: dict[str, list[dict[str, Any]]] = {}
     paths = sorted(set(root.glob("**/*.json")) | set(root.glob("*.jsonl")))
     for path in paths:
-        if path.name in {"state.snapshot.json", "records.index.json"}:
+        if path.name in {"state.snapshot.json", "records.index.json"} or (path.name.endswith(".action.json") and "authority" in path.parts and "requests" in path.parts):
             continue
         records: list[Any]
         if path.suffix == ".jsonl":
@@ -480,6 +488,10 @@ def build_reference_index(engagement_dir: os.PathLike[str] | str) -> dict[str, l
                 entries = index.setdefault(record["engagement_id"], [])
                 if not any(entry["type"] == "engagement" for entry in entries):
                     entries.append({"type": "engagement", "engagement_id": record["engagement_id"], "revision": None, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at")})
+            if record.get("event_type") == "authority.requested":
+                request_id = record.get("payload", {}).get("request_id")
+                if isinstance(request_id, str):
+                    index.setdefault(request_id, []).append({"type": "authority-request", "engagement_id": record.get("engagement_id"), "revision": None, "path": path.relative_to(root).as_posix(), "recorded_at": record.get("recorded_at")})
             if record.get("event_type") in {"candidate.proposed", "hypothesis.created"}:
                 payload = record.get("payload", {})
                 key = "candidate_id" if record["event_type"] == "candidate.proposed" else "hypothesis_id"
@@ -530,7 +542,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
         "artifact": [
             (("target_refs",), {"target"}), (("environment_ref",), {"environment"}),
             (("escalation_confirmation_event_ref",), {"event"}), (("cleanup_obligation_ref",), {"event", "cleanup"}),
-            (("supersedes_artifact_id",), {"artifact"}),
+            (("precreation_classification_event_ref",), {"event"}), (("supersedes_artifact_id",), {"artifact"}),
         ],
         "review": [
             (("input_refs",), {"attempt", "finding", "artifact", "review", "environment", "report"}),
@@ -543,6 +555,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("finding_id",), {"finding"}), (("adjudication_review_ref",), {"review"}),
         ],
         "environment-preflight": [(("target_refs",), {"target"})],
+        "environment-preflight-v2": [(("target_refs",), {"target"})],
         "memory-disposition": [],
     }
     dynamic_specs: list[tuple[tuple[str, ...], Any, set[str]]] = []
@@ -560,7 +573,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             dynamic_specs.append((("legacy_import", "source_artifact_ref"), legacy.get("source_artifact_ref"), {"artifact"}))
     elif schema_name == "review":
         if not (record.get("review_type") == "claim_adjudication" and record.get("entity_ref") == record.get("proposed_finding_id")):
-            dynamic_specs.append((("entity_ref",), record.get("entity_ref"), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement", "report"}))
+            dynamic_specs.append((("entity_ref",), record.get("entity_ref"), {"attempt", "finding", "artifact", "hypothesis", "candidate", "engagement", "report", "environment"}))
         dynamic_specs.append((("proof_profile_ref",), record.get("proof_profile_ref"), {"artifact"}))
         for index_number, control in enumerate(record.get("control_applicability", [])):
             dynamic_specs.append((("control_applicability", str(index_number), "attempt_ref"), control.get("attempt_ref"), {"attempt"}))
@@ -591,6 +604,7 @@ def validate_record_references(record: Any, schema_name: str, index: dict[str, l
             (("payload", "review_ref"), payload.get("review_ref"), {"review"}),
             (("payload", "adjudication_review_ref"), payload.get("adjudication_review_ref"), {"review"}),
             (("payload", "adjudication_event_ref"), payload.get("adjudication_event_ref"), {"event"}),
+            (("payload", "authority_request_ref"), payload.get("authority_request_ref"), {"authority-request"}),
             (("payload", "experiment_refs"), payload.get("experiment_refs", []), {"event", "attempt"}),
             (("payload", "control_refs"), payload.get("control_refs", []), {"attempt"}),
             (("payload", "supporting_evidence_refs"), payload.get("supporting_evidence_refs", []), {"attempt", "artifact"}),

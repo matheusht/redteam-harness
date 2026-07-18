@@ -115,7 +115,10 @@ is *"distinct from a regrade of the finding's validity."* Keep it that way — r
 whether the finding is real and what it actually proves; a CVSS-precedent reviewer is a narrower,
 later, severity-methodology-only pass that doesn't need regrade's full primary-source
 re-derivation scope, and folding one into the other would blur a boundary the reporting skill already
-states cleanly.
+states cleanly. That precedent pass now has a concrete backing artifact:
+`skills/oracles/severity-precedent-oracle.md` (the `oracles.severity-precedent` card, 23 bug-class
+buckets built from re-verified NVD/GHSA/CVE-List vectors). A settled finding's contested-metric question
+routes to that card; regrade does not do the precedent research itself.
 
 ## 6. Model tier
 

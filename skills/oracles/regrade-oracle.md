@@ -51,8 +51,9 @@ Anything other than `confirmed`/`confirmed_with_correction`/`escalation_found` r
 
 ## What this oracle is NOT for
 Not a CVSS-metric-precedent research pass — if a report's severity hinges on a single contested CVSS
-metric and needs disclosed-CVE precedent research, that's a separate, narrower, later reviewer pattern
-(`skills/reporting/hackerone-reports.md`), not a full regrade re-litigation of the finding.
+metric and needs disclosed-CVE precedent, that is the separate, narrower, later `oracles.severity-precedent`
+pass (`skills/oracles/severity-precedent-oracle.md`, cited from `skills/reporting/hackerone-reports.md`),
+not a full regrade re-litigation of the finding.
 
 ## Naming note
 Regrade in this harness has no vendor requirement — every real instance uses a generic

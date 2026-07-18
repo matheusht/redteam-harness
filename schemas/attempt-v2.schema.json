@@ -14,6 +14,7 @@
     "engagement_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
     "recorded_at": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
     "actor": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"},
+    "operation_class": {"const": "notebook"},
     "provenance": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/provenance"},
     "scope_hash": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
     "environment_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},

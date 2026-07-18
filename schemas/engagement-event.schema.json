@@ -56,10 +56,14 @@
     "actor": {
       "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"
     },
+    "operation_class": {
+      "enum": ["notebook", "authority", "real_world"]
+    },
     "event_type": {
       "enum": [
         "scope.attested",
         "environment.preflight_recorded",
+        "environment.review_recorded",
         "observation.recorded",
         "routing.assessed",
         "candidate.proposed",
@@ -83,10 +87,15 @@
         "memory.disposition_recorded",
         "escalation.confirmed",
         "legacy.record_imported",
+        "migration.apply_authorized",
         "record.committed",
         "engagement.blocked",
         "engagement.reopened",
-        "engagement.closed"
+        "engagement.closed",
+        "authority.requested",
+        "authority.resolved",
+        "scope.amendment_proposed",
+        "artifact.classified"
       ]
     },
     "entity_refs": {
@@ -156,7 +165,8 @@
               "report",
               "cleanup",
               "memory",
-              "engagement"
+              "engagement",
+              "environment"
             ]
           },
           "entity_id": {
@@ -185,12 +195,15 @@
         "operator_id": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
         },
+        "executor_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
         "signed_date": {
           "type": "string",
           "format": "date"
         },
         "record_kernel": {
-          "const": "decision-0005-v1"
+          "enum": ["decision-0005-v1", "decision-0006-v1"]
         },
         "supersedes_scope_hash": {
           "oneOf": [
@@ -437,6 +450,9 @@
             "unknown"
           ]
         },
+        "advisory_zone": {
+          "enum": ["clear_local", "review_required", "unknown"]
+        },
         "cost_estimate": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/cost"
         },
@@ -582,6 +598,9 @@
         "review_ref": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
         },
+        "reviewer_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
         "review_digest": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
         },
@@ -661,7 +680,10 @@
           "const": "zone2_artifact_creation"
         },
         "expires_at": {
-          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+          "oneOf": [
+            {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
+            {"type": "null"}
+          ]
         },
         "cleanup_obligation_ref": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
@@ -676,6 +698,68 @@
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
         },
         "updated_at": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+        },
+        "request_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "request_event_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "authority_request_ref": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "action_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "proposal_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "destination_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "action_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "lane_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "request_status": {
+          "const": "pending_authority"
+        },
+        "resolution": {
+          "enum": ["approved", "rejected", "expired", "superseded"]
+        },
+        "resolved_at": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
+        },
+        "draft_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "draft_path": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/relative_path"
+        },
+        "classification_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "classification_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "artifact_id": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"
+        },
+        "source_digest": {
+          "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"
+        },
+        "source_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "classified_at": {
           "$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"
         },
         "operator_override": {
@@ -743,6 +827,17 @@
               "record_revision"
             ]
           }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "environment.review_recorded"}}, "required": ["event_type"]},
+      "then": {
+        "properties": {
+          "operation_class": {"const": "authority"},
+          "actor": {"properties": {"role": {"const": "broker"}}},
+          "payload": {"required": ["environment_ref", "review_ref", "status", "operator_id", "authority_request_ref"]},
+          "state_changes": {"minItems": 1, "maxItems": 1, "items": {"properties": {"dimension": {"const": "environment"}}}}
         }
       }
     },
@@ -1366,6 +1461,10 @@
       }
     },
     {
+      "if": {"properties": {"event_type": {"const": "migration.apply_authorized"}}, "required": ["event_type"]},
+      "then": {"properties": {"payload": {"required": ["entity_id", "status", "action_digest", "proposal_digest", "destination_digest", "operator_id", "authority_request_ref", "executor_id"]}}}
+    },
+    {
       "if": {
         "properties": {
           "event_type": {
@@ -1430,6 +1529,67 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"enum": ["authority.requested", "authority.resolved", "scope.amendment_proposed", "artifact.classified"]}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "required": ["operation_class"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "authority.requested"}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["request_id", "action_kind", "action_digest", "lane_id", "request_status", "scope_hash", "environment_ref", "expires_at"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "authority.resolved"}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["request_id", "request_event_ref", "action_digest", "resolution", "resolved_at"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "artifact.classified"}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["classification_id", "classification_digest", "artifact_id", "source_digest", "source_size", "advisory_zone", "scope_hash", "environment_ref", "classified_at", "expires_at"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"event_type": {"const": "scope.amendment_proposed"}},
+        "required": ["event_type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["draft_digest", "draft_path", "supersedes_scope_hash"]
           }
         }
       }

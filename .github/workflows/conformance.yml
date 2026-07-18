@@ -17,6 +17,12 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check -r requirements-ci.txt
       - name: Decision 0005 engagement-record schema gate (self-test)
         run: python3 tools/run-engagement.py --self-test
+      - name: Decision 0006 frozen old/new gate replay
+        run: python3 tools/decision6_replay.py --self-test
+      - name: Decision 0006 fail-closed capability matrix
+        run: python3 tools/decision6_capabilities.py
+      - name: Decision 0006 agent-neutral flow telemetry
+        run: python3 tools/flow_telemetry.py --self-test
       - name: Decision 0005 migration dry-run and reviewed-apply gate (self-test)
         run: python3 tools/migrate-decision5.py --self-test
       - name: Decision 0005 bounded retrospective evaluator (self-test)

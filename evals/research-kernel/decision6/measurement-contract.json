@@ -1,0 +1,171 @@
+{
+  "classification": [
+    "flow_telemetry",
+    "flow_evidence"
+  ],
+  "contract_id": "decision6-flow-contract-v1",
+  "derived_flow_export": {
+    "additional_properties": false,
+    "fields": [
+      "schema_version",
+      "export_id",
+      "engagement_id",
+      "classification",
+      "source_hashes",
+      "runtime_identities",
+      "operation_counts",
+      "stage_summaries",
+      "authority_intervals",
+      "backtracks",
+      "review_interventions",
+      "record_completeness",
+      "coverage",
+      "policy"
+    ],
+    "schema_version": 1
+  },
+  "coverage_semantics": {
+    "missing_is_zero": false,
+    "shape": {
+      "measured": "nonnegative integer",
+      "records": "nonnegative integer"
+    },
+    "unmeasured_value": null
+  },
+  "forbidden_capture": [
+    "prompt",
+    "response",
+    "tool_arguments",
+    "command_line",
+    "environment_values",
+    "file_contents",
+    "credentials",
+    "target_payloads"
+  ],
+  "forbidden_influence": [
+    "authority",
+    "operation_tier",
+    "claim_truth",
+    "review_independence",
+    "calibration",
+    "routing",
+    "severity",
+    "reporting"
+  ],
+  "kernel_dimensions": [
+    "operation_count",
+    "kernel_wall_seconds",
+    "kernel_model_seconds",
+    "kernel_tool_seconds",
+    "kernel_human_review_seconds",
+    "kernel_input_tokens",
+    "kernel_output_tokens",
+    "kernel_cost_usd",
+    "dependency_blocked_seconds",
+    "authority_intervals",
+    "backtracks",
+    "review_interventions",
+    "record_completeness"
+  ],
+  "policy": {
+    "cross_runtime_average": false,
+    "gates_held_is_primary": true,
+    "live_causal_claims": false,
+    "required_gates_are_stalls": false
+  },
+  "normalized_runtime_observation": {
+    "additional_properties": false,
+    "allowed_kinds": [
+      "turn",
+      "model_call",
+      "tool_call",
+      "runtime_wait"
+    ],
+    "fields": [
+      "schema_version",
+      "engagement_id",
+      "run_id",
+      "session_id",
+      "runtime_name",
+      "runtime_version",
+      "recorded_at",
+      "observation_kind",
+      "operation_id",
+      "candidate_id",
+      "hypothesis_id",
+      "attempt_id",
+      "duration_seconds",
+      "input_tokens",
+      "output_tokens",
+      "cost_usd"
+    ],
+    "nullable_fields": [
+      "runtime_version",
+      "operation_id",
+      "candidate_id",
+      "hypothesis_id",
+      "attempt_id",
+      "duration_seconds",
+      "input_tokens",
+      "output_tokens",
+      "cost_usd"
+    ],
+    "schema_version": 1
+  },
+  "runtime_dimensions": [
+    "turns",
+    "model_calls",
+    "tool_calls",
+    "input_tokens",
+    "output_tokens",
+    "cost_usd",
+    "active_seconds",
+    "runtime_wait_seconds"
+  ],
+  "schema_version": 1,
+  "stage_mapping": {
+    "adjudication": [
+      "claim.adjudicated",
+      "finding.revised"
+    ],
+    "cleanup": [
+      "cleanup.updated",
+      "memory.disposition_recorded",
+      "engagement.closed"
+    ],
+    "recon": [
+      "environment.preflight_recorded",
+      "observation.recorded"
+    ],
+    "review": [
+      "review.challenge_recorded",
+      "review.regrade_completed",
+      "review.pocinator_completed",
+      "review.coverage_completed",
+      "operator.review_recorded"
+    ],
+    "routing": [
+      "routing.assessed",
+      "candidate.proposed",
+      "candidate.selected",
+      "candidate.skipped",
+      "candidate.deferred"
+    ],
+    "search": [
+      "operator_prior.recorded",
+      "hypothesis.created",
+      "hypothesis.status_changed",
+      "coverage.status_changed",
+      "engagement.blocked",
+      "engagement.reopened"
+    ],
+    "unknown": [
+      "scope.attested",
+      "report.generated",
+      "submission.recorded",
+      "escalation.confirmed",
+      "legacy.record_imported",
+      "record.committed"
+    ]
+  }
+}

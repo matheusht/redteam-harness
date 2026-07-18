@@ -18,6 +18,13 @@
     "media_type": {"type": "string", "minLength": 1},
     "created_at": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
     "producer": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/actor"},
+    "producer_session_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "operation_class": {"enum": ["notebook", "real_world"]},
+    "precreation_classification_digest": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
+    "precreation_classification_event_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+    "classified_source_digest": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"},
+    "classified_source_size": {"type": "integer", "minimum": 0},
+    "classified_at": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
     "acquisition_method": {"enum": ["broker", "runtime", "source_inspection", "operator", "migration", "generated_local"]},
     "target_refs": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id_refs"},
     "environment_ref": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
@@ -27,6 +34,7 @@
     "advisory_zone": {"enum": ["clear_local", "review_required", "unknown"]},
     "escalation_confirmation_event_ref": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
     "cleanup_obligation_ref": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+    "cleanup_obligation_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
     "immutable": {"const": true},
     "supersedes_artifact_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]}
   },
@@ -35,8 +43,10 @@
     "then": {
       "properties": {
         "escalation_confirmation_event_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
-        "cleanup_obligation_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}
-      }
+        "cleanup_obligation_ref": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "cleanup_obligation_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}
+      },
+      "required": ["cleanup_obligation_id"]
     }
   }]
 }

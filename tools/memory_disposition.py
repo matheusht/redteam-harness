@@ -12,7 +12,7 @@ from engagement_records import (
     load_json, sha256_file, validate_record, validate_record_references,
 )
 from engagement_state import (
-    _scope_metadata, append_event, atomic_write, base_event, engagement_lock,
+    _scope_metadata, _append_kernel_event as append_event, atomic_write, base_event, engagement_lock,
     read_ledger, reduce_engagement,
 )
 
@@ -37,8 +37,8 @@ def _validate_promotable_abstraction(proposal: dict[str, Any], discovered_terms:
         raise RecordError("memory_abstraction_not_sanitized", "all retained promotable text must be target-neutral prose without commands, endpoints, source IDs, target terms, or recipes")
 
 
-def record_memory_disposition(engagement: Path, proposal_path: Path, operator_id: str) -> dict[str, Any]:
-    engagement = engagement.resolve(); proposal = load_json(proposal_path); operator_id = _operator(operator_id)
+def record_memory_disposition(engagement: Path, proposal_path: Path, operator_id: str, authority_request_ref: str | None = None, executor_id: str | None = None, session_id: str | None = None) -> dict[str, Any]:
+    engagement = engagement.absolute(); proposal = load_json(proposal_path); operator_id = _operator(operator_id)
     errors = validate_record(proposal, "memory-disposition")
     if errors: raise RecordError("memory_disposition_invalid", "memory disposition failed schema validation", errors)
     _validate_promotable_abstraction(proposal)
@@ -79,21 +79,21 @@ def record_memory_disposition(engagement: Path, proposal_path: Path, operator_id
         path = engagement / relative; record_bytes = canonical_json_bytes(proposal)
         if path.exists() and path.read_bytes() != record_bytes: raise RecordError("memory_disposition_id_collision", proposal["disposition_id"])
         if not path.exists(): atomic_write(path, record_bytes)
-        digest = sha256_file(path); event_ids = {event["event_id"] for event in read_ledger(engagement, "event")}
+        digest = sha256_file(path); event_ids = {event["event_id"] for event in read_ledger(engagement, "event")}; actor_role = "broker" if authority_request_ref else "operator"; actor_id = executor_id if authority_request_ref else operator_id
         commit_id = f"event-{proposal['disposition_id']}-commit"; disposition_event_id = f"event-{proposal['disposition_id']}-recorded"
         if commit_id not in event_ids:
-            append_event(engagement, base_event(event_id=commit_id, engagement_id=state["engagement_id"], recorded_at=proposal["recorded_at"], actor_role="operator", actor_id=operator_id, event_type="record.committed", rationale="Commit the immutable operator-reviewed memory disposition.", payload={"record_path": relative, "record_digest": digest, "record_type": "memory-disposition", "record_id": proposal["disposition_id"], "record_revision": None}), lock_held=True)
+            append_event(engagement, base_event(event_id=commit_id, engagement_id=state["engagement_id"], recorded_at=proposal["recorded_at"], actor_role=actor_role, actor_id=actor_id, event_type="record.committed", rationale="Commit the immutable operator-reviewed memory disposition.", payload={"record_path": relative, "record_digest": digest, "record_type": "memory-disposition", "record_id": proposal["disposition_id"], "record_revision": None, **({"authority_request_ref": authority_request_ref} if authority_request_ref else {})}, session_id=session_id, operation_class="authority" if authority_request_ref else None), lock_held=True)
         if disposition_event_id not in event_ids:
             memory_prior = "pending"
             for prior_event in read_ledger(engagement, "event"):
                 for change in prior_event["state_changes"]:
                     if change["dimension"] == "memory" and change["entity_id"] == state["engagement_id"]: memory_prior = change["current"]
-            append_event(engagement, base_event(event_id=disposition_event_id, engagement_id=state["engagement_id"], recorded_at=proposal["recorded_at"], actor_role="operator", actor_id=operator_id, event_type="memory.disposition_recorded", rationale=proposal["rationale"], payload={"entity_id": state["engagement_id"], "memory_disposition": proposal["disposition"], "disposition_ref": proposal["disposition_id"], "disposition_digest": digest}, entity_refs=[proposal["disposition_id"]], state_changes=[{"dimension": "memory", "entity_id": state["engagement_id"], "previous": memory_prior, "current": proposal["disposition"]}]), lock_held=True)
+            append_event(engagement, base_event(event_id=disposition_event_id, engagement_id=state["engagement_id"], recorded_at=proposal["recorded_at"], actor_role=actor_role, actor_id=actor_id, event_type="memory.disposition_recorded", rationale=proposal["rationale"], payload={"entity_id": state["engagement_id"], "memory_disposition": proposal["disposition"], "disposition_ref": proposal["disposition_id"], "disposition_digest": digest, "operator_id": operator_id, **({"authority_request_ref": authority_request_ref} if authority_request_ref else {})}, entity_refs=[proposal["disposition_id"]], state_changes=[{"dimension": "memory", "entity_id": state["engagement_id"], "previous": memory_prior, "current": proposal["disposition"]}], session_id=session_id, operation_class="authority" if authority_request_ref else None), lock_held=True)
         return proposal
 
 
-def close_engagement(engagement: Path, operator_id: str, reason: str, recorded_at: str) -> dict[str, Any]:
-    engagement = engagement.resolve(); operator_id = _operator(operator_id)
+def close_engagement(engagement: Path, operator_id: str, reason: str, recorded_at: str, authority_request_ref: str | None = None, executor_id: str | None = None, session_id: str | None = None) -> dict[str, Any]:
+    engagement = engagement.absolute(); operator_id = _operator(operator_id)
     with engagement_lock(engagement):
         state = reduce_engagement(engagement); scope = _scope_metadata(engagement / "scope.md")
         if _operator(scope["operator"]) != operator_id: raise RecordError("engagement_closure_authority_invalid", operator_id)
@@ -104,6 +104,6 @@ def close_engagement(engagement: Path, operator_id: str, reason: str, recorded_a
             for change in event["state_changes"]:
                 if change["dimension"] == "engagement" and change["entity_id"] == state["engagement_id"]: prior = change["current"]
         if prior == "closed": raise RecordError("engagement_already_closed", state["engagement_id"])
-        event = base_event(event_id=f"event-{state['engagement_id']}-closed", engagement_id=state["engagement_id"], recorded_at=recorded_at, actor_role="operator", actor_id=operator_id, event_type="engagement.closed", rationale=reason, payload={"entity_id": state["engagement_id"], "status": "closed", "scope_hash": state["scope_hash"], "operator_id": operator_id, "disposition_ref": memory["disposition_ref"], "disposition_digest": memory["disposition_digest"]}, entity_refs=[memory["disposition_ref"]], state_changes=[{"dimension": "engagement", "entity_id": state["engagement_id"], "previous": prior, "current": "closed"}])
+        event = base_event(event_id=f"event-{state['engagement_id']}-closed", engagement_id=state["engagement_id"], recorded_at=recorded_at, actor_role="broker" if authority_request_ref else "operator", actor_id=executor_id if authority_request_ref else operator_id, event_type="engagement.closed", rationale=reason, payload={"entity_id": state["engagement_id"], "status": "closed", "scope_hash": state["scope_hash"], "operator_id": operator_id, "disposition_ref": memory["disposition_ref"], "disposition_digest": memory["disposition_digest"], **({"authority_request_ref": authority_request_ref} if authority_request_ref else {})}, entity_refs=[memory["disposition_ref"]], state_changes=[{"dimension": "engagement", "entity_id": state["engagement_id"], "previous": prior, "current": "closed"}], session_id=session_id, operation_class="authority" if authority_request_ref else None)
         append_event(engagement, event, lock_held=True)
         return reduce_engagement(engagement)

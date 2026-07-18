@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-redteam-harness.local/schemas/flow-telemetry.schema.json",
+  "title": "Decision 0006 agent-neutral flow telemetry",
+  "oneOf": [
+    {"$ref": "#/$defs/runtime_observation"},
+    {"$ref": "#/$defs/flow_export"}
+  ],
+  "$defs": {
+    "coverage_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "records", "measured"],
+      "properties": {
+        "value": {"type": ["number", "integer", "null"], "minimum": 0},
+        "records": {"type": "integer", "minimum": 0},
+        "measured": {"type": "integer", "minimum": 0}
+      }
+    },
+    "runtime_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "document_type", "engagement_id", "run_id", "session_id", "runtime_name", "runtime_version", "recorded_at", "observation_kind", "operation_id", "candidate_id", "hypothesis_id", "attempt_id", "duration_seconds", "input_tokens", "output_tokens", "cost_usd"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "document_type": {"const": "runtime_observation"},
+        "engagement_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "run_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "session_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "runtime_name": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"},
+        "runtime_version": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"},
+        "recorded_at": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/timestamp"},
+        "observation_kind": {"enum": ["turn", "model_call", "tool_call", "runtime_wait"]},
+        "operation_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+        "candidate_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+        "hypothesis_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+        "attempt_id": {"oneOf": [{"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"}, {"type": "null"}]},
+        "duration_seconds": {"type": ["number", "null"], "minimum": 0},
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "cost_usd": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "stage_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation_count", "turns", "model_calls", "tool_calls", "input_tokens", "output_tokens", "cost_usd", "active_seconds", "runtime_wait_seconds", "kernel_wall_seconds", "kernel_model_seconds", "kernel_tool_seconds", "kernel_human_review_seconds", "kernel_input_tokens", "kernel_output_tokens", "kernel_cost_usd", "dependency_blocked_seconds"],
+      "properties": {
+        "operation_count": {"type": "integer", "minimum": 0},
+        "turns": {"$ref": "#/$defs/coverage_value"},
+        "model_calls": {"$ref": "#/$defs/coverage_value"},
+        "tool_calls": {"$ref": "#/$defs/coverage_value"},
+        "input_tokens": {"$ref": "#/$defs/coverage_value"},
+        "output_tokens": {"$ref": "#/$defs/coverage_value"},
+        "cost_usd": {"$ref": "#/$defs/coverage_value"},
+        "active_seconds": {"$ref": "#/$defs/coverage_value"},
+        "runtime_wait_seconds": {"$ref": "#/$defs/coverage_value"},
+        "kernel_wall_seconds": {"$ref": "#/$defs/coverage_value"},
+        "kernel_model_seconds": {"$ref": "#/$defs/coverage_value"},
+        "kernel_tool_seconds": {"$ref": "#/$defs/coverage_value"},
+        "kernel_human_review_seconds": {"$ref": "#/$defs/coverage_value"},
+        "kernel_input_tokens": {"$ref": "#/$defs/coverage_value"},
+        "kernel_output_tokens": {"$ref": "#/$defs/coverage_value"},
+        "kernel_cost_usd": {"$ref": "#/$defs/coverage_value"},
+        "dependency_blocked_seconds": {"$ref": "#/$defs/coverage_value"}
+      }
+    },
+    "flow_export": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "document_type", "export_id", "engagement_id", "classification", "source_hashes", "runtime_identities", "operation_counts", "stage_summaries", "authority_intervals", "backtracks", "review_interventions", "record_completeness", "coverage", "policy"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "document_type": {"const": "flow_export"},
+        "export_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "engagement_id": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/id"},
+        "classification": {"const": "flow_telemetry"},
+        "source_hashes": {"type": "object", "additionalProperties": {"$ref": "https://llm-redteam-harness.local/schemas/research-common.schema.json#/$defs/sha256"}},
+        "runtime_identities": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["runtime_name", "runtime_version", "run_id", "session_id", "trust"], "properties": {"runtime_name": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"}, "trust": {"const": "advisory"}, "runtime_version": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$"}, "run_id": {"type": "string"}, "session_id": {"type": "string"}}}, "uniqueItems": true},
+        "operation_counts": {"type": "object", "additionalProperties": false, "required": ["notebook", "authority", "real_world"], "properties": {"notebook": {"type": "integer", "minimum": 0}, "authority": {"type": "integer", "minimum": 0}, "real_world": {"type": "integer", "minimum": 0}}},
+        "stage_summaries": {"type": "object", "additionalProperties": false, "required": ["recon", "routing", "search", "adjudication", "review", "cleanup", "unknown"], "properties": {"recon": {"$ref": "#/$defs/stage_summary"}, "routing": {"$ref": "#/$defs/stage_summary"}, "search": {"$ref": "#/$defs/stage_summary"}, "adjudication": {"$ref": "#/$defs/stage_summary"}, "review": {"$ref": "#/$defs/stage_summary"}, "cleanup": {"$ref": "#/$defs/stage_summary"}, "unknown": {"$ref": "#/$defs/stage_summary"}}},
+        "authority_intervals": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["request_id", "lane_id", "status", "requested_at", "resolved_at", "duration_seconds", "overlapping_notebook_operations", "overlapping_runtime_observations"], "properties": {"request_id": {"type": "string"}, "lane_id": {"type": "string"}, "status": {"enum": ["pending_authority", "approved", "rejected", "expired", "superseded"]}, "requested_at": {"type": "string"}, "resolved_at": {"type": ["string", "null"]}, "duration_seconds": {"type": ["number", "null"]}, "overlapping_notebook_operations": {"type": "integer", "minimum": 0}, "overlapping_runtime_observations": {"type": "integer", "minimum": 0}}}},
+        "backtracks": {"type": "integer", "minimum": 0},
+        "review_interventions": {"type": "integer", "minimum": 0},
+        "record_completeness": {"type": "object", "additionalProperties": false, "required": ["records", "complete"], "properties": {"records": {"type": "integer", "minimum": 0}, "complete": {"type": "integer", "minimum": 0}}},
+        "coverage": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "required": ["records", "measured"], "properties": {"records": {"type": "integer", "minimum": 0}, "measured": {"type": "integer", "minimum": 0}}}},
+        "policy": {"type": "object", "additionalProperties": false, "required": ["gates_held_is_primary", "required_gates_are_stalls", "automatic_authority_changes", "automatic_tier_changes", "automatic_truth_changes", "automatic_routing_changes", "automatic_severity_changes", "automatic_report_changes", "live_causal_claims", "cross_runtime_average"], "properties": {"gates_held_is_primary": {"const": true}, "required_gates_are_stalls": {"const": false}, "automatic_authority_changes": {"const": false}, "automatic_tier_changes": {"const": false}, "automatic_truth_changes": {"const": false}, "automatic_routing_changes": {"const": false}, "automatic_severity_changes": {"const": false}, "automatic_report_changes": {"const": false}, "live_causal_claims": {"const": false}, "cross_runtime_average": {"const": false}}}
+      }
+    }
+  }
+}
