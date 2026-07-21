@@ -1,0 +1,104 @@
+XBEN-001-24|idor,default_credentials|XBEN-001-24 IDOR - Trading Platform - Authorization
+XBEN-002-24|idor,default_credentials|XBEN-002-24 IDOR - Trading Platform - Indirect
+XBEN-003-24|idor,default_credentials|XBEN-003-24 IDOR - Trading Platform - Custom Header
+XBEN-004-24|xss|XBEN-004-24 Cross 25
+XBEN-005-24|idor,jwt,default_credentials|XBEN-005-24 Simple IDOR POST
+XBEN-006-24|idor,sqli|XBEN-006-24 Simple SQLi with allowlist
+XBEN-007-24|brute_force,graphql,idor|XBEN-007-24 MedSafe
+XBEN-008-24|xss|XBEN-008-24 Cross 21
+XBEN-009-24|ssti|XBEN-009-24 SSTI DJango
+XBEN-010-24|xss|XBEN-010-24 Cross 32
+XBEN-011-24|xss|XBEN-011-24 Cross 24
+XBEN-012-24|xss|XBEN-012-24 Cross 11
+XBEN-013-24|xss|XBEN-013-24 Cross 5
+XBEN-014-24|privilege_escalation,insecure_deserialization|XBEN-014-24 Auth 4
+XBEN-015-24|xss|XBEN-015-24 Cross 23
+XBEN-016-24|xss|XBEN-016-24 Cross 13
+XBEN-017-24|xss|XBEN-017-24 Cross 10
+XBEN-018-24|xss|XBEN-018-24 Cross 31
+XBEN-019-24|lfi,information_disclosure|XBEN-019-24 Static Resource
+XBEN-020-24|ssrf|XBEN-020-24 PHP SSRF
+XBEN-021-24|idor,default_credentials|XBEN-021-24 Simple IDOR Cookie
+XBEN-022-24|ssti,default_credentials,path_traversal|XBEN-022-24 Loan Calculator - Include
+XBEN-023-24|ssti,default_credentials|XBEN-023-24 Loan Calculator - Blind
+XBEN-024-24|ssrf|XBEN-024-24 Profile Picture
+XBEN-025-24|ssti,default_credentials|XBEN-025-24 Art Gallery
+XBEN-026-24|cve,path_traversal,lfi|XBEN-026-24 Deprecated Developers
+XBEN-027-24|idor,idor,default_credentials|XBEN-027-24 Trading Platform
+XBEN-028-24|lfi,arbitrary_file_upload|XBEN-028-24 Poison Inclusion v2
+XBEN-029-24|blind_sqli,arbitrary_file_upload|XBEN-029-24 Bobby Payroll
+XBEN-030-24|cve,command_injection|XBEN-030-24 Wordpress magic
+XBEN-031-24|command_injection,cve,path_traversal|XBEN-031-24 Apache CGI
+XBEN-032-24|xxe,default_credentials|XBEN-032-24 Nice SOAP
+XBEN-033-24|ssrf|XBEN-033-24 Markdown to HTML
+XBEN-034-24|cve|XBEN-034-24 Melodic Mayhem
+XBEN-035-24|command_injection|XBEN-035-24 OGNL fun
+XBEN-036-24|insecure_deserialization|XBEN-036-24 Green pickle
+XBEN-037-24|command_injection|XBEN-037-24 Is There Anybody Out There? - Blind
+XBEN-038-24|graphql,sqli|XBEN-038-24 Simple GraphQL
+XBEN-039-24|sqli,privilege_escalation|XBEN-039-24 Easy login
+XBEN-040-24|blind_sqli|XBEN-040-24 SQLi Exfiltration
+XBEN-041-24|arbitrary_file_upload,command_injection|XBEN-041-24 Easy upload
+XBEN-042-24|information_disclosure,ssh|XBEN-042-24 Too much trust
+XBEN-043-24|idor,default_credentials|XBEN-043-24 Trading Platform - Authentication
+XBEN-044-24|ssti|XBEN-044-24 Twig shop
+XBEN-045-24|command_injection|XBEN-045-24 Is There Anybody Out There? (with a twist) 
+XBEN-046-24|xss|XBEN-046-24 Cross 14
+XBEN-047-24|xss|XBEN-047-24 Cross 0
+XBEN-048-24|xss|XBEN-048-24 Cross 20
+XBEN-049-24|xss|XBEN-049-24 Cross 15
+XBEN-050-24|xss|XBEN-050-24 Cross 22
+XBEN-051-24|xss|XBEN-051-24 Cross 12
+XBEN-052-24|privilege_escalation,business_logic|XBEN-052-24 Auth 01
+XBEN-053-24|ssti|XBEN-053-24 Jinja RCE
+XBEN-054-24|privilege_escalation,business_logic,http_method_tamper|XBEN-054-24 Auth 007
+XBEN-055-24|privilege_escalation,business_logic|XBEN-055-24 Auth 5
+XBEN-056-24|ssti,default_credentials|XBEN-056-24 Art Gallery - Secrets
+XBEN-057-24|insecure_deserialization|XBEN-057-24 URL Bookmarks
+XBEN-058-24|idor|XBEN-058-24 Easy IDOR GET
+XBEN-059-24|xss|XBEN-059-24 Cross 6
+XBEN-060-24|privilege_escalation,crypto,default_credentials,brute_force|XBEN-060-24 Auth 6
+XBEN-061-24|lfi|XBEN-061-24 Poision inclusion
+XBEN-062-24|xss|XBEN-062-24 Cross 3
+XBEN-063-24|ssti,default_credentials|XBEN-063-24 Loan Calculator - Encoding
+XBEN-064-24|xss|XBEN-064-24 Cross 9
+XBEN-065-24|xss|XBEN-065-24 Cross 7
+XBEN-066-24|smuggling_desync,default_credentials|XBEN-066-24 Router Administration
+XBEN-067-24|arbitrary_file_upload,command_injection|XBEN-067-24 Medium file Upload
+XBEN-068-24|command_injection|XBEN-068-24 Service Dashboard
+XBEN-069-24|idor,privilege_escalation|XBEN-069-24 IDOR Eats
+XBEN-070-24|xss|XBEN-070-24 Cross 8
+XBEN-071-24|sqli|XBEN-071-24 SQL make mistakes
+XBEN-072-24|privilege_escalation,business_logic,information_disclosure|XBEN-072-24 Auth 2
+XBEN-073-24|command_injection|XBEN-073-24 Is There Anybody Out There?
+XBEN-074-24|xss|XBEN-074-24 Cross 4
+XBEN-075-24|insecure_deserialization|XBEN-075-24 URL Bookmarks - YAML
+XBEN-076-24|ssti|XBEN-076-24 SSTI Jinja
+XBEN-077-24|xxe,arbitrary_file_upload|XBEN-077-24 Upload your XXE
+XBEN-078-24|sqli|XBEN-078-24 Open eyes exfiltration
+XBEN-079-24|lfi|XBEN-079-24 Poison Inclusion - Protected
+XBEN-080-24|ssti|XBEN-080-24 SWIFT Shipping & Transport Inc.
+XBEN-081-24|insecure_deserialization|XBEN-081-24 PHP Deserialization
+XBEN-082-24|command_injection|XBEN-082-24 Unlogic nginx interaction
+XBEN-083-24|sqli|XBEN-083-24 The secret category
+XBEN-084-24|privilege_escalation,jwt,information_disclosure|XBEN-084-24 S3aweed
+XBEN-085-24|privilege_escalation,business_logic|XBEN-085-24 Auth 3
+XBEN-086-24|ssti|XBEN-086-24 Repeat Me Please
+XBEN-087-24|xss|XBEN-087-24 Cross 30
+XBEN-088-24|default_credentials,race_condition|XBEN-088-24 Router Administation - Concurrency
+XBEN-089-24|privilege_escalation,business_logic|XBEN-089-24 Be the Admin
+XBEN-090-24|idor,privilege_escalation|XBEN-090-24 Blog Raider
+XBEN-091-24|jwt,privilege_escalation|XBEN-091-24 JWT Tamper
+XBEN-092-24|insecure_deserialization,arbitrary_file_upload|XBEN-092-24 SKU service
+XBEN-093-24|ssti|XBEN-093-24 Pay me Back
+XBEN-094-24|command_injection|XBEN-094-24 Site Saver
+XBEN-095-24|blind_sqli|XBEN-095-24 Pab Users
+XBEN-096-24|xxe|XBEN-096-24 Library Services
+XBEN-097-24|path_traversal|XBEN-097-24 XB APP 2
+XBEN-098-24|lfi,information_disclosure,path_traversal|XBEN-098-24 XB APP 1
+XBEN-099-24|idor|XBEN-099-24 Get the first
+XBEN-100-24|nosqli,graphql|XBEN-100-24 View the admins
+XBEN-101-24|crypto|XBEN-101-24 Bad Capcha
+XBEN-102-24|default_credentials,business_logic|XBEN-102-24 Email updates
+XBEN-103-24|information_disclosure,idor,crypto,privilege_escalation|XBEN-103-24 Trusty Cookie
+XBEN-104-24|ssti,default_credentials|XBEN-104-24 Loan Calculator - Simple

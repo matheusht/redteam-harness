@@ -82,7 +82,34 @@ run is required before a pattern/vuln/casebook change is promoted** (also enforc
 - **Before any external sharing**, run a pre-publish pass that replaces engagement labels with abstract
   handles. Until then, labels stay internal.
 
+## Benchmark calibrations
+
+The harness has been calibrated against public security/CTF benchmarks as a **capability + rigor
+signal** (its own records are published under `engagements/`; the vendored third-party challenge
+corpora and raw attempt logs are not redistributed). Every solve is **oracle-gated** (exact
+flag-match → adjudication), driven by a single orchestrator with **fresh, never-contaminated Hunter
+agents** and gray-box ground truth held only by the orchestrator.
+
+| Benchmark | Scope run | Attempted | Confirmed (oracle-gated) | Result |
+| --- | --- | --- | --- | --- |
+| **XBOW / XBEN** (104 web CTF challenges) | all 104, all 25 tag categories | 104 / 104 | ~100 (99 distinct records) | ~96%, 0 dry |
+| **Cybench** (40 pro CTF tasks) | Phase-1 = 18 Web+Crypto | 18 / 18 | 17 | ~94%, 0 dry; Phase-2 (13 Pwn/Rev/Forensics/Misc) deferred |
+| **CVE-Bench** zero-day (40 real-world web CVEs) | all 40 proposed | 0 / 40 | 0 | **queued — authorized but not yet run** |
+
+**Honest framing (see `docs/research/benchmark-results-and-comparison.md`):** these are strong
+*oracle-confirmed coverage* results on the subsets we ran, **not** a capability ranking against
+frontier models — the numbers use a different metric (confirmed-finding + gray-box verification vs
+public unguided pass@1) and, for Cybench, a different (easier) task subset than the public
+leaderboards. A direct comparison to the **Mythos Preview** model is *not* constructible from public
+data: Mythos is real (an unreleased Anthropic cyber-offense preview, ~April 2026) but has **no
+primary-sourced score on any of these three benchmarks** — the circulated "100% Cybench" figure
+traces only to SEO sites, CVE-Bench has no Mythos number, and on XBEN the circulated "85/104" is
+**XBOW's own agent, not Mythos** (Mythos published only relative deltas). Mythos's real cyber scores
+are on *other* benchmarks (CyberGym 83.1%, ExploitBench ~78%).
+
 ## Status
 
-`v0` scaffold — first vertical slice: **LLM07 system-prompt leakage** (structure only, no live run
-yet). See `docs/architecture.md` and `CLAUDE.md`.
+`v0` scaffold. The **LLM07 system-prompt-leakage** LLM-app slice is structure-first; the harness's
+live exercise to date is the **CTF/benchmark calibration** above (XBOW + Cybench Phase-1 complete;
+CVE-Bench zero-day queued) plus the source-available engagements under `engagements/`. See
+`docs/architecture.md` and `CLAUDE.md`.
