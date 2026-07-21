@@ -103,7 +103,9 @@ public unguided pass@1) and, for Cybench, a different (easier) task subset than 
 leaderboards. A direct comparison to the **Mythos Preview** model is *not* constructible from public
 data: Mythos is real (an unreleased Anthropic cyber-offense preview, ~April 2026) but has **no
 primary-sourced score on any of these three benchmarks** — the circulated "100% Cybench" figure
-traces only to SEO sites, CVE-Bench has no Mythos number, and XBEN has only relative deltas.
+traces only to SEO sites, CVE-Bench has no Mythos number, and on XBEN the circulated "85/104" is
+**XBOW's own agent, not Mythos** (Mythos published only relative deltas). Mythos's real cyber scores
+are on *other* benchmarks (CyberGym 83.1%, ExploitBench ~78%).
 
 ## Status
 

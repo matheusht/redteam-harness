@@ -60,8 +60,12 @@ published**.
   `github.com/uiuc-kang-lab/cve-bench`). Paper abstract: the **SOTA agent framework resolves up to
   13%** of the vulnerabilities.
 - **XBOW / XBEN** — 104 containerized web-exploitation CTF challenges (`github.com/xbow-engineering/
-  validation-benchmarks`). This is XBOW's *own* validation suite; XBOW's agent is the reference
-  solver. No clean cross-model absolute-solve leaderboard is published.
+  validation-benchmarks`). This is XBOW's *own* validation suite. The one widely-cited absolute figure
+  is **XBOW's own agent at 85% (85/104) in black-box mode** — the same 85% reached by the strongest of
+  5 professional pentesters given 40 hours (the other four scored ≤59%). A third party (FireCompass)
+  independently reports **96.15% (100/104) first-attempt / 104/104 with bounded retry** using a single
+  frontier model + router (explicitly *not* a Mythos-class model). **No cross-model Mythos XBEN number
+  exists.**
 
 ## 3. The Mythos comparison — the honest answer
 
@@ -78,12 +82,31 @@ public data:**
   SEO content-farm sites — it is **absent from Anthropic's primary red-team disclosure**, which speaks
   only qualitatively ("saturating nearly all of our existing benchmarks"). Treat it as unconfirmed.
 - **CVE-Bench:** **no Mythos number exists anywhere credible.**
-- **XBEN:** no absolute solve rate — XBOW published only *relative* deltas (Mythos had 42% fewer false
-  negatives than Opus 4.6, 55% fewer with source access, in an 80-action budget).
+- **XBEN:** **no Mythos absolute solve rate exists.** XBOW published Mythos only as *relative* deltas
+  (42% fewer false negatives than Opus 4.6, 55% fewer with source access, in an 80-action budget). The
+  circulated "85/104 on XBEN" is **XBOW's own agent, not Mythos** (see §2) — a common conflation.
 
-Anthropic deliberately pivoted Mythos's disclosures to **custom internal benchmarks** (an OSS-Fuzz
-corpus run; a Firefox 147 exploit-dev harness — 181 working exploits vs Opus 4.6's ~2), not the three
-public benchmarks here.
+Mythos's *actual* published cyber scores are on **different** benchmarks: **CyberGym 83.1%**,
+**ExploitBench ~78%**, and ExploitGym — plus custom internal disclosures (an OSS-Fuzz corpus run; a
+Firefox 147 exploit-dev harness — 181 working exploits vs Opus 4.6's ~2). None of these is XBEN,
+Cybench, or CVE-Bench.
+
+### The XBEN head-to-head, specifically (the one asked for)
+
+| On XBEN (104 web CTF challenges) | Result | Metric / caveat |
+|---|---|---|
+| **Our harness** | ~100/104 confirmed (~96%), 0 dry | oracle-gated (exact-flag + adjudication), gray-box ground-truth verification, bounded-retry campaign |
+| **XBOW's own agent** | 85/104 (85%) | fully autonomous, **black-box** (no ground-truth assist) |
+| Best of 5 human pentesters (40h) | 85% | human baseline XBOW published |
+| FireCompass (single frontier model + router) | 100/104 first-attempt, 104/104 bounded-retry | independent third party, not a Mythos-class model |
+| **Mythos Preview** | **— (no XBEN number published)** | only relative deltas vs Opus 4.6 exist |
+
+**Read this carefully, don't overclaim it.** Our ~96% is *not* a clean win over XBOW's 85%: XBOW's
+agent runs **black-box with no ground-truth assist**, while our loop holds gray-box ground truth for
+oracle verification and runs a bounded-retry campaign — arguably an easier setting. The honest takeaway
+is that our oracle-confirmed coverage on XBEN is **in the same high band** as XBOW's own agent and the
+FireCompass router result, and that a Mythos comparison on XBEN **cannot be made at all** because
+Mythos has no published XBEN score.
 
 ## 4. Why even the baseline comparison must be caveated (do not overclaim)
 
@@ -113,6 +136,11 @@ capability ranking against frontier models.
 
 *Sources — external: `cybench.github.io`; `arxiv.org/abs/2503.17332`;
 `github.com/uiuc-kang-lab/cve-bench`; `github.com/xbow-engineering/validation-benchmarks`;
-`anthropic.com/research/mythos-preview`; `aisi.gov.uk`; `xbow.com/blog/mythos-offensive-security-xbow-evaluation`;
-Epoch AI. Internal: `engagements/{xbow-benchmarks,cybench,cve-bench}/{scope,progress}.md` +
+`anthropic.com/research/mythos-preview` + `red.anthropic.com/2026/mythos-preview`; `aisi.gov.uk`;
+`xbow.com/blog/mythos-offensive-security-xbow-evaluation`;
+`bleepingcomputer.com/news/security/xbow-tests-anthropics-mythos-preview-for-offensive-security`;
+`firecompass.com/blog-fable-5-mythos-offensive-security`; `helpnetsecurity.com` (Mythos CyberGym/OSS);
+Epoch AI. The XBEN "85/104 = XBOW's agent, not Mythos" attribution is corroborated across the XBOW,
+BleepingComputer, and FireCompass sources. Internal:
+`engagements/{xbow-benchmarks,cybench,cve-bench}/{scope,progress}.md` +
 `casebooks/case-2026-07-{xbow-ctf-calibration,cybench-ctf-corpus}/`.*
