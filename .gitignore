@@ -11,5 +11,18 @@ __pycache__/
 engagements/*/
 !engagements/_TEMPLATE/
 
+# Published benchmark calibrations — our OWN records are public (findings + methodology).
+# The vendored third-party challenge corpora (upstream/, licensing + size) and raw attempt
+# logs (evidence/) stay private and are NOT redistributed.
+!engagements/xbow-benchmarks/
+!engagements/cybench/
+!engagements/cve-bench/
+engagements/xbow-benchmarks/upstream/
+engagements/xbow-benchmarks/evidence/
+engagements/cybench/upstream/
+engagements/cybench/evidence/
+engagements/cve-bench/upstream/
+engagements/cve-bench/evidence/
+
 .playwright-mcp
 graphify-out/
