@@ -1,0 +1,133 @@
+# GLOSSOPETRAE family manifest — the harness-owned keyhole contract.
+#
+# The upstream repo is a full constructed-language / covert-channel toolkit. The harness does NOT hand
+# the model that toolbox. This manifest declares exactly which actions exist, the capability CLASS that
+# bounds each one's maximum authority, and the gate each must pass before it is exposed at runtime.
+#
+# Invariants (conformance-enforced by tools/check-conformance.py :: check_tool_families):
+#   - family authority is sensor_only; NO action may claim oracle/judge/verdict/confirmed/allow/success.
+#   - every action is classed sensor | converter | payload_generator | future_review.
+#   - payload_generator (and advanced/offense) actions are status: blocked_until with a named next_gate —
+#     in scope to build, never exposed raw.
+#   - integration is arms-length subprocess; AGPL source is never vendored into Plane 1/2.
+#   - the broker owns evidence; the oracle owns adjudication. This family only emits evidence/proposals.
+
+family_id: glossopetrae
+upstream:
+  repo: https://github.com/elder-plinius/GLOSSOPETRAE
+  reviewed_commit: 2c6f59a
+  license: AGPL-3.0
+  posture: arms-length; reviewed statically; not executed; not vendored
+integration: subprocess
+default: disabled
+authority: sensor_only
+evidence_role: >
+  Outputs are broker/oracle-consumable evidence only — a transformed benign canary, a decode/roundtrip
+  record, a channel inventory, or a contained proposal. GLOSS never declares confirmed/allow/verdict/
+  success; the harness oracle decides truth from broker-owned evidence.
+requires: [safe_signal, scope_allows_adversarial_input_transforms, operator_review]
+forbidden_authority: [oracle, judge, verdict, confirmed, allow, success]
+non_authorities:
+  - decides truth or success
+  - emits confirmed / allow / verdict / success
+  - mutates evaluator / scorer / gold / budget / casebook / sealed data
+  - bypasses broker logs, controls, or replay
+  - writes raw secrets / live target ids into Plane 1/2
+
+# Output schema emitted by converter/sensor adapters (G2+). No verdict fields by construction.
+output_schema:
+  channel_id: string          # which channel/transform was applied
+  input_ref: string           # reference/digest of the benign canary input (not raw secrets)
+  artifact_ref: string        # reference/digest of the produced artifact
+  roundtrip: object           # {attempted: bool, recovered_equals_input: bool}
+  cost: object                # {bytes_in: int, bytes_out: int, expansion_ratio: number}
+  redaction: object           # {raw_payload_stored: bool, notes: string}
+redaction:
+  omit: [raw_secret, live_target_id, auth_material]
+  hash_or_summarize: [large_artifact_body]
+
+# ---- ACTIONS ----
+# class: sensor | converter | payload_generator | future_review
+# status: allowed (manifest-approved keyhole) | blocked_until (in scope, gated)
+# exposed_at_gate: the phase that wires the adapter for an allowed action
+# next_gate: the phase that must pass before a blocked_until action is exposed
+actions:
+  # --- buildable first (sensor/converter; benign canary only) ---
+  - id: list_channels
+    class: sensor
+    status: allowed
+    exposed_at_gate: G2
+    emits: channel inventory (ids + profiles); no verdict
+
+  - id: inspect_channel
+    class: sensor
+    status: allowed
+    exposed_at_gate: G2
+    emits: one channel profile (reversible?, normalization-sensitivity); no verdict
+
+  - id: encode_benign
+    class: converter
+    status: allowed
+    exposed_at_gate: G2
+    emits: covert-channel-encoded BENIGN canary artifact_ref; no verdict
+
+  - id: decode_if_possible
+    class: converter
+    status: allowed
+    exposed_at_gate: G2
+    emits: best-effort decode evidence of a provided artifact; no verdict
+
+  - id: roundtrip_check
+    class: sensor
+    status: allowed
+    exposed_at_gate: G2
+    emits: roundtrip record (attempted, recovered_equals_input); no verdict
+
+  - id: normalization_profile
+    class: sensor
+    status: allowed
+    exposed_at_gate: G3
+    emits: how a channel survives NFKC/confusable-skeleton/zero-width-strip; no verdict
+
+  # --- advanced buildable actions (in scope; blocked_until their gate) ---
+  - id: channel_rank_against_defense
+    class: sensor
+    status: blocked_until
+    next_gate: G4
+    emits: hermetic transform-vs-defense measurement; advisory, no verdict
+
+  - id: model_refusal_consistency_eval
+    class: sensor
+    status: blocked_until
+    next_gate: G5
+    emits: advisory refusal-consistency measurement; oracle decides allow/block/probe
+
+  - id: semantic_stego_proposal
+    class: payload_generator
+    status: blocked_until
+    next_gate: G6
+    emits: contained proposal artifact + required controls; never executed, no verdict
+
+  - id: token_exploit_proposal
+    class: payload_generator
+    status: blocked_until
+    next_gate: G6
+    emits: contained proposal artifact + required controls; never executed, no verdict
+
+  - id: glyph_render_benign
+    class: payload_generator
+    status: blocked_until
+    next_gate: G7
+    emits: rendered glyph/visual benign canary; needs vision/OCR oracle; no verdict
+
+  - id: shared_protocol_hermetic
+    class: sensor
+    status: blocked_until
+    next_gate: G8
+    emits: hermetic sender/receiver transcripts as test data; no hidden runtime channel; no verdict
+
+  - id: authorized_probe_set_eval
+    class: sensor
+    status: blocked_until
+    next_gate: G9
+    emits: scoped-live advisory measurement under signed scope; oracle confirms, not GLOSS

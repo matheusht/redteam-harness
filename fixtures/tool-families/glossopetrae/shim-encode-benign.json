@@ -1,0 +1,21 @@
+{
+  "action": "encode_benign",
+  "channel_id": "homoglyph",
+  "evidence_role": "converter",
+  "result": "encoded",
+  "input_ref": "sha256:c78bae51eb83230b",
+  "artifact_ref": "sha256:b9f0d50746e2fc75",
+  "roundtrip": {
+    "attempted": true,
+    "recovered_equals_input": true
+  },
+  "cost": {
+    "bytes_in": 22,
+    "bytes_out": 32,
+    "expansion_ratio": 1.455
+  },
+  "redaction": {
+    "raw_payload_stored": false,
+    "notes": "digests only; raw artifact not written to Plane 1/2"
+  }
+}

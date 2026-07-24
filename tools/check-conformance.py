@@ -683,6 +683,128 @@ def check_adversarial_candidates():
     record(not leaks, "adversarial: every immutable-touching candidate is blocked", f"leaky: {leaks}" if leaks else "")
 
 
+# ---- tool-family manifest keyhole (docs/tool-family-adapter-architecture.md) ----
+# A family manifest exposes the model only to gated, non-authoritative actions. This mirrors the external
+# capability registry: a pure predicate is the single source of truth, reused by a _must_reject corpus.
+
+TOOL_FAMILY_CLASSES = {"sensor", "converter", "payload_generator", "future_review"}
+TOOL_FAMILY_INTEGRATIONS = {"subprocess", "external_checkout", "package_cli", "future_review"}
+FAMILY_FORBIDDEN_AUTHORITY = ("oracle", "judge", "verdict", "confirmed", "allow", "success")
+
+
+def tool_family_action_problems(aid, body):
+    """Pure predicate — reasons a single family action violates the keyhole (empty = clean)."""
+    p = []
+    cls = _get_field(body, "class")
+    status = _get_field(body, "status")
+    if cls not in TOOL_FAMILY_CLASSES:
+        p.append(f"class not in {sorted(TOOL_FAMILY_CLASSES)}: {cls}")
+    if status not in ("allowed", "blocked_until"):
+        p.append(f"status must be allowed|blocked_until: {status}")
+    # an action may not declare verdict authority in a structured field (descriptive 'emits' text is exempt)
+    for tok in FAMILY_FORBIDDEN_AUTHORITY:
+        if re.search(rf"^\s*(authority|class|status)\s*:\s*{tok}\b", body, re.MULTILINE):
+            p.append(f"action claims forbidden authority: {tok}")
+    if status == "blocked_until" and _get_field(body, "next_gate") is None:
+        p.append("blocked_until action missing next_gate")
+    if status == "allowed" and _get_field(body, "exposed_at_gate") is None:
+        p.append("allowed action missing exposed_at_gate")
+    # advanced / proposal-class actions may not be exposed raw — they graduate through a gate
+    if cls == "payload_generator" and status == "allowed":
+        p.append("payload_generator action must be blocked_until, not allowed")
+    # the raw offense modes never appear as an exposed action
+    if aid in DANGEROUS_ACTIONS and status != "blocked_until":
+        p.append(f"dangerous action not gated: {aid}")
+    return p
+
+
+def tool_family_manifest_problems(text):
+    """Pure predicate — reasons a family manifest violates the keyhole (empty = clean).
+    Single source of truth reused by check_tool_families and its _must_reject corpus."""
+    p = []
+    if _get_field(text, "family_id") is None:
+        p.append("no family_id")
+    if re.search(r"^\s*reviewed_commit:\s*\S", text, re.MULTILINE) is None:
+        p.append("no upstream reviewed_commit")
+    if re.search(r"^\s*license:\s*\S", text, re.MULTILINE) is None:
+        p.append("no upstream license")
+    if _get_field(text, "integration") not in TOOL_FAMILY_INTEGRATIONS:
+        p.append(f"integration invalid: {_get_field(text, 'integration')}")
+    if re.search(r"^\s*evidence_role:\s*", text, re.MULTILINE) is None:
+        p.append("no evidence_role")
+    if re.search(r"^\s*authority:\s*sensor_only\s*$", text, re.MULTILINE) is None:
+        p.append("family authority not sensor_only")
+    if re.search(r"^\s*authority:\s*(oracle|judge|authoritative|verdict)\b", text, re.MULTILINE):
+        p.append("family claims oracle/judge authority")
+    if re.search(r"^\s*forbidden_authority:\s*\[", text, re.MULTILINE) is None:
+        p.append("no forbidden_authority declaration")
+    blocks = _capability_blocks(text)
+    if not blocks:
+        p.append("no actions")
+    for aid, body in blocks:
+        p += [f"action {aid}: {x}" for x in tool_family_action_problems(aid, body)]
+    return p
+
+
+def _json_forbidden_keys(obj):
+    """Recursively collect any verdict-authority keys an adapter-evidence JSON must never carry."""
+    found = set()
+
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if str(k).lower() in FAMILY_FORBIDDEN_AUTHORITY:
+                    found.add(str(k).lower())
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(obj)
+    return found
+
+
+def check_tool_families():
+    """The tool-family keyhole: each manifest declares gated, non-authoritative actions only."""
+    base = os.path.join(ROOT, "tool-families")
+    fixtures_base = os.path.join(ROOT, "fixtures", "tool-families")
+    if not os.path.isdir(base) and not os.path.isdir(fixtures_base):
+        return
+    print("\n[tool-families] family manifest keyhole")
+    if os.path.isdir(base):
+        for name in sorted(os.listdir(base)):
+            mf = os.path.join(base, name, "manifest.yaml")
+            if not os.path.isfile(mf):
+                continue
+            problems = tool_family_manifest_problems(open(mf).read())
+            record(not problems, f"tool-families/{name}: manifest within the keyhole",
+                   "; ".join(problems) if problems else "")
+    if os.path.isdir(fixtures_base):
+        for name in sorted(os.listdir(fixtures_base)):
+            fdir = os.path.join(fixtures_base, name)
+            if not os.path.isdir(fdir):
+                continue
+            vm = os.path.join(fdir, "valid-manifest.yaml")
+            if os.path.isfile(vm):
+                problems = tool_family_manifest_problems(open(vm).read())
+                record(not problems, f"tool-families/fixtures/{name}/valid-manifest: passes",
+                       "; ".join(problems) if problems else "")
+            # adapter evidence fixtures (G2+): must never carry a verdict-authority key
+            for fn in sorted(os.listdir(fdir)):
+                if fn.startswith("shim-") and fn.endswith(".json"):
+                    bad = sorted(_json_forbidden_keys(load_json(os.path.join(fdir, fn))))
+                    record(not bad, f"tool-families/fixtures/{name}/{fn}: adapter evidence carries no verdict key",
+                           f"forbidden keys: {bad}" if bad else "")
+            mr = os.path.join(fdir, "_must_reject")
+            if os.path.isdir(mr):
+                for fn in sorted(os.listdir(mr)):
+                    if not fn.endswith((".yaml", ".yml")):
+                        continue
+                    problems = tool_family_manifest_problems(open(os.path.join(mr, fn)).read())
+                    record(bool(problems),
+                           f"tool-families/fixtures/{name}/_must_reject/{fn}: rejected [{'; '.join(problems) or 'NONE'}]",
+                           "fixture should be rejected but passed" if not problems else "")
+
+
 def main():
     pattern_ids = collect_pattern_ids()
     cap_ids = collect_capability_ids()
@@ -699,6 +821,7 @@ def main():
     check_payload_proposals()
     check_oracles()
     check_casebooks(pattern_ids)
+    check_tool_families()
     check_secrets()
     check_finding_fixtures()
     check_decision5_record_schemas()
